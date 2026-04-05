@@ -1,0 +1,301 @@
+﻿@page
+@using System.Globalization
+@model Vyuka.Pages.Schedule.IndexModel
+
+<h1>Týdenní rozvrh</h1>
+
+<!-- NAVIGACE TÝDNŮ -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <a class="btn btn-secondary"
+           asp-page="./Index"
+           asp-route-week="@Model.StartOfWeek.AddDays(-7).ToString("yyyy-MM-dd")">
+        ← Předchozí týden
+    </a>
+
+    <div class="d-flex flex-column align-items-center">
+        <h4 class="m-0">
+            @Model.StartOfWeek.ToString("dd.MM.yyyy")
+            –
+            @Model.EndOfWeek.ToString("dd.MM.yyyy")
+        </h4>
+
+        <a class="btn btn-info mt-2"
+               asp-page="./Index"
+               asp-route-week="@DateTime.Today.ToString("yyyy-MM-dd")">
+            Aktuální týden
+        </a>
+    </div>
+
+    <a class="btn btn-secondary"
+           asp-page="./Index"
+           asp-route-week="@Model.StartOfWeek.AddDays(7).ToString("yyyy-MM-dd")">
+        Další týden →
+    </a>
+
+</div>
+
+<!-- FORMULÁŘ PRO PŘIDÁNÍ HODINY -->
+<div class="card mb-4">
+    <div class="card-body">
+
+        <h5>Přidat hodinu do rozvrhu</h5>
+
+        <form method="post" asp-page-handler="Add">
+            <input type="hidden" asp-for="Week" />
+            <input type="hidden" asp-for="StartOfWeek" />
+            <input type="hidden" asp-for="EndOfWeek" />
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label>Student</label>
+                    <select asp-for="NewStudentId" class="form-control">
+                        @foreach (var s in Model.Students)
+                        {
+                            <option value="@s.Id">@s.FirstName @s.LastName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Předmět</label>
+                    <select asp-for="NewSubjectId" class="form-select" id="subjectSelect">
+                        <option value="">-- Vyber předmět --</option>
+                        @foreach (var s in Model.Subjects)
+                        {
+                            <option value="@s.Id">@s.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Téma</label>
+                    <select asp-for="NewTopicId" class="form-select" id="topicSelect">
+                        <option value="">-- Vyber téma --</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label>Den</label>
+                    <select asp-for="NewDay" class="form-control">
+                        <option value="Monday">Pondělí</option>
+                        <option value="Tuesday">Úterý</option>
+                        <option value="Wednesday">Středa</option>
+                        <option value="Thursday">Čtvrtek</option>
+                        <option value="Friday">Pátek</option>
+                        <option value="Saturday">Sobota</option>
+                        <option value="Sunday">Neděle</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Začátek</label>
+                    <input type="time" asp-for="NewStart" class="form-control" required/>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Konec</label>
+                    <input type="time" asp-for="NewEnd" class="form-control" required/>
+                </div>
+
+            </div>
+
+            <button type="submit" class="btn btn-success">Přidat</button>
+
+        </form>
+
+    </div>
+</div>
+
+<!-- FORMULÁŘ PRO EDITACI -->
+@if (Model.EditPlan != null)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+
+            <h5>Upravit hodinu</h5>
+
+            <form method="post" asp-page-handler="Save">
+
+                <input type="hidden" asp-for="EditPlan.Id" />
+                <input type="hidden" asp-for="StartOfWeek" />
+                <input type="hidden" asp-for="EndOfWeek" />
+                <input type="hidden" asp-for="Week" />
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        <label>Student</label>
+                        <select asp-for="EditPlan.StudentId" class="form-control">
+                            @foreach (var s in Model.Students)
+                            {
+                                <option value="@s.Id">@s.FirstName @s.LastName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Předmět</label>
+                        <select asp-for="EditPlan.SubjectId" class="form-control">
+                            @foreach (var s in Model.Subjects)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Téma</label>
+                        <select asp-for="EditPlan.SubjectTopicId" class="form-control">
+                            <option value="">(bez tématu)</option>
+                            @foreach (var t in Model.Topics)
+                            {
+                                <option value="@t.Id">@t.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        <label>Den</label>
+                        <select asp-for="EditPlan.Day" class="form-control">
+                            <option value="Monday">Pondělí</option>
+                            <option value="Tuesday">Úterý</option>
+                            <option value="Wednesday">Středa</option>
+                            <option value="Thursday">Čtvrtek</option>
+                            <option value="Friday">Pátek</option>
+                            <option value="Saturday">Sobota</option>
+                            <option value="Sunday">Neděle</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Datum</label>
+                        <input type="date" asp-for="EditPlan.Date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Začátek</label>
+                        <input type="time" asp-for="EditPlan.Start" class="form-control" />
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-4 mb-3">
+                        <label>Konec</label>
+                        <input type="time" asp-for="EditPlan.End" class="form-control" />
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn btn-success">Uložit změny</button>
+
+            </form>
+
+        </div>
+    </div>
+}
+
+<!-- TÝDENNÍ ROZVRH -->
+<div class="row">
+
+    @for (int i = 0; i < 7; i++)
+    {
+        var dayDate = Model.StartOfWeek.AddDays(i);
+
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header text-center">
+                    <strong>@dayDate.ToString("dddd dd.MM")</strong>
+                </div>
+
+                <div class="card-body">
+
+                    @{
+                        var lessons = Model.Plans
+                            .Where(p => p.Date.Date == dayDate.Date)
+                            .OrderBy(p => p.Start)
+                            .ToList();
+                    }
+
+                    @if (lessons.Count == 0)
+                    {
+                        <p class="text-muted">Žádné hodiny</p>
+                    }
+                    else
+                    {
+                        foreach (var l in lessons)
+                        {
+                            <div class="border rounded p-2 mb-2"
+                                 style="background-color:@Model.GetColorForStudent(l.StudentId);">
+
+                                <div class="d-flex gap-2 mb-2">
+
+                                    <form method="post" asp-page-handler="Edit" asp-route-id="@l.Id">
+                                        <button class="btn btn-sm btn-primary">Upravit</button>
+                                    </form>
+
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@l.Id"
+                                          onsubmit="return confirm('Opravdu smazat tuto hodinu?');">
+                                        <button class="btn btn-sm btn-danger">Smazat</button>
+                                    </form>
+
+                                </div>
+
+                                <!-- CHECKBOX PRO ODUČENÍ -->
+                                <form method="post" asp-page-handler="Teach" asp-route-id="@l.Id">
+                                    @if (!l.IsTaught)
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Označit jako odučeno
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success">✓ Odučeno</span>
+                                    }
+                                </form>
+
+                                <strong>@l.Start.ToString(@"hh\:mm") – @l.End.ToString(@"hh\:mm")</strong><br />
+                                <span>@l.Student?.FirstName @l.Student?.LastName</span><br />
+                                <span>@l.Subject?.Name</span><br />
+
+                                @if (l.SubjectTopic != null)
+                                {
+                                    <small class="text-muted">@l.SubjectTopic.Name</small>
+                                }
+                            </div>
+                        }
+                    }
+
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<script>
+    document.getElementById("subjectSelect").addEventListener("change", function () {
+        var subjectId = this.value;
+
+        fetch(`?handler=Topics&subjectId=${subjectId}`)
+            .then(response => response.json())
+            .then(data => {
+                var topicSelect = document.getElementById("topicSelect");
+                topicSelect.innerHTML = '<option value="">-- Vyber téma --</option>';
+
+                data.forEach(t => {
+                    topicSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                });
+            });
+    });
+</script>

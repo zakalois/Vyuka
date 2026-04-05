@@ -1,0 +1,89 @@
+﻿@page
+@model Vyuka.Pages.Subjects.CreateModel
+
+<h1>Přidat nový předmět</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label>Obrázek předmětu</label>
+        <input type="file" name="ImageFile" class="form-control" onchange="showPreview(this)" />
+        <img id="preview" class="image-preview" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Název</label>
+        <input asp-for="Subject.Name" class="form-control" />
+        <span asp-validation-for="Subject.Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Témata</label>
+
+        <div id="topics-container">
+            <div class="input-group mb-2">
+                <input type="text" class="form-control topic-input" placeholder="Napište téma..." />
+                <button type="button" class="btn btn-danger remove-topic">X</button>
+            </div>
+        </div>
+
+        <button type="button" id="add-topic" class="btn btn-secondary">+ Přidat téma</button>
+
+        <!-- Skryté pole, do kterého se uloží všechna témata -->
+        <textarea asp-for="Subject.Topics" id="topics-hidden" hidden></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-success" onclick="saveTopics()">Uložit</button>
+    <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+</form>
+
+@section Scripts {
+    <script>
+        // Přidání nového řádku
+        document.getElementById("add-topic").addEventListener("click", function () {
+            const container = document.getElementById("topics-container");
+
+            const row = document.createElement("div");
+            row.className = "input-group mb-2";
+
+            row.innerHTML = `
+                <input type="text" class="form-control topic-input" placeholder="Napište téma..." />
+                <button type="button" class="btn btn-danger remove-topic">X</button>
+            `;
+
+            container.appendChild(row);
+        });
+
+        // Odebrání řádku
+        document.addEventListener("click", function (e) {
+            if (e.target.classList.contains("remove-topic")) {
+                e.target.parentElement.remove();
+            }
+        });
+
+        // Uložení témat do hidden textarea
+        function saveTopics() {
+            const inputs = document.querySelectorAll(".topic-input");
+            const hidden = document.getElementById("topics-hidden");
+
+            let lines = [];
+            inputs.forEach(i => {
+                if (i.value.trim() !== "") {
+                    lines.push(i.value.trim());
+                }
+            });
+
+            hidden.value = lines.join("\n");
+        }
+        // Náhked obrázku
+        function showPreview(input) {
+            const preview = document.getElementById("preview");
+            const file = input.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => preview.src = e.target.result;
+                reader.readAsDataURL(file);
+            }
+        }
+
+    </script>
+}

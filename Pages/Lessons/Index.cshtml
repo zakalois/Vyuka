@@ -1,0 +1,72 @@
+﻿@page
+@model Vyuka.Pages.Lessons.IndexModel
+
+<h2>Odučené hodiny</h2>
+
+<!-- Výběr studenta -->
+<form method="get" class="mb-3">
+    <label>Student:</label>
+    <select asp-for="SelectedStudentId"
+            asp-items="Model.StudentList"
+            class="form-select"
+            onchange="this.form.submit()">
+        <option value="">-- vyberte studenta --</option>
+    </select>
+</form>
+
+@if (Model.SelectedStudentId > 0)
+{
+    <!-- Filtr podle datumu -->
+    <form method="get" class="row g-3 mb-3">
+
+        <!-- zachování studenta -->
+        <input type="hidden" asp-for="SelectedStudentId" />
+
+        <div class="col-auto">
+            <label>Od:</label>
+            <input type="date" asp-for="FromDate" class="form-control" />
+        </div>
+
+        <div class="col-auto">
+            <label>Do:</label>
+            <input type="date" asp-for="ToDate" class="form-control" />
+        </div>
+
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn btn-primary">Filtrovat</button>
+        </div>
+
+        <div class="col-auto align-self-end">
+            <a href="/Lessons?SelectedStudentId=@Model.SelectedStudentId"
+                   class="btn btn-secondary">
+                Reset
+            </a>
+        </div>
+    </form>
+
+    <!-- Součet hodin -->
+    <div class="alert alert-info">
+        <strong>Celkem odučeno:</strong> @Model.TotalTaughtHours hodin
+    </div>
+
+    <!-- Tabulka -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Předmět</th>
+                <th>Hodin</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var l in Model.Lessons)
+            {
+                <tr>
+                    <td>@l.Date.ToString("dd.MM.yyyy")</td>
+                    <td>@l.Subject?.Name</td>
+                    <td>@l.Hours</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

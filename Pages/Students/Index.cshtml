@@ -1,0 +1,60 @@
+﻿@page
+@model Vyuka.Pages.Students.IndexModel
+
+<h1>Seznam studentů</h1>
+
+<p>
+    <a class="btn btn-primary" asp-page="Create">Nový student</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Příjmení</th>
+            <th>Jméno</th>
+            <th>Věk</th>
+            <th>Email</th>
+            <th>Telefon</th>
+            <th>Škola</th>
+            <th>Adresa</th>
+            <th>Jméno rodiče</th>
+            <th>Příjmení rodiče</th>
+            <th>Telefon rodiče</th>
+            <th>Email rodiče</th>
+
+            <!-- ⭐ Pevná šířka + centrování -->
+            <th class="text-center" style="width:110px;">Akce</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Students)
+        {
+            <tr>
+                <td>@item.LastName</td>
+                <td>@item.FirstName</td>
+                <td>@item.Age</td>
+                <td>@item.Email</td>
+                <td>@item.Phone</td>
+                <td>@item.School</td>
+                <td>@item.Address</td>
+                <td>@item.ParentFirstName</td>
+                <td>@item.ParentLastName</td>
+                <td>@item.ParentPhone</td>
+                <td>@item.ParentEmail</td>
+
+                <!-- ⭐ Ikony + zarovnání + žádné zalomení -->
+                <td class="text-center" style="white-space:nowrap;">
+                    <a asp-page="Edit" asp-route-id="@item.Id" class="text-primary me-2" title="Upravit">
+                        <i class="bi bi-pencil-square"></i>
+                    </a>
+                    <a asp-page="Details" asp-route-id="@item.Id" class="text-info me-2" title="Detail">
+                        <i class="bi bi-search"></i>
+                    </a>
+                    <a asp-page="Delete" asp-route-id="@item.Id" class="text-danger" title="Smazat">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

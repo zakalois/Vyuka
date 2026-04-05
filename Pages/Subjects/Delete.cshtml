@@ -1,0 +1,27 @@
+﻿@page "{id:int}"
+@model Vyuka.Pages.Subjects.DeleteModel
+
+<h1>Smazat předmět</h1>
+
+<h3>Opravdu chcete smazat tento předmět?</h3>
+
+<div class="mb-3">
+    <strong>@Model.Subject.Name</strong>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Subject.ImageUrl))
+{
+    <div class="mb-3">
+        <img src="/images/@Model.Subject.ImageUrl" style="height:80px;border-radius:4px;" />
+    </div>
+}
+
+<div class="mb-3">
+    <pre>@Model.Subject.Topics</pre>
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="Subject.Id" />
+    <button type="submit" class="btn btn-danger">Smazat</button>
+    <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+</form>

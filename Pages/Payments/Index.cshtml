@@ -1,0 +1,77 @@
+﻿@page
+@model Vyuka.Pages.Payments.IndexModel
+
+<h1>Přehled plateb</h1>
+
+<form method="get" class="mb-4">
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label">Vyber studenta</label>
+            <select asp-for="SelectedStudentId" asp-items="Model.StudentList" class="form-select">
+                <option value="">-- Vyber studenta --</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary">Zobrazit</button>
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end justify-content-end">
+            <a asp-page="/Payments/Create" class="btn btn-success">Přidat platbu</a>
+        </div>
+    </div>
+</form>
+
+@if (Model.SelectedStudentId > 0)
+{
+    <div class="alert alert-info mt-3">
+        <h5>Souhrn hodin</h5>
+
+        <div><strong>Předplacené hodiny:</strong> @Model.TotalPurchasedHours h</div>
+        <div><strong>Odučené hodiny:</strong> @Model.TotalTaughtHours h</div>
+
+        <div>
+            <strong>Zůstatek:</strong>
+            <span class="@(Model.BalanceHours < 0 ? "text-danger fw-bold" : "text-success fw-bold")">
+                @Model.BalanceHours h
+            </span>
+        </div>
+    </div>
+}
+
+@if (Model.SelectedStudentId > 0)
+{
+    <h3>Platby studenta</h3>
+
+    <table class="table table-striped text-center">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Částka</th>
+                <th>Předplacené hodiny</th>
+                <th>Cena/hod</th>
+                <th>Způsob</th>
+                <th>Poznámka</th>
+                <th>Akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.Payments)
+            {
+                <tr>
+                    <td>@p.Date.ToShortDateString()</td>
+                    <td>@p.Amount Kč</td>
+                    <td>@p.HoursPurchased.ToString("0") h</td>
+                    <td>@p.PricePerHour?.ToString("0") Kč</td>
+                    <td>@p.Method</td>
+                    <td>@p.Note</td>
+                    <td>
+                        <a asp-page="/Payments/Delete" asp-route-id="@p.Id" class="text-danger">
+                            Smazat
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

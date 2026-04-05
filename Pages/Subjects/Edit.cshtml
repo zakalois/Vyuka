@@ -1,0 +1,53 @@
+﻿@page "{id:int}"
+@model Vyuka.Pages.Subjects.EditModel
+
+<h1>Upravit předmět</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Subject.Id" />
+
+    <div class="mb-3">
+        <label class="form-label">Název</label>
+        <input asp-for="Subject.Name" class="form-control" />
+        <span asp-validation-for="Subject.Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label>Obrázek předmětu</label>
+        <input type="file" name="ImageFile" class="form-control" onchange="showPreview(this)" />
+
+        <!-- Aktuální obrázek -->
+        @if (!string.IsNullOrEmpty(Model.Subject.ImageUrl))
+        {
+            <img src="/images/@Model.Subject.ImageUrl" class="image-preview" />
+        }
+
+        <!-- Náhled nového obrázku -->
+        <img id="preview" class="image-preview" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Nový obrázek (volitelné)</label>
+        <input type="file" name="ImageFile" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Témata (každé na nový řádek)</label>
+        <textarea asp-for="Subject.Topics" class="form-control" rows="5"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Uložit změny</button>
+    <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+</form>
+<script>
+    function showPreview(input) {
+        const preview = document.getElementById("preview");
+        const file = input.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = e => preview.src = e.target.result;
+            reader.readAsDataURL(file);
+        }
+    }
+</script>

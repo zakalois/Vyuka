@@ -1,0 +1,76 @@
+﻿@page
+@model Vyuka.Pages.Reports.OverviewModel
+
+<h2>Přehled výuky a plateb</h2>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-auto">
+        <label>Od:</label>
+        <input type="date" asp-for="FromDate" class="form-control" />
+    </div>
+
+    <div class="col-auto">
+        <label>Do:</label>
+        <input type="date" asp-for="ToDate" class="form-control" />
+    </div>
+
+    <div class="col-auto align-self-end">
+        <button type="submit" class="btn btn-primary">Filtrovat</button>
+    </div>
+
+    <div class="col-auto align-self-end">
+        <a href="/Reports/Overview" class="btn btn-secondary">Reset</a>
+    </div>
+</form>
+
+<table class="table table-striped text-center">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Předplaceno (h)</th>
+            <th>Odučeno (h)</th>
+            <th>Zaplaceno (Kč)</th>
+            <th>Zůstatek (h)</th>
+            <th>Zbývá odučit (h)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model.Summaries)
+        {
+            var remaining = s.BalanceHours;
+
+            string rowColor = remaining > 0
+                ? "background-color:#ffe5e5;"   // červená
+                : "background-color:#e8ffe8;";  // zelená
+
+            <tr style="@rowColor">
+                <td class="text-start">@s.Name</td>
+                <td>@s.PurchasedHours.ToString("0")</td>
+                <td>@s.TaughtHours.ToString("0")</td>
+                <td>@s.PaidAmount.ToString("0")</td>
+                <td>@s.BalanceHours.ToString("0")</td>
+                <td>@remaining.ToString("0")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- ⭐ Souhrnná tabulka v jednom řádku -->
+<table class="table table-bordered table-sm mt-4">
+    <thead class="table-light">
+        <tr>
+            <th style="text-align:center;">Celkem předplaceno (h)</th>
+            <th style="text-align:center;">Celkem odučeno (h)</th>
+            <th style="text-align:center;">Celkem zaplaceno (Kč)</th>
+            <th style="text-align:center;">Celkový zůstatek (h)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="text-align:center;">@Model.TotalPurchasedHours.ToString("0")</td>
+            <td style="text-align:center;">@Model.TotalTaughtHours.ToString("0")</td>
+            <td style="text-align:center;">@Model.TotalPaidAmount.ToString("0") Kč</td>
+            <td style="text-align:center;">@Model.TotalBalanceHours.ToString("0")</td>
+        </tr>
+    </tbody>
+</table>

@@ -1,0 +1,47 @@
+﻿@page
+@model Vyuka.Pages.Subjects.IndexModel
+
+<h1>Výukové předměty</h1>
+
+<p>
+    <a class="btn btn-primary" asp-page="Create">Přidat nový předmět</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Název</th>
+            <th>Obrázek</th>
+            <th>Témata</th>
+            <th>Akce</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model.Subjects)
+        {
+            <tr>
+                <td>@s.Name</td>
+
+                <td>
+                    @if (!string.IsNullOrEmpty(s.ImageUrl))
+                    {
+                        <img src="/images/@s.ImageUrl" class="subject-image" />
+                    }
+                </td>
+
+                <td>
+                    @if (!string.IsNullOrEmpty(s.Topics))
+                    {
+                        <pre>@s.Topics</pre>
+                    }
+                </td>
+
+                <td>
+                    <a asp-page="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-primary">Upravit</a>
+                    <a asp-page="Details" asp-route-id="@s.Id" class="btn btn-sm btn-info">Detail</a>
+                    <a asp-page="Delete" asp-route-id="@s.Id" class="btn btn-sm btn-danger">Smazat</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,57 @@
+﻿@page "{id:int}"
+@model Vyuka.Pages.Students.DetailsModel
+
+<h1>Student Details</h1>
+
+<div class="card" style="max-width:600px;">
+    <div class="card-body">
+
+        <h4>@Model.Student.FirstName @Model.Student.LastName</h4>
+
+        <p><strong>Věk:</strong> @Model.Student.Age</p>
+        <p><strong>Email:</strong> @Model.Student.Email</p>
+        <p><strong>Telefon:</strong> @Model.Student.Phone</p>
+
+        <hr />
+
+        <h5>Přiřazené předměty</h5>
+
+        @if (Model.Subjects.Count == 0)
+        {
+            <p><em>Student nemá přiřazené žádné předměty.</em></p>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var subject in Model.Subjects)
+                {
+                    <div class="col-12 mb-3 d-flex align-items-center">
+
+                        @* Obrázek předmětu *@
+                        @if (!string.IsNullOrEmpty(subject.ImageUrl))
+                        {
+                            <img src="/images/@subject.ImageUrl"
+                                 style="width:60px;height:60px;object-fit:cover;border-radius:6px;margin-right:12px;" />
+                        }
+                        else
+                        {
+                            <div style="width:60px;height:60px;background:#eee;border-radius:6px;margin-right:12px;
+                                display:flex;align-items:center;justify-content:center;color:#777;">
+                                ?
+                            </div>
+                        }
+
+                        @* Název předmětu *@
+                        <span style="font-size:1.1rem;">@subject.Name</span>
+                    </div>
+                }
+            </div>
+        }
+
+        <hr />
+
+        <a asp-page="Edit" asp-route-id="@Model.Student.Id" class="btn btn-primary">Upravit</a>
+        <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+
+    </div>
+</div>

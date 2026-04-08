@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Vyuka.Pages
 {
-    public class IndexModel : PageModel
+    public class HomeIndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
+        private readonly ILogger<HomeIndexModel> _logger;
 
-        public IndexModel(ILogger<IndexModel> logger)
+        public HomeIndexModel(ILogger<HomeIndexModel> logger)
         {
             _logger = logger;
         }

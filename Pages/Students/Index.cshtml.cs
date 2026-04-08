@@ -4,11 +4,11 @@ using Vyuka.Models;
 
 namespace Vyuka.Pages.Students
 {
-    public class IndexModel : PageModel
+    public class StudentsIndexModel : PageModel
     {
         private readonly AppDbContext _context;
 
-        public IndexModel(AppDbContext context)
+        public StudentsIndexModel(AppDbContext context)
         {
             _context = context;
         }
@@ -18,9 +18,9 @@ namespace Vyuka.Pages.Students
         public async Task OnGetAsync()
         {
             Students = await _context.Students
-    .OrderBy(s => s.LastName)
-    .ThenBy(s => s.FirstName)
-    .ToListAsync();
+                .OrderBy(s => s.LastName)
+                .ThenBy(s => s.FirstName)
+                .ToListAsync();
         }
     }
 }

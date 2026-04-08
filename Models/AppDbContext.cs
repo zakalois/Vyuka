@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace Vyuka.Models
 {
@@ -15,7 +16,6 @@ namespace Vyuka.Models
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<StudentSubject> StudentSubjects { get; set; }
-
         public DbSet<SubjectTopic> SubjectTopics { get; set; }
         public DbSet<LessonPlan> LessonPlans { get; set; }
 
@@ -23,21 +23,30 @@ namespace Vyuka.Models
         {
             base.OnModelCreating(modelBuilder);
 
+            // Ignorovat všechny PageModely
+            var pageModelType = typeof(Microsoft.AspNetCore.Mvc.RazorPages.PageModel);
+            var pageModels = Assembly.GetExecutingAssembly()
+                .GetTypes()
+                .Where(t => pageModelType.IsAssignableFrom(t));
+
+            foreach (var pm in pageModels)
+                modelBuilder.Ignore(pm);
+
+            // ❗ Ignorovat GlobalPaymentRow – to je skutečný zdroj chyby
+            modelBuilder.Ignore<Vyuka.Pages.Payments.PaymentsIndexModel.GlobalPaymentRow>();
+
             // Klíč pro vazební tabulku
             modelBuilder.Entity<StudentSubject>()
                 .HasKey(ss => new { ss.StudentId, ss.SubjectId });
 
-            // ⭐ Amount – celé koruny (bez desetinných míst)
             modelBuilder.Entity<Payment>()
                 .Property(p => p.Amount)
                 .HasPrecision(18, 0);
 
-            // ⭐ PricePerHour – desetiny (např. 350.5 Kč)
             modelBuilder.Entity<Payment>()
                 .Property(p => p.PricePerHour)
                 .HasPrecision(18, 2);
 
-            // ⭐ HoursPurchased – desetiny (např. 1.5 h)
             modelBuilder.Entity<Payment>()
                 .Property(p => p.HoursPurchased)
                 .HasPrecision(18, 2);

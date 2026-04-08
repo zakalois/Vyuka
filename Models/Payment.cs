@@ -17,13 +17,13 @@
         // Kolik hodin si tím předplatil
         public decimal HoursPurchased { get; set; }
 
-        // ⭐ Cena za hodinu (volitelné)
+        // Cena za hodinu (volitelné)
         public decimal? PricePerHour { get; set; }
 
-        // ⭐ Poznámka k platbě (volitelné)
+        // Poznámka k platbě (volitelné)
         public string? Note { get; set; }
 
-        // ⭐ Způsob úhrady (hotově, převodem…)
+        // Způsob úhrady (hotově, převodem…)
         public string? Method { get; set; }
     }
 }

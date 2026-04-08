@@ -23,6 +23,8 @@
         public string? ParentPhone { get; set; }
         public string? ParentEmail { get; set; }
 
+        public bool IsActive { get; set; } = true;
+
         public List<StudentSubject> StudentSubjects { get; set; } = new();
     }
 }

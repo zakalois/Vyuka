@@ -5,11 +5,11 @@ using Vyuka.Models;
 
 namespace Vyuka.Pages.Subjects
 {
-    public class IndexModel : PageModel
+    public class SubjectsIndexModel : PageModel
     {
         private readonly AppDbContext _context;
 
-        public IndexModel(AppDbContext context)
+        public SubjectsIndexModel(AppDbContext context)
         {
             _context = context;
         }

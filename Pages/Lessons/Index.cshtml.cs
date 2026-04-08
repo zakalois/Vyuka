@@ -6,14 +6,15 @@ using Vyuka.Models;
 
 namespace Vyuka.Pages.Lessons
 {
-    public class IndexModel : PageModel
+    public class LessonsIndexModel : PageModel
     {
         private readonly AppDbContext _context;
 
-        public IndexModel(AppDbContext context)
+        public LessonsIndexModel(AppDbContext context)
         {
             _context = context;
         }
+
         [BindProperty(SupportsGet = true)]
         public DateTime? FromDate { get; set; }
 

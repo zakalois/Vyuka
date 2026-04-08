@@ -1,5 +1,5 @@
 ﻿@page
-@model Vyuka.Pages.Students.IndexModel
+@model Vyuka.Pages.Students.StudentsIndexModel
 
 <h1>Seznam studentů</h1>
 
@@ -29,7 +29,7 @@
     <tbody>
         @foreach (var item in Model.Students)
         {
-            <tr>
+            <tr class="@(item.IsActive ? "" : "table-secondary")">
                 <td>@item.LastName</td>
                 <td>@item.FirstName</td>
                 <td>@item.Age</td>
@@ -42,7 +42,6 @@
                 <td>@item.ParentPhone</td>
                 <td>@item.ParentEmail</td>
 
-                <!-- ⭐ Ikony + zarovnání + žádné zalomení -->
                 <td class="text-center" style="white-space:nowrap;">
                     <a asp-page="Edit" asp-route-id="@item.Id" class="text-primary me-2" title="Upravit">
                         <i class="bi bi-pencil-square"></i>
@@ -50,11 +49,27 @@
                     <a asp-page="Details" asp-route-id="@item.Id" class="text-info me-2" title="Detail">
                         <i class="bi bi-search"></i>
                     </a>
-                    <a asp-page="Delete" asp-route-id="@item.Id" class="text-danger" title="Smazat">
+                    <a asp-page="Delete" asp-route-id="@item.Id" class="text-danger me-3" title="Smazat">
                         <i class="bi bi-trash"></i>
                     </a>
+
+                    <form method="post" asp-page="Toggle" asp-route-id="@item.Id" style="display:inline;">
+                        @if (item.IsActive)
+                        {
+                            <!-- Student je aktivní → nabídni DEAKTIVACI (červené tlačítko) -->
+                            <button class="btn btn-danger btn-sm" title="Deaktivovat">
+                                <i class="bi bi-person-dash"></i>
+                            </button>
+                        }
+                        else
+                        {
+                            <!-- Student je neaktivní → nabídni AKTIVACI (zelené tlačítko) -->
+                            <button class="btn btn-success btn-sm" title="Aktivovat">
+                                <i class="bi bi-person-check"></i>
+                            </button>
+                        }
+                    </form>
                 </td>
             </tr>
         }
     </tbody>
-</table>

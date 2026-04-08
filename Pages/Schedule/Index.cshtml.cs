@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Vyuka.Pages.Schedule
 {
-    public class IndexModel : PageModel
+    public class ScheduleIndexModel : PageModel
     {
         private readonly AppDbContext _context;
-        public IndexModel(AppDbContext context)
+
+        public ScheduleIndexModel(AppDbContext context)
         {
             _context = context;
         }
@@ -54,7 +56,6 @@ namespace Vyuka.Pages.Schedule
         [BindProperty] public TimeSpan NewStart { get; set; }
         [BindProperty] public TimeSpan NewEnd { get; set; }
 
-        // Výpočet týdne
         private void ComputeWeek()
         {
             if (Week == default)
@@ -65,15 +66,22 @@ namespace Vyuka.Pages.Schedule
             EndOfWeek = StartOfWeek.AddDays(6);
         }
 
-        // 🔵 Společná metoda pro dropdowny
         private async Task LoadDropdownsAsync()
         {
-            Students = await _context.Students.OrderBy(s => s.LastName).ToListAsync();
-            Subjects = await _context.Subjects.OrderBy(s => s.Name).ToListAsync();
-            Topics = await _context.SubjectTopics.OrderBy(t => t.Name).ToListAsync();
+            Students = await _context.Students
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.LastName)
+                .ToListAsync();
+
+            Subjects = await _context.Subjects
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+
+            Topics = await _context.SubjectTopics
+                .OrderBy(t => t.Name)
+                .ToListAsync();
         }
 
-        // GET
         public async Task OnGetAsync()
         {
             ComputeWeek();
@@ -89,7 +97,6 @@ namespace Vyuka.Pages.Schedule
                 .ToListAsync();
         }
 
-        // AJAX – načtení témat
         public async Task<JsonResult> OnGetTopicsAsync(int subjectId)
         {
             var topics = await _context.SubjectTopics
@@ -101,12 +108,10 @@ namespace Vyuka.Pages.Schedule
             return new JsonResult(topics);
         }
 
-        // ✔ Přidání hodiny do rozvrhu
         public async Task<IActionResult> OnPostAddAsync()
         {
             ComputeWeek();
 
-            // VALIDACE – musí být vybrán předmět
             if (NewSubjectId <= 0)
             {
                 ModelState.AddModelError("NewSubjectId", "Musíte vybrat předmět.");
@@ -114,25 +119,29 @@ namespace Vyuka.Pages.Schedule
                 return Page();
             }
 
-            // VALIDACE – časová pole musí být vyplněna
-            if (NewStart == default || NewEnd == default)
+            if (NewStart == default)
             {
-                ModelState.AddModelError("", "Musíte zadat začátek i konec hodiny.");
+                ModelState.AddModelError("", "Musíte zadat začátek hodiny.");
                 await LoadDropdownsAsync();
                 return Page();
             }
 
-            // VALIDACE – konec musí být později než začátek
-            if (NewEnd <= NewStart)
+            var student = await _context.Students.FindAsync(NewStudentId);
+            if (student == null || !student.IsActive)
             {
-                ModelState.AddModelError("", "Konec hodiny musí být později než začátek.");
+                ModelState.AddModelError("", "Tomuto studentovi nelze přiřadit hodinu, protože je neaktivní.");
                 await LoadDropdownsAsync();
                 return Page();
             }
 
-            // Výpočet data podle dne v týdnu
-            int dayIndex = NewDay == DayOfWeek.Sunday ? 6 : ((int)NewDay - 1);
-            var date = StartOfWeek.AddDays(dayIndex);
+            if (NewEnd == default || NewEnd <= NewStart)
+            {
+                NewEnd = NewStart.Add(TimeSpan.FromHours(1));
+            }
+
+            int dayIndex = NewDay == DayOfWeek.Sunday
+                ? 6
+                : ((int)NewDay - 1);
 
             var plan = new LessonPlan
             {
@@ -142,7 +151,7 @@ namespace Vyuka.Pages.Schedule
                 Day = NewDay,
                 Start = NewStart,
                 End = NewEnd,
-                Date = date
+                Date = StartOfWeek.AddDays(dayIndex)
             };
 
             _context.LessonPlans.Add(plan);
@@ -151,7 +160,6 @@ namespace Vyuka.Pages.Schedule
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
-        // ✔ Označení hodiny jako odučené
         public async Task<IActionResult> OnPostTeachAsync(int id)
         {
             ComputeWeek();
@@ -164,7 +172,6 @@ namespace Vyuka.Pages.Schedule
             if (plan == null)
                 return NotFound();
 
-            // VŽDY vytvořit nový Lesson
             int hours = (int)(plan.End - plan.Start).TotalHours;
 
             var lesson = new Lesson
@@ -179,7 +186,6 @@ namespace Vyuka.Pages.Schedule
 
             _context.Lessons.Add(lesson);
 
-            // LessonPlan jen označíme jako odučený (kvůli UI)
             plan.IsTaught = true;
 
             await _context.SaveChangesAsync();
@@ -187,20 +193,16 @@ namespace Vyuka.Pages.Schedule
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
-        // ✔ Smazání hodiny + odpovídající odučené lekce
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
             ComputeWeek();
 
-            // Najdeme LessonPlan
             var plan = await _context.LessonPlans.FindAsync(id);
 
             if (plan != null)
             {
-                // Spočítáme počet hodin podle Start/End
                 var hours = (int)(plan.End - plan.Start).TotalHours;
 
-                // Najdeme odpovídající Lesson
                 var lesson = await _context.Lessons
                     .FirstOrDefaultAsync(l =>
                         l.StudentId == plan.StudentId &&
@@ -209,13 +211,11 @@ namespace Vyuka.Pages.Schedule
                         l.Hours == hours &&
                         l.IsTaught == true);
 
-                // Pokud existuje, smažeme ji
                 if (lesson != null)
                 {
                     _context.Lessons.Remove(lesson);
                 }
 
-                // Smažeme LessonPlan
                 _context.LessonPlans.Remove(plan);
 
                 await _context.SaveChangesAsync();
@@ -224,7 +224,6 @@ namespace Vyuka.Pages.Schedule
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
-        // ✔ Editace
         [BindProperty]
         public LessonPlan EditPlan { get; set; }
 
@@ -242,10 +241,9 @@ namespace Vyuka.Pages.Schedule
             return Page();
         }
 
-        // ✔ Uložení změn
         public async Task<IActionResult> OnPostSaveAsync()
         {
-            ComputeWeek();
+            ComputeWeek(); ;
 
             var plan = await _context.LessonPlans.FindAsync(EditPlan.Id);
 

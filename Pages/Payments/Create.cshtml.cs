@@ -3,16 +3,21 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
+using Vyuka.Services;
 
 namespace Vyuka.Pages.Payments
 {
     public class CreateModel : PageModel
     {
         private readonly AppDbContext _context;
+        private readonly IEmailService _email;
+        private readonly IWebHostEnvironment _env;
 
-        public CreateModel(AppDbContext context)
+        public CreateModel(AppDbContext context, IEmailService email, IWebHostEnvironment env)
         {
             _context = context;
+            _email = email;
+            _env = env;
         }
 
         public SelectList StudentList { get; set; } = default!;
@@ -60,10 +65,11 @@ namespace Vyuka.Pages.Payments
         {
             if (!ModelState.IsValid)
             {
-                await OnGetAsync(); // znovu načteme dropdown
+                await OnGetAsync();
                 return Page();
             }
 
+            // 1) Uložit platbu
             var payment = new Payment
             {
                 StudentId = SelectedStudentId,
@@ -78,7 +84,29 @@ namespace Vyuka.Pages.Payments
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage("/Payments/Create");
+            // 2) Načíst studenta
+            var student = await _context.Students.FindAsync(SelectedStudentId);
+
+            // 3) Načíst HTML šablonu
+            var templatePath = Path.Combine(_env.ContentRootPath, "EmailsTemplates", "PaymentConfirmation.html");
+            var html = await System.IO.File.ReadAllTextAsync(templatePath);
+
+            // 4) Nahradit placeholdery
+            html = html.Replace("{{StudentName}}", $"{student.FirstName} {student.LastName}")
+                       .Replace("{{Amount}}", Amount.ToString("0.##"))
+                       .Replace("{{PaymentDate}}", Date.ToString("dd.MM.yyyy"))
+                       .Replace("{{Method}}", Method ?? "neuvedeno")
+                       .Replace("{{HoursPurchased}}", HoursPurchased.ToString("0.#"))
+                       .Replace("{{PricePerHour}}", PricePerHour?.ToString("0.##") ?? "neuvedeno")
+                       .Replace("{{NoteHtml}}", string.IsNullOrWhiteSpace(Note)
+                            ? ""
+                            : $"<p><strong>Poznámka:</strong> {Note}</p>");
+
+            // 5) Odeslat e‑mail
+            await _email.SendAsync(student.Email, "Potvrzení platby", html);
+
+            // 6) Přesměrování
+            return RedirectToPage("/Payments/Index");
         }
     }
 }

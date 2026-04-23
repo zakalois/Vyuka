@@ -18,7 +18,11 @@ namespace Vyuka.Services
 
         public string RenderTemplate(string templateName, Dictionary<string, string> values)
         {
-            var path = Path.Combine(_env.ContentRootPath, "EmailTemplates", templateName);
+            // 🔥 Vždy přidáme .html
+            string fileName = templateName + ".html";
+
+            // 🔥 Správná cesta ke složce EmailsTemplates
+            var path = Path.Combine(_env.ContentRootPath, "EmailsTemplates", fileName);
 
             if (!File.Exists(path))
                 throw new FileNotFoundException($"Template not found: {path}");

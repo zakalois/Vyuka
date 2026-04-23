@@ -1,7 +1,7 @@
 ﻿@page "{id:int}"
 @model Vyuka.Pages.Students.DetailsModel
 
-<h1>Student Details</h1>
+<h1>Detail studenta</h1>
 
 <div class="card" style="max-width:600px;">
     <div class="card-body">
@@ -50,8 +50,13 @@
 
         <hr />
 
-        <a asp-page="Edit" asp-route-id="@Model.Student.Id" class="btn btn-primary">Upravit</a>
-        <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+        <a asp-page="Edit" asp-route-id="@Model.Student.Id" class="btn btn-primary">
+            Upravit studenta
+        </a>
+
+        <a asp-page="/Payments/Index" class="btn btn-secondary ms-2">
+            Zpět na platby
+        </a>
 
     </div>
 </div>

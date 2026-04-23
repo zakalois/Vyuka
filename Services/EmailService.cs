@@ -1,42 +1,54 @@
 ﻿using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Options;
 
 namespace Vyuka.Services
 {
-    public interface IEmailService
-    {
-        Task SendEmailAsync(string to, string subject, string bodyHtml);
-    }
-
     public class EmailService : IEmailService
     {
-        private readonly SmtpSettings _settings;
+        private readonly IConfiguration _config;
 
-        public EmailService(IOptions<SmtpSettings> options)
+        public EmailService(IConfiguration config)
         {
-            _settings = options.Value;
+            _config = config;
         }
 
-        public async Task SendEmailAsync(string to, string subject, string bodyHtml)
+        public async Task SendAsync(string to, string subject, string html)
         {
-            using var client = new SmtpClient(_settings.Host, _settings.Port)
+            try
             {
-                EnableSsl = _settings.EnableSsl,
-                Credentials = new NetworkCredential(_settings.UserName, _settings.Password)
-            };
+                var smtp = new SmtpClient
+                {
+                    Host = _config["Smtp:Host"],
+                    Port = int.Parse(_config["Smtp:Port"]),
+                    EnableSsl = true,
+                    Credentials = new NetworkCredential(
+                        _config["Smtp:User"],
+                        _config["Smtp:Password"]
+                    )
+                };
 
-            var message = new MailMessage
+                var msg = new MailMessage
+                {
+                    From = new MailAddress(
+                         _config["Smtp:From"],
+                         _config["Smtp:DisplayName"] ?? "Výuka systém"
+),
+                    Subject = subject,
+                    Body = html,
+                    IsBodyHtml = true
+                };
+
+                msg.To.Add(to);
+                // Skrytá kopie na adresu zakalois@ucitelzak.eu
+                msg.Bcc.Add("zakalois@ucitelzak.eu");
+
+                await smtp.SendMailAsync(msg);
+            }
+            catch (Exception ex)
             {
-                From = new MailAddress(_settings.UserName, "Výuka"),
-                Subject = subject,
-                Body = bodyHtml,
-                IsBodyHtml = true
-            };
-
-            message.To.Add(to);
-
-            await client.SendMailAsync(message);
+                Console.WriteLine("SMTP ERROR: " + ex.Message);
+                throw;
+            }
         }
     }
 }

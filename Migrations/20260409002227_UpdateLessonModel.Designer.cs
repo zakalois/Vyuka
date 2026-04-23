@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Vyuka.Models;
 
@@ -11,9 +12,11 @@ using Vyuka.Models;
 namespace Vyuka.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260409002227_UpdateLessonModel")]
+    partial class UpdateLessonModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,31 +24,6 @@ namespace Vyuka.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("AppUser", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
-                });
 
             modelBuilder.Entity("Lesson", b =>
                 {
@@ -70,9 +48,6 @@ namespace Vyuka.Migrations
                     b.Property<bool>("IsTaught")
                         .HasColumnType("bit");
 
-                    b.Property<string>("MeetLink")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<TimeSpan>("Start")
                         .HasColumnType("time");
 
@@ -90,8 +65,6 @@ namespace Vyuka.Migrations
                     b.HasIndex("StudentId");
 
                     b.HasIndex("SubjectId");
-
-                    b.HasIndex("SubjectTopicId");
 
                     b.ToTable("Lessons");
                 });
@@ -115,9 +88,6 @@ namespace Vyuka.Migrations
 
                     b.Property<bool>("IsTaught")
                         .HasColumnType("bit");
-
-                    b.Property<string>("MeetLink")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<TimeSpan>("Start")
                         .HasColumnType("time");
@@ -335,15 +305,9 @@ namespace Vyuka.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Vyuka.Models.SubjectTopic", "SubjectTopic")
-                        .WithMany()
-                        .HasForeignKey("SubjectTopicId");
-
                     b.Navigation("Student");
 
                     b.Navigation("Subject");
-
-                    b.Navigation("SubjectTopic");
                 });
 
             modelBuilder.Entity("LessonPlan", b =>

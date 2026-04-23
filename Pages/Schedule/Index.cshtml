@@ -53,7 +53,7 @@
                     <select asp-for="NewStudentId" class="form-control">
                         @foreach (var s in Model.Students)
                         {
-                            <option value="@s.Id">@s.FirstName @s.LastName</option>
+                            <option value="@s.Id">@s.LastName @s.FirstName</option>
                         }
                     </select>
                 </div>
@@ -207,13 +207,13 @@
 }
 
 <!-- TÝDENNÍ ROZVRH -->
-<div class="row">
+<div class="schedule-grid">
 
     @for (int i = 0; i < 7; i++)
     {
         var dayDate = Model.StartOfWeek.AddDays(i);
 
-        <div class="col-md-3 mb-4">
+        <div class="day-column">
             <div class="card">
                 <div class="card-header text-center">
                     <strong>@dayDate.ToString("dddd dd.MM")</strong>
@@ -252,7 +252,6 @@
 
                                 </div>
 
-                                <!-- CHECKBOX PRO ODUČENÍ -->
                                 <form method="post" asp-page-handler="Teach" asp-route-id="@l.Id">
                                     @if (!l.IsTaught)
                                     {
@@ -282,7 +281,9 @@
             </div>
         </div>
     }
+
 </div>
+
 <script>
     document.getElementById("subjectSelect").addEventListener("change", function () {
         var subjectId = this.value;

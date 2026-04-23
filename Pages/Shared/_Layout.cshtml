@@ -1,28 +1,17 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using Microsoft.AspNetCore.Http
+
+<!DOCTYPE html>
+<html lang="cs">
 <head>
     <style>
-    .lesson-taught {
-        background-color: #c8f7c5 !important;
-    }
-    .lesson-planned {
-        background-color: #cfe2ff !important;
-    }
-</style>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Vyuka</title>
+            .lesson-taught {
+                background-color: #c8f7c5 !important;
+            }
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+            .lesson-planned {
+                background-color: #cfe2ff !important;
+            }
 
-    <!-- ⭐ Bootstrap Icons – nutné pro ikonky v tabulkách -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Vyuka.styles.css" asp-append-version="true" />
-
-    <!-- ⭐ Globální zarovnání tabulek -->
-    <style>
             /* Všechny buňky na střed */
             table td, table th {
                 text-align: center;
@@ -34,6 +23,18 @@
                     text-align: left;
                 }
     </style>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Vyuka</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Vyuka.styles.css" asp-append-version="true" />
 </head>
 
 <body>
@@ -49,7 +50,7 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
 
-                         <li class="nav-item">
+                        <li class="nav-item">
                             <a class="nav-link" asp-page="/Communications/Index">Komunikace</a>
                         </li>
 
@@ -88,6 +89,29 @@
                         </li>
 
                     </ul>
+
+                    <!-- PRAVÁ STRANA NAVBARU -->
+                    <ul class="navbar-nav ms-auto">
+                        @if (Context.Session.GetString("UserName") != null)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Account/Profile">
+                                    @Context.Session.GetString("UserName") (@Context.Session.GetString("UserRole"))
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Logout">Odhlásit</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Login">Přihlásit</a>
+                            </li>
+                        }
+                    </ul>
+
                 </div>
             </div>
         </nav>

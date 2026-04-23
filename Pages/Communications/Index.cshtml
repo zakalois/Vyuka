@@ -1,79 +1,100 @@
 ﻿@page
 @model Vyuka.Pages.Communications.IndexModel
-
-<h2>Test e‑mailové komunikace</h2>
-
-@if (TempData["Message"] != null)
-{
-    <div class="alert alert-info">@TempData["Message"]</div>
+@{
+    ViewData["Title"] = "Komunikace";
 }
 
-<!-- FORM: ZOBRAZENÍ NÁHLEDU -->
-<form method="post" asp-page-handler="Preview">
+<h2 class="mb-4">E‑mailová komunikace</h2>
 
-    <div class="mb-3">
-        <label class="form-label">Student</label>
-        <select asp-for="SelectedStudentId" class="form-select">
-            <option value="">-- vyberte studenta --</option>
-            @foreach (var s in Model.Students)
-            {
-                <option value="@s.Id">@s.LastName @s.FirstName</option>
-            }
-        </select>
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        <!-- 🔥 JEDEN SPOLEČNÝ FORM -->
+        <form method="post">
+
+            <!-- STUDENT -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Student</label>
+                <select asp-for="SelectedStudentId" class="form-select">
+                    <option value="">-- vyberte studenta --</option>
+                    @foreach (var s in Model.Students)
+                    {
+                        <option value="@s.Id">@s.LastName @s.FirstName</option>
+                    }
+                </select>
+            </div>
+
+            <!-- ADRESÁT -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Adresát</label>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" asp-for="RecipientType" value="student" checked />
+                    <label class="form-check-label">
+                        Student (@Model.Students.FirstOrDefault(s => s.Id == Model.SelectedStudentId)?.Email)
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" asp-for="RecipientType" value="parent" />
+                    <label class="form-check-label">
+                        Rodič (@Model.Students.FirstOrDefault(s => s.Id == Model.SelectedStudentId)?.ParentEmail)
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" asp-for="RecipientType" value="both" />
+                    <label class="form-check-label">
+                        Oba
+                    </label>
+                </div>
+            </div>
+
+            <!-- ŠABLONA -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Šablona e‑mailu</label>
+                <select asp-for="SelectedTemplate" class="form-select">
+                    @foreach (var t in Model.Templates)
+                    {
+                        <option value="@t">@t</option>
+                    }
+                </select>
+            </div>
+
+            <!-- TLAČÍTKA -->
+            <div class="d-flex gap-2 mt-3">
+                <button type="submit" formaction="?handler=Preview" class="btn btn-primary">
+                    Zobrazit náhled
+                </button>
+
+                <button type="submit" formaction="?handler=Send" class="btn btn-success">
+                    Odeslat e‑mail
+                </button>
+            </div>
+
+        </form>
+        <!-- 🔥 KONEC FORMU -->
+
     </div>
+</div>
 
-    <div class="mb-3">
-        <label class="form-label">Adresát</label>
-
-        <div class="form-check">
-            <input class="form-check-input" type="radio" asp-for="RecipientType" value="student" checked />
-            <label class="form-check-label">
-                Student (@Model.Students.FirstOrDefault(s => s.Id == Model.SelectedStudentId)?.Email)
-            </label>
-        </div>
-
-        <div class="form-check">
-            <input class="form-check-input" type="radio" asp-for="RecipientType" value="parent" />
-            <label class="form-check-label">
-                Rodič (@Model.Students.FirstOrDefault(s => s.Id == Model.SelectedStudentId)?.ParentEmail)
-            </label>
-        </div>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Šablona e‑mailu</label>
-        <select asp-for="SelectedTemplate" class="form-select">
-            @foreach (var t in Model.Templates)
-            {
-                <option value="@t">@t</option>
-            }
-        </select>
-    </div>
-
-    <button class="btn btn-secondary" type="submit">Zobrazit náhled</button>
-</form>
-
-<hr />
-
-<!-- TLAČÍTKO ODESLAT – VŽDY VIDITELNÉ -->
-<form method="post" asp-page-handler="Send">
-    <input type="hidden" asp-for="SelectedStudentId" />
-    <input type="hidden" asp-for="RecipientType" />
-    <input type="hidden" asp-for="SelectedTemplate" />
-
-    <button type="submit" class="btn btn-success">
-        Odeslat e‑mail
-    </button>
-</form>
-
-<hr />
-
-<!-- BLOK NÁHLEDU -->
-@if (Model.PreviewHtml != null)
+<!-- NÁHLED -->
+@if (!string.IsNullOrWhiteSpace(Model.PreviewHtml))
 {
-    <h3>Náhled e‑mailu</h3>
+    <div class="card shadow-sm mt-4">
+        <div class="card-header fw-bold">
+            Náhled e‑mailu
+        </div>
+        <div class="card-body">
+            @Html.Raw(Model.PreviewHtml)
+        </div>
+    </div>
+}
 
-    <div class="border p-3 mb-3" style="background:white;">
-        @Html.Raw(Model.PreviewHtml)
+<!-- ZPRÁVA -->
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-info mt-3">
+        @TempData["Message"]
     </div>
 }

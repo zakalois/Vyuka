@@ -1,9 +1,11 @@
 ﻿<!DOCTYPE html>
 <html lang="cs">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Plánovaná lekce</title>
+    <title>Potvrzení platby</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,21 +43,21 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
 
-        <!-- FIREMNÍ HLAVIČKA -->
         <table width="100%" style="margin-bottom:25px;">
             <tr>
                 <td style="width:80px;">
-                    <img src="https://tvoje-domena.cz/images/logo.jpg"
+                    <img src="https://raw.githubusercontent.com/zakalois/Vyuka/master/wwwroot/images/logo.jpg"
                          alt="Logo"
                          width="70"
                          style="display:block;">
                 </td>
                 <td style="text-align:left; vertical-align:middle;">
                     <div style="font-size:20px; font-weight:bold; color:#333;">
-                        Výuka – Oznámení lekce
+                        Výuka – Potvrzení platby
                     </div>
                     <div style="font-size:13px; color:#777;">
                         Automatický informační systém
@@ -64,22 +66,26 @@
             </tr>
         </table>
 
-        <h1>Nová lekce byla naplánována</h1>
+        <h1>Platba byla úspěšně přijata</h1>
 
         <p>Dobrý den {{StudentName}},</p>
 
         <p>
-            byla pro vás naplánována nová lekce:
+            potvrzuji přijetí vaší platby za výuku.
         </p>
 
         <p>
-            <strong>Předmět:</strong> {{SubjectName}}<br />
-            <strong>Datum:</strong> {{LessonDate}}<br />
-            <strong>Čas začátku hodiny:</strong> {{LessonTime}}<br />
+            <strong>Částka:</strong> {{Amount}} Kč<br />
+            <strong>Datum přijetí:</strong> {{PaymentDate}}<br />
+            <strong>Způsob úhrady:</strong> {{Method}}<br />
+            <strong>Předplacené hodiny:</strong> {{HoursPurchased}}<br />
+            <strong>Cena za hodinu:</strong> {{PricePerHour}} Kč<br />
         </p>
 
+        {{NoteHtml}}
+
         <p>
-            Pokud máte jakékoli dotazy, neváhejte mě kontaktovat.
+            Děkuji za včasnou úhradu. Pokud máte jakékoli dotazy, neváhejte mě kontaktovat.
         </p>
 
         <p>S pozdravem,</p>
@@ -87,7 +93,7 @@
         <p>
             Ing. Alois Žák<br>
             <a href="tel:+420601172322">+420 601 172 322</a><br>
-            <a href="https://zakalois.webnode.cz/">https://zakalois.webnode.cz/</a>
+            <a href="https://ucitelzak.eu/">https://ucitelzak.eu/</a>
         </p>
 
         <div class="footer">

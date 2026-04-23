@@ -2,21 +2,33 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Vyuka.Services;
 
 namespace Vyuka.Pages.Schedule
 {
     public class ScheduleIndexModel : PageModel
     {
         private readonly AppDbContext _context;
+        private readonly IEmailService _email;
+        private readonly LessonPlanEmailBuilder _emailBuilder;
+        private readonly GoogleCalendarService _calendar;
 
-        public ScheduleIndexModel(AppDbContext context)
+        public ScheduleIndexModel(
+            AppDbContext context,
+            GoogleCalendarService calendar,
+            IEmailService email,
+            LessonPlanEmailBuilder emailBuilder
+        )
         {
             _context = context;
+            _calendar = calendar;   // ← správně
+            _email = email;
+            _emailBuilder = emailBuilder;
         }
+   
 
-        // 25 barev
-        private static readonly string[] StudentColors = new[]
+// 25 barev
+private static readonly string[] StudentColors = new[]
         {
             "#FFCDD2","#F8BBD0","#E1BEE7","#D1C4E9","#C5CAE9",
             "#BBDEFB","#B3E5FC","#B2EBF2","#B2DFDB","#C8E6C9",
@@ -108,6 +120,7 @@ namespace Vyuka.Pages.Schedule
             return new JsonResult(topics);
         }
 
+        // 🔵 PŘIDÁNÍ PLÁNOVANÉ HODINY + GENEROVÁNÍ MEET ODKAZU
         public async Task<IActionResult> OnPostAddAsync()
         {
             ComputeWeek();
@@ -136,13 +149,56 @@ namespace Vyuka.Pages.Schedule
 
             if (NewEnd == default || NewEnd <= NewStart)
             {
-                NewEnd = NewStart.Add(TimeSpan.FromHours(1));
+                NewEnd = NewStart + TimeSpan.FromHours(1);
             }
 
-            int dayIndex = NewDay == DayOfWeek.Sunday
-                ? 6
-                : ((int)NewDay - 1);
+            int dayIndex = NewDay == DayOfWeek.Sunday ? 6 : ((int)NewDay - 1);
+            var date = StartOfWeek.AddDays(dayIndex);
 
+            // 🔵 Načtení předmětu
+            var subject = await _context.Subjects.FindAsync(NewSubjectId);
+
+            // 🔵 Načtení tématu (může být null)
+            var topic = NewTopicId.HasValue
+                ? await _context.SubjectTopics.FindAsync(NewTopicId.Value)
+                : null;
+
+            // 🔵 Název události pro Google Calendar
+            var title = $"{subject?.Name} – {topic?.Name}";
+
+            // 🔵 Spojení data + času na DateTime
+            var startDateTime = date.Date + NewStart;
+            var endDateTime = date.Date + NewEnd;
+
+            // 🔵 Vytvoření Meet odkazu
+            var meetLink = await _calendar.CreateMeetEventAsync(
+                startDateTime,
+                endDateTime,
+                title,
+                student.Email,
+                "zakalois@ucitelzak.eu",
+                student.FirstName,
+                student.LastName
+            );
+
+            // 🔵 Vygenerování HTML e‑mailu
+            var html = await _emailBuilder.BuildAsync(
+                $"{student.FirstName} {student.LastName}",
+                subject?.Name ?? "",
+                topic?.Name ?? "",
+                date,
+                NewStart,      // ← správně: TimeSpan
+                meetLink
+            );
+
+            // 🔵 Odeslání e‑mailu studentovi
+            await _email.SendAsync(
+                  student.Email,
+                  "Plánovaná lekce",
+                  html
+            );
+
+            // 🔵 Uložení plánované hodiny do DB
             var plan = new LessonPlan
             {
                 StudentId = NewStudentId,
@@ -151,15 +207,18 @@ namespace Vyuka.Pages.Schedule
                 Day = NewDay,
                 Start = NewStart,
                 End = NewEnd,
-                Date = StartOfWeek.AddDays(dayIndex)
+                Date = date,
+                MeetLink = meetLink
             };
 
             _context.LessonPlans.Add(plan);
             await _context.SaveChangesAsync();
 
+            // 🔵 Návrat zpět na rozvrh
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
+        // 🔵 ODUČENÍ – BEZ GENEROVÁNÍ MEET
         public async Task<IActionResult> OnPostTeachAsync(int id)
         {
             ComputeWeek();
@@ -178,14 +237,13 @@ namespace Vyuka.Pages.Schedule
             {
                 StudentId = plan.StudentId,
                 SubjectId = plan.SubjectId,
+                SubjectTopicId = plan.SubjectTopicId,
                 Date = plan.Date,
                 Hours = hours,
-                IsTaught = true,
-                Type = "Standard"
+                IsTaught = true
             };
 
             _context.Lessons.Add(lesson);
-
             plan.IsTaught = true;
 
             await _context.SaveChangesAsync();
@@ -243,7 +301,7 @@ namespace Vyuka.Pages.Schedule
 
         public async Task<IActionResult> OnPostSaveAsync()
         {
-            ComputeWeek(); ;
+            ComputeWeek();
 
             var plan = await _context.LessonPlans.FindAsync(EditPlan.Id);
 

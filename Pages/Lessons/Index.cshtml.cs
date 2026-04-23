@@ -31,27 +31,20 @@ namespace Vyuka.Pages.Lessons
 
         public async Task OnGetAsync()
         {
-            // Načteme studenty
+            // Načteme studenty – třídění podle příjmení a pak jména
             var students = await _context.Students
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            // Dropdown: PŘÍJMENÍ + JMÉNO
-            StudentList = new SelectList(
-                students.Select(s => new
-                {
-                    Id = s.Id,
-                    FullName = $"{s.LastName} {s.FirstName}"
-                }),
-                "Id",
-                "FullName"
-            );
+            // Dropdown: PŘÍJMENÍ + JMÉNO (používá FullName z modelu)
+            StudentList = new SelectList(students, "Id", "FullName");
 
             if (SelectedStudentId > 0)
             {
                 var query = _context.Lessons
                     .Include(l => l.Subject)
+                    .Include(l => l.SubjectTopic)
                     .Where(l => l.StudentId == SelectedStudentId && l.IsTaught)
                     .AsQueryable();
 

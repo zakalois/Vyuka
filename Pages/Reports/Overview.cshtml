@@ -1,139 +1,158 @@
 ﻿@page
 @model Vyuka.Pages.Reports.OverviewModel
+@{
+    ViewData["Title"] = "Přehled výuky a plateb";
+}
 
 <style>
-    .lesson-taught {
-        background-color: #c8f7c5 !important; /* výrazná zelená */
-    }
-    .lesson-planned {
-        background-color: #cfe2ff !important; /* výrazná modrá */
-    }
+    .row-green { background-color: #d4edda !important; }
+    .row-pink { background-color: #f8d7da !important; }
+    .row-yellow { background-color: #fff3cd !important; }
+    .row-white { background-color: white !important; }
 </style>
 
-<h2>Přehled výuky a plateb</h2>
+<h2 class="mb-4">Přehled výuky a plateb</h2>
 
 <form method="get" class="row g-3 mb-4">
-    <div class="col-auto">
-        <label>Od:</label>
+
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Od:</label>
         <input type="date" asp-for="FromDate" class="form-control" />
     </div>
 
-    <div class="col-auto">
-        <label>Do:</label>
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Do:</label>
         <input type="date" asp-for="ToDate" class="form-control" />
     </div>
 
-    <div class="col-auto align-self-end">
-        <button type="submit" class="btn btn-primary">Filtrovat</button>
+    <div class="col-md-4">
+        <label class="form-label fw-bold">Student:</label>
+
+        <select asp-for="SelectedStudentId" class="form-select">
+
+            <!-- SKUPINY -->
+            @foreach (var g in Model.GroupItems)
+            {
+                <option value="@g.Value">@g.Text</option>
+            }
+
+            <option disabled>──────────</option>
+
+            <!-- STUDENTI -->
+            @foreach (var s in Model.StudentItems)
+            {
+                <option value="@s.Value">@s.Text</option>
+            }
+
+        </select>
     </div>
 
-    <div class="col-auto align-self-end">
-        <a href="/Reports/Overview" class="btn btn-secondary">Reset</a>
+    <div class="col-md-2 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary w-100">Filtrovat</button>
+        <a href="/Reports/Overview" class="btn btn-secondary w-100">Reset</a>
     </div>
+
 </form>
 
-<table class="table table-striped text-center">
-    <thead>
+<table class="table table-bordered table-striped">
+    <thead class="table-light">
         <tr>
             <th>Student</th>
             <th>Předplaceno (h)</th>
             <th>Odučeno (h)</th>
             <th>Zaplaceno (Kč)</th>
-            <th>Zůstatek (h)</th>
+            <th>Plánované hodiny (h)</th>
             <th>Zbývá odučit (h)</th>
         </tr>
     </thead>
+
     <tbody>
-        @foreach (var s in Model.Summaries)
-        {
-            var remaining = s.BalanceHours;
-            string rowColor = remaining > 0 ? "background-color:#ffe5e5;" : "background-color:#e8ffe8;";
-
-            <tr style="@rowColor">
-                <td class="text-start">@s.Name</td>
-                <td>@s.PurchasedHours.ToString("0")</td>
-                <td>@s.TaughtHours.ToString("0")</td>
-                <td>@s.PaidAmount.ToString("0")</td>
-                <td>@s.BalanceHours.ToString("0")</td>
-                <td>@remaining.ToString("0")</td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<table class="table table-bordered table-sm mt-4">
-    <thead class="table-light">
-        <tr>
-            <th style="text-align:center;">Celkem předplaceno (h)</th>
-            <th style="text-align:center;">Celkem odučeno (h)</th>
-            <th style="text-align:center;">Celkový zůstatek (h)</th>
-            <th style="text-align:center;">Celkem zaplaceno (Kč)</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td style="text-align:center;">@Model.TotalPurchasedHours.ToString("0")</td>
-            <td style="text-align:center;">@Model.TotalTaughtHours.ToString("0")</td>
-            <td style="text-align:center;">@Model.TotalBalanceHours.ToString("0")</td>
-            <td style="text-align:center;">@Model.TotalPaidAmount.ToString("0") Kč</td>
-        </tr>
-    </tbody>
-</table>
-
-<hr class="my-5" />
-
-<h2>Detailní přehled výuky studenta</h2>
-
-<form method="get" class="row g-3 mb-4">
-    <div class="col-md-3">
-        <label class="form-label">Vyber studenta</label>
-        <select asp-for="SelectedStudentId" asp-items="Model.StudentList" class="form-select">
-            <option value="">-- Vyber studenta --</option>
-        </select>
-    </div>
-
-    <div class="col-md-2">
-        <label class="form-label">Od</label>
-        <input asp-for="FromDate" type="date" class="form-control" />
-    </div>
-
-    <div class="col-md-2">
-        <label class="form-label">Do</label>
-        <input asp-for="ToDate" type="date" class="form-control" />
-    </div>
-
-    <div class="col-md-2 d-flex align-items-end">
-        <button class="btn btn-primary w-100">Filtrovat</button>
-    </div>
-
-    <div class="col-md-3 d-flex align-items-end justify-content-end">
-        <a href="/Reports/Overview" class="btn btn-secondary">Reset</a>
-    </div>
-</form>
-
-@if (Model.SelectedStudentId > 0)
+@foreach (var s in Model.Summaries)
 {
-    <h3>Výpis odučených a plánovaných hodin</h3>
+    var remaining = Math.Round(s.RemainingHoursToTeach, 2);
 
-    <table class="table table-bordered text-center">
-        <thead>
+    string rowClass;
+
+    if (!s.IsActive)
+    {
+        rowClass = "row-pink";
+    }
+    else if (s.PlannedHours > s.PurchasedHours)
+    {
+        rowClass = "row-pink";
+    }
+    else if (s.PurchasedHours == 0 && s.PlannedHours > 0)
+    {
+        rowClass = "row-pink";
+    }
+    else if (remaining > 5)
+    {
+        rowClass = "row-green";
+    }
+    else if (remaining < 5)
+    {
+        rowClass = "row-yellow";
+    }
+    else
+    {
+        rowClass = "row-white"; // přesně 5
+    }
+
+    <tr class="@rowClass">
+        <td>@s.Name</td>
+        <td>@s.PurchasedHours.ToString("0.##")</td>
+        <td>@s.TaughtHours.ToString("0.##")</td>
+        <td>@s.PaidAmount.ToString("0.##") Kč</td>
+        <td>@s.PlannedHours.ToString("0.##")</td>
+        <td>@remaining.ToString("0.##")</td>
+    </tr>
+}
+
+
+
+    </tbody>
+
+    <tfoot class="table-secondary">
+        <tr>
+            <th>Celkem</th>
+            <th>@Model.TotalPurchasedHours.ToString("0.##")</th>
+            <th>@Model.TotalTaughtHours.ToString("0.##")</th>
+            <th>@Model.TotalPaidAmount.ToString("0.##") Kč</th>
+            <th>@Model.TotalPlannedHours.ToString("0.##")</th>
+            <th>@Model.TotalRemainingHours.ToString("0.##")</th>
+        </tr>
+    </tfoot>
+</table>
+
+@{
+    bool isStudentSelected =
+        int.TryParse(Model.SelectedStudentId, out var selectedId)
+        && selectedId > 0;
+}
+
+@if (isStudentSelected)
+{
+    <h3 class="mt-5">Detail výuky studenta</h3>
+
+    <table class="table table-bordered table-striped mt-3">
+        <thead class="table-light">
             <tr>
                 <th>Datum</th>
                 <th>Typ</th>
+                <th>Hodiny</th>
                 <th>Předmět</th>
                 <th>Téma</th>
-                <th>Hodiny</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var e in Model.StudentLessons)
             {
                 <tr class="@e.ColorClass">
-                    <td>@e.Date.ToShortDateString()</td>
+                    <td>@e.Date.ToString("dd.MM.yyyy")</td>
                     <td>@e.Type</td>
+                    <td>@e.Hours.ToString("0.##")</td>
                     <td>@e.Subject</td>
                     <td>@e.Topic</td>
-                    <td>@e.Hours.ToString("0") h</td>
                 </tr>
             }
         </tbody>

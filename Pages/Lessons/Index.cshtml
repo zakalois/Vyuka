@@ -55,6 +55,7 @@
             <tr>
                 <th>Datum</th>
                 <th>Předmět</th>
+                <th>Téma</th>
                 <th>Hodin</th>
             </tr>
         </thead>
@@ -64,6 +65,7 @@
                 <tr>
                     <td>@l.Date.ToString("dd.MM.yyyy")</td>
                     <td>@l.Subject?.Name</td>
+                    <td>@l.SubjectTopic?.Name</td>
                     <td>@l.Hours</td>
                 </tr>
             }

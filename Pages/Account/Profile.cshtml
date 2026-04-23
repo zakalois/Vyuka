@@ -1,0 +1,21 @@
+﻿@page
+@model ProfileModel
+@{
+    ViewData["Title"] = "Profil";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <h2 class="mb-4">Můj profil</h2>
+
+    <div class="card p-3">
+        <p><strong>Jméno:</strong> @Model.User.Name</p>
+        <p><strong>Email:</strong> @Model.User.Email</p>
+        <p><strong>Role:</strong> @Model.User.Role</p>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <a asp-page="/Account/ChangePassword" class="btn btn-primary">Změnit heslo</a>
+        <a asp-page="/Account/ForgotPassword" class="btn btn-warning">Zapomenuté heslo</a>
+        <a asp-page="/Index" class="btn btn-secondary">Zpět</a>
+    </div>
+</div>

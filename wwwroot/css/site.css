@@ -35,3 +35,21 @@ body {
     border: 1px solid #ddd;
     margin-top: 10px;
 }
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+}
+
+.day-column .card {
+    height: 100%;
+}
+
+.day-column .card-body {
+    padding: 8px;
+}
+
+.day-column .border {
+    padding: 6px !important;
+    font-size: 14px;
+}

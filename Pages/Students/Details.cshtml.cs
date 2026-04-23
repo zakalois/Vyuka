@@ -19,7 +19,9 @@ namespace Vyuka.Pages.Students
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            Student = await _context.Students.FindAsync(id);
+            // ⭐ Načteme studenta
+            Student = await _context.Students
+                .FirstOrDefaultAsync(s => s.Id == id);
 
             if (Student == null)
                 return NotFound();

@@ -8,53 +8,63 @@ namespace Vyuka.Pages.Communications
 {
     public class IndexModel : PageModel
     {
-        private readonly IEmailService _emailService;
         private readonly AppDbContext _context;
-        private readonly ITemplateService _templateService;
+        private readonly TemplateService _templateService;
+        private readonly IEmailService _emailService;
 
-        public IndexModel(IEmailService emailService, AppDbContext context, ITemplateService templateService)
+        public IndexModel(AppDbContext context, TemplateService templateService, IEmailService emailService)
         {
-            _emailService = emailService;
             _context = context;
             _templateService = templateService;
+            _emailService = emailService;
         }
 
         public List<Student> Students { get; set; } = new();
+
+        public List<string> Templates { get; set; } = new()
+        {
+            "LessonPlanned",
+            "PaymentConfirmation"
+        };
+
+        public string PreviewHtml { get; set; } = "";
 
         [BindProperty]
         public int SelectedStudentId { get; set; }
 
         [BindProperty]
+        public string SelectedTemplate { get; set; }
+
+        [BindProperty]
         public string RecipientType { get; set; } = "student";
-
-        [BindProperty]
-        public string SelectedTemplate { get; set; } = "LessonPlanned.html";
-
-        [BindProperty]
-        public string SubjectName { get; set; }
-
-        public List<string> Templates { get; set; } = new()
-        {
-            "LessonPlanned.html"
-        };
-
-        public string? PreviewHtml { get; set; }
-
-        public async Task OnGetAsync()
-        {
-            await LoadStudentsAsync();
-        }
 
         private async Task LoadStudentsAsync()
         {
             Students = await _context.Students
                 .Where(s => s.IsActive)
                 .OrderBy(s => s.LastName)
-                .ThenBy(s => s.FirstName)
                 .ToListAsync();
         }
 
-        // 🔵 PREVIEW HANDLER
+        public async Task OnGetAsync()
+        {
+            await LoadStudentsAsync();
+        }
+
+        private async Task<LessonPlan?> GetNextLessonAsync(int studentId)
+        {
+            return await _context.LessonPlans
+                .Include(p => p.Subject)
+                .Include(p => p.SubjectTopic)
+                .Where(p => p.StudentId == studentId && p.Date >= DateTime.Today)
+                .OrderBy(p => p.Date)
+                .ThenBy(p => p.Start)
+                .FirstOrDefaultAsync();
+        }
+
+        // ---------------------------------------------------------
+        // 🔥 PREVIEW E-MAILU
+        // ---------------------------------------------------------
         public async Task<IActionResult> OnPostPreviewAsync()
         {
             await LoadStudentsAsync();
@@ -68,27 +78,76 @@ namespace Vyuka.Pages.Communications
                 return Page();
             }
 
-            // 🔥 NAČTENÍ PŘEDMĚTU Z ROZVRHU
-            var lesson = await _context.Lessons
-                .Include(l => l.Subject)
-                .FirstOrDefaultAsync(l => l.StudentId == SelectedStudentId);
+            Dictionary<string, string> model = new();
 
-            SubjectName = lesson?.Subject?.Name ?? "Neuvedeno";
-
-            PreviewHtml = _templateService.RenderTemplate(SelectedTemplate, new Dictionary<string, string>
+            switch (SelectedTemplate)
             {
-                { "StudentName", $"{student.FirstName} {student.LastName}" },
-                { "LessonDate", DateTime.Now.ToString("dd.MM.yyyy") },
-                { "LessonTime", "14:00" },
-                { "TeacherName", "Alois Učitel" },
-                { "SenderName", "Alois" },
-                { "SubjectName", SubjectName }
-            });
+                case "LessonPlanned":
+                    {
+                        var plan = await GetNextLessonAsync(SelectedStudentId);
 
+                        if (plan == null)
+                        {
+                            TempData["Message"] = "Tento student nemá žádnou naplánovanou lekci.";
+                            return Page();
+                        }
+
+                        string lessonDate = plan.Date.ToString("dd.MM.yyyy");
+                        string lessonTime = plan.Start.ToString(@"hh\:mm");
+
+                        model = new()
+                    {
+                        { "StudentName", $"{student.FirstName} {student.LastName}" },
+                        { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
+                        { "LessonDate", lessonDate },
+                        { "LessonTime", lessonTime },
+                        { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
+                        { "TeacherName", "Alois Učitel" },
+                        { "SenderName", "Alois" }
+                    };
+
+                        break;
+                    }
+
+                case "PaymentConfirmation":
+                    {
+                        var payment = await _context.Payments
+                            .Where(p => p.StudentId == student.Id)
+                            .OrderByDescending(p => p.Date)
+                            .FirstOrDefaultAsync();
+
+                        if (payment == null)
+                        {
+                            TempData["Message"] = "Tento student nemá žádnou platbu.";
+                            return Page();
+                        }
+
+                        string noteHtml = string.IsNullOrWhiteSpace(payment.Note)
+                            ? ""
+                            : $"<p><strong>Poznámka:</strong> {payment.Note}</p>";
+
+                        model = new()
+                    {
+                        { "StudentName", $"{student.FirstName} {student.LastName}" },
+                        { "Amount", payment.Amount.ToString("0.##") },
+                        { "PaymentDate", payment.Date.ToString("dd.MM.yyyy") },
+                        { "Method", payment.Method ?? "neuvedeno" },
+                        { "HoursPurchased", payment.HoursPurchased.ToString("0.##") },
+                        { "PricePerHour", payment.PricePerHour?.ToString("0.##") ?? "—" },
+                        { "NoteHtml", noteHtml }
+                    };
+
+                        break;
+                    }
+            }
+
+            PreviewHtml = _templateService.RenderTemplate(SelectedTemplate, model);
             return Page();
         }
 
-        // 🔵 SEND HANDLER
+        // ---------------------------------------------------------
+        // 🔥 ODESLÁNÍ E-MAILU (student / rodič / oba)
+        // ---------------------------------------------------------
         public async Task<IActionResult> OnPostSendAsync()
         {
             await LoadStudentsAsync();
@@ -98,48 +157,114 @@ namespace Vyuka.Pages.Communications
 
             if (student == null)
             {
-                TempData["Message"] = "Student nebyl nalezen.";
+                TempData["Message"] = "Vyberte studenta.";
                 return Page();
             }
 
-            string? email = RecipientType switch
-            {
-                "student" => student.Email,
-                "parent" => student.ParentEmail,
-                _ => null
-            };
+            // ⭐ Výběr adresátů
+            List<string> recipients = new();
 
-            if (string.IsNullOrWhiteSpace(email))
+            if (RecipientType == "student" || RecipientType == "both")
             {
-                TempData["Message"] = "Vybraný adresát nemá vyplněný e‑mail.";
+                if (!string.IsNullOrWhiteSpace(student.Email))
+                    recipients.Add(student.Email);
+            }
+
+            if (RecipientType == "parent" || RecipientType == "both")
+            {
+                if (!string.IsNullOrWhiteSpace(student.ParentEmail))
+                    recipients.Add(student.ParentEmail);
+            }
+
+            if (recipients.Count == 0)
+            {
+                TempData["Message"] = "Není dostupný žádný e‑mail pro odeslání.";
                 return Page();
             }
 
-            // 🔥 NAČTENÍ PŘEDMĚTU Z ROZVRHU (STEJNÉ JAKO V PREVIEW)
-            var lesson = await _context.Lessons
-                .Include(l => l.Subject)
-                .FirstOrDefaultAsync(l => l.StudentId == SelectedStudentId);
+            Dictionary<string, string> model = new();
+            string subject = "";
 
-            SubjectName = lesson?.Subject?.Name ?? "Neuvedeno";
-
-            var html = _templateService.RenderTemplate(SelectedTemplate, new Dictionary<string, string>
+            switch (SelectedTemplate)
             {
-                { "StudentName", $"{student.FirstName} {student.LastName}" },
-                { "LessonDate", DateTime.Now.ToString("dd.MM.yyyy") },
-                { "LessonTime", "14:00" },
-                { "TeacherName", "Alois Učitel" },
-                { "SenderName", "Alois" },
-                { "SubjectName", SubjectName }
-            });
+                case "LessonPlanned":
+                    {
+                        var plan = await GetNextLessonAsync(SelectedStudentId);
 
-            await _emailService.SendEmailAsync(
-                email,
-                "Naplánovaná lekce",
-                html
-            );
+                        if (plan == null)
+                        {
+                            TempData["Message"] = "Tento student nemá žádnou naplánovanou lekci.";
+                            return Page();
+                        }
 
-            TempData["Message"] = $"E‑mail byl odeslán na {email}.";
-            return RedirectToPage();
+                        string lessonDate = plan.Date.ToString("dd.MM.yyyy");
+                        string lessonTime = plan.Start.ToString(@"hh\:mm");
+
+                        model = new()
+                    {
+                        { "StudentName", $"{student.FirstName} {student.LastName}" },
+                        { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
+                        { "LessonDate", lessonDate },
+                        { "LessonTime", lessonTime },
+                        { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
+                        { "TeacherName", "Alois Učitel" },
+                        { "SenderName", "Alois" }
+                    };
+
+                        subject = "Naplánovaná lekce";
+                        break;
+                    }
+
+                case "PaymentConfirmation":
+                    {
+                        var payment = await _context.Payments
+                            .Where(p => p.StudentId == student.Id)
+                            .OrderByDescending(p => p.Date)
+                            .FirstOrDefaultAsync();
+
+                        if (payment == null)
+                        {
+                            TempData["Message"] = "Tento student nemá žádnou platbu.";
+                            return Page();
+                        }
+
+                        string noteHtml = string.IsNullOrWhiteSpace(payment.Note)
+                            ? ""
+                            : $"<p><strong>Poznámka:</strong> {payment.Note}</p>";
+
+                        model = new()
+                    {
+                        { "StudentName", $"{student.FirstName} {student.LastName}" },
+                        { "Amount", payment.Amount.ToString("0.##") },
+                        { "PaymentDate", payment.Date.ToString("dd.MM.yyyy") },
+                        { "Method", payment.Method ?? "neuvedeno" },
+                        { "HoursPurchased", payment.HoursPurchased.ToString("0.##") },
+                        { "PricePerHour", payment.PricePerHour?.ToString("0.##") ?? "—" },
+                        { "NoteHtml", noteHtml }
+                    };
+
+                        subject = "Potvrzení platby";
+                        break;
+                    }
+            }
+
+            string html = _templateService.RenderTemplate(SelectedTemplate, model);
+
+            try
+            {
+                foreach (var email in recipients)
+                {
+                    await _emailService.SendAsync(email, subject, html);
+                }
+
+                TempData["Message"] = $"E‑mail byl odeslán na: {string.Join(", ", recipients)}.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Message"] = "Chyba při odesílání e‑mailu: " + ex.Message;
+            }
+
+            return Page();
         }
     }
 }

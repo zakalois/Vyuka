@@ -12,7 +12,10 @@ namespace Vyuka.Models
 
         public DbSet<Student> Students { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
+        public DbSet<AppUser> Users { get; set; }
         public DbSet<Reward> Rewards { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<StudentSubject> StudentSubjects { get; set; }
@@ -23,7 +26,6 @@ namespace Vyuka.Models
         {
             base.OnModelCreating(modelBuilder);
 
-            // Ignorovat všechny PageModely
             var pageModelType = typeof(Microsoft.AspNetCore.Mvc.RazorPages.PageModel);
             var pageModels = Assembly.GetExecutingAssembly()
                 .GetTypes()
@@ -32,10 +34,8 @@ namespace Vyuka.Models
             foreach (var pm in pageModels)
                 modelBuilder.Ignore(pm);
 
-            // ❗ Ignorovat GlobalPaymentRow – to je skutečný zdroj chyby
             modelBuilder.Ignore<Vyuka.Pages.Payments.PaymentsIndexModel.GlobalPaymentRow>();
 
-            // Klíč pro vazební tabulku
             modelBuilder.Entity<StudentSubject>()
                 .HasKey(ss => new { ss.StudentId, ss.SubjectId });
 

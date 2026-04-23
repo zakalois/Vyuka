@@ -20,4 +20,5 @@ public class LessonPlan
     public SubjectTopic? SubjectTopic { get; set; }
     public DateTime Date { get; set; }
     public bool IsTaught { get; set; }
+    public string? MeetLink { get; set; }
 }

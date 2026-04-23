@@ -4,12 +4,13 @@ public class Lesson
 {
     public int Id { get; set; }
 
-    public DateTime Date { get; set; } = DateTime.Now;
+    public DateTime Date { get; set; }
 
-    // ⭐ NECHÁME DurationMinutes, ale nebudeme ho používat pro výpočet
-    public int DurationMinutes { get; set; }
+    public int Day { get; set; }
 
-    public string Type { get; set; } = string.Empty;
+    public TimeSpan Start { get; set; }
+
+    public TimeSpan End { get; set; }
 
     public int StudentId { get; set; }
     public Student Student { get; set; } = null!;
@@ -17,9 +18,12 @@ public class Lesson
     public int SubjectId { get; set; }
     public Subject Subject { get; set; } = null!;
 
-    // ⭐ NOVÉ — počet hodin lekce (1, 2, 3…)
-    public int Hours { get; set; }
+    public int? SubjectTopicId { get; set; }
+    public SubjectTopic? SubjectTopic { get; set; }   // 🔥 DŮLEŽITÉ
 
-    // ⭐ NOVÉ — zda byla lekce odučena
     public bool IsTaught { get; set; }
+    public string? MeetLink { get; set; }
+
+    public decimal Hours { get; set; }
+
 }

@@ -40,10 +40,15 @@ namespace Vyuka.Pages.Payments
 
         public List<GlobalPaymentRow> GlobalTable { get; set; } = new();
 
-        // 🔵 Detail vybraného studenta
+        // 🔵 Souhrny pro studenta / všechny
         public decimal SelectedStudentPrepaidHours { get; set; }
         public decimal SelectedStudentTaughtHours { get; set; }
         public decimal SelectedStudentBalance => SelectedStudentPrepaidHours - SelectedStudentTaughtHours;
+
+        // 🔵 Platební statistiky
+        public decimal TotalPaidFiltered { get; set; }
+        public int TotalPaymentsCount { get; set; }
+        public Payment? LastPayment { get; set; }
 
         // 🔵 Dropdown + platby
         public SelectList StudentList { get; set; } = default!;
@@ -62,7 +67,9 @@ namespace Vyuka.Pages.Payments
         // 🔵 GET – načtení dat
         public async Task OnGetAsync()
         {
-            // 🔹 Globální statistiky
+            //
+            // 🔹 1) Globální statistiky
+            //
             TotalStudents = await _context.Students.CountAsync();
             ActiveStudents = await _context.Students.CountAsync(s => s.IsActive);
             InactiveStudents = TotalStudents - ActiveStudents;
@@ -71,7 +78,9 @@ namespace Vyuka.Pages.Payments
             TotalPrepaidHours = await _context.Payments.SumAsync(p => (decimal?)p.HoursPurchased) ?? 0;
             TotalTaughtHours = await _context.Lessons.SumAsync(l => (decimal?)l.Hours) ?? 0;
 
-            // 🔹 Globální tabulka studentů
+            //
+            // 🔹 2) Globální tabulka studentů
+            //
             var allStudents = await _context.Students
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
@@ -104,14 +113,11 @@ namespace Vyuka.Pages.Payments
                 });
             }
 
-            // 🔹 Dropdown studentů
-            var students = await _context.Students
-                .OrderBy(s => s.LastName)
-                .ThenBy(s => s.FirstName)
-                .ToListAsync();
-
+            //
+            // 🔹 3) Dropdown studentů
+            //
             StudentList = new SelectList(
-                students.Select(s => new
+                allStudents.Select(s => new
                 {
                     Id = s.Id,
                     FullName = $"{s.LastName} {s.FirstName}"
@@ -120,28 +126,50 @@ namespace Vyuka.Pages.Payments
                 "FullName"
             );
 
-            // 🔹 Platby vybraného studenta + datumový filtr
+            //
+            // 🔹 4) Platby – filtr student + datum
+            //
+            var paymentsQuery = _context.Payments
+                .Include(p => p.Student)   // ← DŮLEŽITÉ PRO ZOBRAZENÍ JMÉNA
+                .AsQueryable();
+
             if (SelectedStudentId > 0)
             {
-                var paymentsQuery = _context.Payments
-                    .Where(p => p.StudentId == SelectedStudentId);
+                paymentsQuery = paymentsQuery.Where(p => p.StudentId == SelectedStudentId);
+            }
 
-                if (DateFrom.HasValue)
-                    paymentsQuery = paymentsQuery.Where(p => p.Date >= DateFrom.Value);
+            if (DateFrom.HasValue)
+                paymentsQuery = paymentsQuery.Where(p => p.Date >= DateFrom.Value);
 
-                if (DateTo.HasValue)
-                    paymentsQuery = paymentsQuery.Where(p => p.Date <= DateTo.Value);
+            if (DateTo.HasValue)
+                paymentsQuery = paymentsQuery.Where(p => p.Date <= DateTo.Value);
 
-                Payments = await paymentsQuery
-                    .OrderByDescending(p => p.Date)
-                    .ToListAsync();
+            Payments = await paymentsQuery
+                .OrderByDescending(p => p.Date)
+                .ToListAsync();
 
-                SelectedStudentPrepaidHours = Payments.Sum(p => p.HoursPurchased);
+            //
+            // 🔹 5) Souhrny – student / všichni
+            //
+            SelectedStudentPrepaidHours = Payments.Sum(p => p.HoursPurchased);
 
+            if (SelectedStudentId > 0)
+            {
                 SelectedStudentTaughtHours = await _context.Lessons
                     .Where(l => l.StudentId == SelectedStudentId)
                     .SumAsync(l => l.Hours);
             }
+            else
+            {
+                SelectedStudentTaughtHours = await _context.Lessons.SumAsync(l => l.Hours);
+            }
+
+            //
+            // 🔹 6) Platební statistiky – student / všichni
+            //
+            TotalPaidFiltered = Payments.Sum(p => p.Amount);
+            TotalPaymentsCount = Payments.Count;
+            LastPayment = Payments.FirstOrDefault();
         }
     }
 }

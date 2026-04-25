@@ -4,5 +4,9 @@
     public string Name { get; set; }
     public string Email { get; set; }
 
-    public string Role { get; set; } // Admin, Teacher, Student
+    // 🔥 Role je ve tvé DB před PasswordHash
+    public string Role { get; set; }
+
+    // 🔥 PasswordHash je poslední
+    public string PasswordHash { get; set; }
 }

@@ -81,8 +81,7 @@ app.UseRouting();
 
 app.UseSession();
 
-// 🔥🔥🔥 OCHRANA PŘED NEPŘIHLÁŠENÝMI UŽIVATELI 🔥🔥🔥
-// Toto je klíčové – bez toho se kdokoliv dostane na rozvrh.
+// 🔥 OCHRANA PŘED NEPŘIHLÁŠENÝMI UŽIVATELI (session varianta)
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value?.ToLower();
@@ -107,8 +106,6 @@ app.Use(async (context, next) =>
 
     await next();
 });
-
-app.UseAuthorization();
 
 app.MapRazorPages();
 

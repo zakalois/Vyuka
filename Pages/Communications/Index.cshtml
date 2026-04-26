@@ -9,7 +9,6 @@
 <div class="card shadow-sm">
     <div class="card-body">
 
-        <!-- 🔥 JEDEN SPOLEČNÝ FORM -->
         <form method="post">
 
             <!-- STUDENT -->
@@ -31,14 +30,14 @@
                 <div class="form-check">
                     <input class="form-check-input" type="radio" asp-for="RecipientType" value="student" checked />
                     <label class="form-check-label">
-                        Student (@Model.Students.FirstOrDefault(s => s.Id == Model.SelectedStudentId)?.Email)
+                        Student (@Model.SelectedStudentEmail)
                     </label>
                 </div>
 
                 <div class="form-check">
                     <input class="form-check-input" type="radio" asp-for="RecipientType" value="parent" />
                     <label class="form-check-label">
-                        Rodič (@Model.Students.FirstOrDefault(s => s.Id == Model.SelectedStudentId)?.ParentEmail)
+                        Rodič (@Model.SelectedParentEmail)
                     </label>
                 </div>
 
@@ -73,7 +72,6 @@
             </div>
 
         </form>
-        <!-- 🔥 KONEC FORMU -->
 
     </div>
 </div>

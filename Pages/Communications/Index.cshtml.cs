@@ -9,34 +9,44 @@ namespace Vyuka.Pages.Communications
     public class IndexModel : PageModel
     {
         private readonly AppDbContext _context;
-        private readonly TemplateService _templateService;
+        private readonly ITemplateService _templateService;
         private readonly IEmailService _emailService;
+        private readonly IWebHostEnvironment _env;
 
-        public IndexModel(AppDbContext context, TemplateService templateService, IEmailService emailService)
+        public IndexModel(
+            AppDbContext context,
+            ITemplateService templateService,
+            IEmailService emailService,
+            IWebHostEnvironment env)
         {
             _context = context;
             _templateService = templateService;
             _emailService = emailService;
+            _env = env;
         }
 
         public List<Student> Students { get; set; } = new();
 
+        // ⭐ Šablony dostupné v komunikaci
         public List<string> Templates { get; set; } = new()
-        {
-            "LessonPlanned",
-            "PaymentConfirmation"
-        };
+{
+    "LessonPlanned",
+    "PaymentConfirmation",
+    "OfferTemplate"
+};
+
+        // ⭐ DOPLNĚNO – řeší chybu v Index.cshtml
+        public string? SelectedStudentEmail =>
+            Students.FirstOrDefault(s => s.Id == SelectedStudentId)?.Email;
+
+        public string? SelectedParentEmail =>
+            Students.FirstOrDefault(s => s.Id == SelectedStudentId)?.ParentEmail;
 
         public string PreviewHtml { get; set; } = "";
 
-        [BindProperty]
-        public int SelectedStudentId { get; set; }
-
-        [BindProperty]
-        public string SelectedTemplate { get; set; }
-
-        [BindProperty]
-        public string RecipientType { get; set; } = "student";
+        [BindProperty] public int SelectedStudentId { get; set; }
+        [BindProperty] public string SelectedTemplate { get; set; } = "";
+        [BindProperty] public string RecipientType { get; set; } = "student";
 
         private async Task LoadStudentsAsync()
         {
@@ -63,7 +73,7 @@ namespace Vyuka.Pages.Communications
         }
 
         // ---------------------------------------------------------
-        // 🔥 PREVIEW E-MAILU
+        // ⭐ PREVIEW
         // ---------------------------------------------------------
         public async Task<IActionResult> OnPostPreviewAsync()
         {
@@ -84,28 +94,22 @@ namespace Vyuka.Pages.Communications
             {
                 case "LessonPlanned":
                     {
-                        var plan = await GetNextLessonAsync(SelectedStudentId);
-
+                        var plan = await GetNextLessonAsync(student.Id);
                         if (plan == null)
                         {
                             TempData["Message"] = "Tento student nemá žádnou naplánovanou lekci.";
                             return Page();
                         }
 
-                        string lessonDate = plan.Date.ToString("dd.MM.yyyy");
-                        string lessonTime = plan.Start.ToString(@"hh\:mm");
-
                         model = new()
-                    {
-                        { "StudentName", $"{student.FirstName} {student.LastName}" },
-                        { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
-                        { "LessonDate", lessonDate },
-                        { "LessonTime", lessonTime },
-                        { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
-                        { "TeacherName", "Alois Učitel" },
-                        { "SenderName", "Alois" }
-                    };
-
+                        {
+                            { "StudentName", $"{student.FirstName} {student.LastName}" },
+                            { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
+                            { "LessonDate", plan.Date.ToString("dd.MM.yyyy") },
+                            { "LessonTime", plan.Start.ToString(@"hh\\:mm") },
+                            { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
+                            { "TeacherName", "Alois Učitel" }
+                        };
                         break;
                     }
 
@@ -122,21 +126,27 @@ namespace Vyuka.Pages.Communications
                             return Page();
                         }
 
-                        string noteHtml = string.IsNullOrWhiteSpace(payment.Note)
-                            ? ""
-                            : $"<p><strong>Poznámka:</strong> {payment.Note}</p>";
-
                         model = new()
-                    {
-                        { "StudentName", $"{student.FirstName} {student.LastName}" },
-                        { "Amount", payment.Amount.ToString("0.##") },
-                        { "PaymentDate", payment.Date.ToString("dd.MM.yyyy") },
-                        { "Method", payment.Method ?? "neuvedeno" },
-                        { "HoursPurchased", payment.HoursPurchased.ToString("0.##") },
-                        { "PricePerHour", payment.PricePerHour?.ToString("0.##") ?? "—" },
-                        { "NoteHtml", noteHtml }
-                    };
+                        {
+                            { "StudentName", $"{student.FirstName} {student.LastName}" },
+                            { "Amount", payment.Amount.ToString("0.##") },
+                            { "PaymentDate", payment.Date.ToString("dd.MM.yyyy") },
+                            { "Method", payment.Method ?? "neuvedeno" },
+                            { "HoursPurchased", payment.HoursPurchased.ToString("0.##") },
+                            { "PricePerHour", payment.PricePerHour?.ToString("0.##") ?? "—" },
+                            { "NoteHtml", string.IsNullOrWhiteSpace(payment.Note) ? "" : $"<p><strong>Poznámka:</strong> {payment.Note}</p>" }
+                        };
+                        break;
+                    }
 
+                case "OfferTemplate":
+                    {
+                        model = new()
+                        {
+                            { "ParentName", $"{student.ParentFirstName} {student.ParentLastName}".Trim() },
+                            { "StudentName", $"{student.FirstName} {student.LastName}" },
+                            { "CustomText", "" }
+                        };
                         break;
                     }
             }
@@ -146,7 +156,7 @@ namespace Vyuka.Pages.Communications
         }
 
         // ---------------------------------------------------------
-        // 🔥 ODESLÁNÍ E-MAILU (student / rodič / oba)
+        // ⭐ SEND
         // ---------------------------------------------------------
         public async Task<IActionResult> OnPostSendAsync()
         {
@@ -165,16 +175,12 @@ namespace Vyuka.Pages.Communications
             List<string> recipients = new();
 
             if (RecipientType == "student" || RecipientType == "both")
-            {
                 if (!string.IsNullOrWhiteSpace(student.Email))
                     recipients.Add(student.Email);
-            }
 
             if (RecipientType == "parent" || RecipientType == "both")
-            {
                 if (!string.IsNullOrWhiteSpace(student.ParentEmail))
                     recipients.Add(student.ParentEmail);
-            }
 
             if (recipients.Count == 0)
             {
@@ -184,32 +190,28 @@ namespace Vyuka.Pages.Communications
 
             Dictionary<string, string> model = new();
             string subject = "";
+            List<EmailAttachment>? attachments = null;
 
             switch (SelectedTemplate)
             {
                 case "LessonPlanned":
                     {
-                        var plan = await GetNextLessonAsync(SelectedStudentId);
-
+                        var plan = await GetNextLessonAsync(student.Id);
                         if (plan == null)
                         {
                             TempData["Message"] = "Tento student nemá žádnou naplánovanou lekci.";
                             return Page();
                         }
 
-                        string lessonDate = plan.Date.ToString("dd.MM.yyyy");
-                        string lessonTime = plan.Start.ToString(@"hh\:mm");
-
                         model = new()
-                    {
-                        { "StudentName", $"{student.FirstName} {student.LastName}" },
-                        { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
-                        { "LessonDate", lessonDate },
-                        { "LessonTime", lessonTime },
-                        { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
-                        { "TeacherName", "Alois Učitel" },
-                        { "SenderName", "Alois" }
-                    };
+                        {
+                            { "StudentName", $"{student.FirstName} {student.LastName}" },
+                            { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
+                            { "LessonDate", plan.Date.ToString("dd.MM.yyyy") },
+                            { "LessonTime", plan.Start.ToString(@"hh\\:mm") },
+                            { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
+                            { "TeacherName", "Alois Učitel" }
+                        };
 
                         subject = "Naplánovaná lekce";
                         break;
@@ -228,22 +230,41 @@ namespace Vyuka.Pages.Communications
                             return Page();
                         }
 
-                        string noteHtml = string.IsNullOrWhiteSpace(payment.Note)
-                            ? ""
-                            : $"<p><strong>Poznámka:</strong> {payment.Note}</p>";
-
                         model = new()
-                    {
-                        { "StudentName", $"{student.FirstName} {student.LastName}" },
-                        { "Amount", payment.Amount.ToString("0.##") },
-                        { "PaymentDate", payment.Date.ToString("dd.MM.yyyy") },
-                        { "Method", payment.Method ?? "neuvedeno" },
-                        { "HoursPurchased", payment.HoursPurchased.ToString("0.##") },
-                        { "PricePerHour", payment.PricePerHour?.ToString("0.##") ?? "—" },
-                        { "NoteHtml", noteHtml }
-                    };
+                        {
+                            { "StudentName", $"{student.FirstName} {student.LastName}" },
+                            { "Amount", payment.Amount.ToString("0.##") },
+                            { "PaymentDate", payment.Date.ToString("dd.MM.yyyy") },
+                            { "Method", payment.Method ?? "neuvedeno" },
+                            { "HoursPurchased", payment.HoursPurchased.ToString("0.##") },
+                            { "PricePerHour", payment.PricePerHour?.ToString("0.##") ?? "—" },
+                            { "NoteHtml", string.IsNullOrWhiteSpace(payment.Note) ? "" : $"<p><strong>Poznámka:</strong> {payment.Note}</p>" }
+                        };
 
                         subject = "Potvrzení platby";
+                        break;
+                    }
+
+                case "OfferTemplate":
+                    {
+                        model = new()
+    {
+        { "ParentName", $"{student.ParentFirstName} {student.ParentLastName}".Trim() },
+        { "StudentName", $"{student.FirstName} {student.LastName}" },
+        { "CustomText", "" }
+    };
+
+
+                        subject = "Nabídka online výuky";
+
+                        // ⭐ QR kódy
+                        attachments = new()
+{
+    new EmailAttachment("qr1", Path.Combine(_env.WebRootPath, "images/QR/1_hod_400.jpg")),
+    new EmailAttachment("qr2", Path.Combine(_env.WebRootPath, "images/QR/10_hod_3500.jpg"))
+};
+
+
                         break;
                     }
             }
@@ -253,9 +274,7 @@ namespace Vyuka.Pages.Communications
             try
             {
                 foreach (var email in recipients)
-                {
-                    await _emailService.SendAsync(email, subject, html);
-                }
+                    await _emailService.SendAsync(email, subject, html, attachments);
 
                 TempData["Message"] = $"E‑mail byl odeslán na: {string.Join(", ", recipients)}.";
             }

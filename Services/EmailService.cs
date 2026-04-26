@@ -1,5 +1,6 @@
-﻿using System.Net;
-using System.Net.Mail;
+﻿using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 
 namespace Vyuka.Services
 {
@@ -14,41 +15,87 @@ namespace Vyuka.Services
 
         public async Task SendAsync(string to, string subject, string html)
         {
-            try
+            await SendAsync(to, subject, html, null);
+        }
+
+        public async Task SendAsync(
+            string to,
+            string subject,
+            string html,
+            List<EmailAttachment>? attachments)
+        {
+            var message = new MimeMessage();
+
+            // FROM
+            message.From.Add(new MailboxAddress(
+                _config["Smtp:DisplayName"],
+                _config["Smtp:From"]
+            ));
+
+            // TO
+            message.To.Add(new MailboxAddress(to, to));
+            message.Subject = subject;
+
+            var builder = new BodyBuilder
             {
-                var smtp = new SmtpClient
-                {
-                    Host = _config["Smtp:Host"],
-                    Port = int.Parse(_config["Smtp:Port"]),
-                    EnableSsl = true,
-                    Credentials = new NetworkCredential(
-                        _config["Smtp:User"],
-                        _config["Smtp:Password"]
-                    )
-                };
-
-                var msg = new MailMessage
-                {
-                    From = new MailAddress(
-                         _config["Smtp:From"],
-                         _config["Smtp:DisplayName"] ?? "Výuka systém"
-),
-                    Subject = subject,
-                    Body = html,
-                    IsBodyHtml = true
-                };
-
-                msg.To.Add(to);
-                // Skrytá kopie na adresu zakalois@ucitelzak.eu
-                msg.Bcc.Add("zakalois@ucitelzak.eu");
-
-                await smtp.SendMailAsync(msg);
-            }
-            catch (Exception ex)
+                HtmlBody = html
+            };
+            // ⭐ Přidání loga jako embedded obrázek
+            var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logo.jpg");
+            if (File.Exists(logoPath))
             {
-                Console.WriteLine("SMTP ERROR: " + ex.Message);
-                throw;
+                var logo = builder.LinkedResources.Add(logoPath);
+                logo.ContentId = "logo";
+                logo.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
+                logo.ContentType.MediaType = "image";
+                logo.ContentType.MediaSubtype = "jpeg";
             }
+
+            // ⭐ QR kódy jako embedded obrázky
+            if (attachments != null)
+            {
+                foreach (var att in attachments)
+                {
+                    var img = builder.LinkedResources.Add(att.FilePath);
+                    img.ContentId = att.ContentId;
+
+                    // Gmail vyžaduje INLINE
+                    img.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
+                    img.ContentType.Name = Path.GetFileName(att.FilePath);
+
+                    // Typ souboru
+                    if (att.FilePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                        att.FilePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+                    {
+                        img.ContentType.MediaType = "image";
+                        img.ContentType.MediaSubtype = "jpeg";
+                    }
+                    else if (att.FilePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    {
+                        img.ContentType.MediaType = "image";
+                        img.ContentType.MediaSubtype = "png";
+                    }
+                }
+            }
+
+            message.Body = builder.ToMessageBody();
+
+            using var client = new SmtpClient();
+
+            // ⭐ Gmail – správné připojení (port 587 + STARTTLS)
+            await client.ConnectAsync(
+                _config["Smtp:Host"],
+                int.Parse(_config["Smtp:Port"]),
+                SecureSocketOptions.StartTls
+            );
+
+            await client.AuthenticateAsync(
+                _config["Smtp:User"],
+                _config["Smtp:Password"]
+            );
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
         }
     }
 }

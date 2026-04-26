@@ -5,6 +5,9 @@ namespace Vyuka.Services
     public interface ITemplateService
     {
         string RenderTemplate(string templateName, Dictionary<string, string> values);
+
+        // 🔵 Nově přidáno – pohodlné načtení nabídky
+        string RenderOfferTemplate(Dictionary<string, string> values);
     }
 
     public class TemplateService : ITemplateService
@@ -18,10 +21,8 @@ namespace Vyuka.Services
 
         public string RenderTemplate(string templateName, Dictionary<string, string> values)
         {
-            // 🔥 Vždy přidáme .html
             string fileName = templateName + ".html";
 
-            // 🔥 Správná cesta ke složce EmailsTemplates
             var path = Path.Combine(_env.ContentRootPath, "EmailsTemplates", fileName);
 
             if (!File.Exists(path))
@@ -35,6 +36,12 @@ namespace Vyuka.Services
             }
 
             return html;
+        }
+
+        // 🔵 Nová metoda – šablona nabídky
+        public string RenderOfferTemplate(Dictionary<string, string> values)
+        {
+            return RenderTemplate("OfferTemplate", values);
         }
     }
 }

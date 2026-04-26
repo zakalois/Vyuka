@@ -1,0 +1,40 @@
+﻿@page
+@model Vyuka.Pages.Communications.SendOfferModel
+
+<h2>Odeslat nabídku výuky</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label>E‑mail rodiče</label>
+        <input asp-for="ParentEmail" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Jméno rodiče</label>
+        <input asp-for="ParentName" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Jméno studenta</label>
+        <input asp-for="StudentName" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Doplňující text</label>
+        <textarea asp-for="CustomText" rows="4" class="form-control"></textarea>
+    </div>
+
+    <button type="submit" name="handler" value="Preview" class="btn btn-secondary">Náhled</button>
+    <button type="submit" name="handler" value="Send" class="btn btn-primary">Odeslat</button>
+</form>
+
+
+
+@if (Model.PreviewHtml != null)
+{
+    <hr />
+    <h3>Náhled e‑mailu</h3>
+    <div style="border:1px solid #ddd; padding:15px; border-radius:8px;">
+        @Html.Raw(Model.PreviewHtml)
+    </div>
+}

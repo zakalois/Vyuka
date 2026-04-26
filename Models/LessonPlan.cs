@@ -18,7 +18,15 @@ public class LessonPlan
 
     public int? SubjectTopicId { get; set; }
     public SubjectTopic? SubjectTopic { get; set; }
+
     public DateTime Date { get; set; }
     public bool IsTaught { get; set; }
+
     public string? MeetLink { get; set; }
+
+    // 🔵 NOVÉ: ID události v Google Calendar
+    public string? GoogleEventId { get; set; }
+
+    // 🔵 NOVÉ: zda při mazání poslat studentovi zrušení
+    public bool NotifyOnDelete { get; set; }
 }

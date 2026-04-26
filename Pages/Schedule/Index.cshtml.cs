@@ -9,26 +9,24 @@ namespace Vyuka.Pages.Schedule
     public class ScheduleIndexModel : PageModel
     {
         private readonly AppDbContext _context;
-        private readonly IEmailService _email;
-        private readonly LessonPlanEmailBuilder _emailBuilder;
         private readonly GoogleCalendarService _calendar;
+        private readonly IEmailService _email;
+        private readonly LessonEmailBuilder _emailBuilder;
 
         public ScheduleIndexModel(
             AppDbContext context,
             GoogleCalendarService calendar,
             IEmailService email,
-            LessonPlanEmailBuilder emailBuilder
-        )
+            LessonEmailBuilder emailBuilder)
         {
             _context = context;
-            _calendar = calendar;   // ← správně
+            _calendar = calendar;
             _email = email;
             _emailBuilder = emailBuilder;
         }
-   
 
-// 25 barev
-private static readonly string[] StudentColors = new[]
+        // 🔵 Barvy studentů
+        private static readonly string[] StudentColors = new[]
         {
             "#FFCDD2","#F8BBD0","#E1BEE7","#D1C4E9","#C5CAE9",
             "#BBDEFB","#B3E5FC","#B2EBF2","#B2DFDB","#C8E6C9",
@@ -42,31 +40,30 @@ private static readonly string[] StudentColors = new[]
             return StudentColors[studentId % StudentColors.Length];
         }
 
-        public IList<Lesson> Lessons { get; set; }
-
-        // Parametry týdne
-        [BindProperty(SupportsGet = true)]
-        public DateTime Week { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public DateTime StartOfWeek { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public DateTime EndOfWeek { get; set; }
-
-        // Data pro formulář
+        public IList<LessonPlan> Plans { get; set; } = new List<LessonPlan>();
         public List<Student> Students { get; set; } = new();
         public List<Subject> Subjects { get; set; } = new();
         public List<SubjectTopic> Topics { get; set; } = new();
-        public List<LessonPlan> Plans { get; set; } = new();
 
-        // BindProperty pro přidání hodiny
+        [BindProperty(SupportsGet = true)]
+        public DateTime Week { get; set; }
+
+        [BindProperty]
+        public DateTime StartOfWeek { get; set; }
+
+        [BindProperty]
+        public DateTime EndOfWeek { get; set; }
+
         [BindProperty] public int NewStudentId { get; set; }
         [BindProperty] public int NewSubjectId { get; set; }
         [BindProperty] public int? NewTopicId { get; set; }
         [BindProperty] public DayOfWeek NewDay { get; set; }
         [BindProperty] public TimeSpan NewStart { get; set; }
         [BindProperty] public TimeSpan NewEnd { get; set; }
+        [BindProperty] public bool NotifyStudentOnDelete { get; set; }
+
+        [BindProperty]
+        public LessonPlan EditPlan { get; set; }
 
         private void ComputeWeek()
         {
@@ -120,85 +117,45 @@ private static readonly string[] StudentColors = new[]
             return new JsonResult(topics);
         }
 
-        // 🔵 PŘIDÁNÍ PLÁNOVANÉ HODINY + GENEROVÁNÍ MEET ODKAZU
         public async Task<IActionResult> OnPostAddAsync()
         {
             ComputeWeek();
-
-            if (NewSubjectId <= 0)
-            {
-                ModelState.AddModelError("NewSubjectId", "Musíte vybrat předmět.");
-                await LoadDropdownsAsync();
-                return Page();
-            }
-
-            if (NewStart == default)
-            {
-                ModelState.AddModelError("", "Musíte zadat začátek hodiny.");
-                await LoadDropdownsAsync();
-                return Page();
-            }
+            await LoadDropdownsAsync();
 
             var student = await _context.Students.FindAsync(NewStudentId);
-            if (student == null || !student.IsActive)
-            {
-                ModelState.AddModelError("", "Tomuto studentovi nelze přiřadit hodinu, protože je neaktivní.");
-                await LoadDropdownsAsync();
-                return Page();
-            }
-
-            if (NewEnd == default || NewEnd <= NewStart)
-            {
-                NewEnd = NewStart + TimeSpan.FromHours(1);
-            }
-
-            int dayIndex = NewDay == DayOfWeek.Sunday ? 6 : ((int)NewDay - 1);
-            var date = StartOfWeek.AddDays(dayIndex);
-
-            // 🔵 Načtení předmětu
             var subject = await _context.Subjects.FindAsync(NewSubjectId);
-
-            // 🔵 Načtení tématu (může být null)
             var topic = NewTopicId.HasValue
                 ? await _context.SubjectTopics.FindAsync(NewTopicId.Value)
                 : null;
 
-            // 🔵 Název události pro Google Calendar
-            var title = $"{subject?.Name} – {topic?.Name}";
+            int dayIndex = NewDay == DayOfWeek.Sunday ? 6 : ((int)NewDay - 1);
+            var date = StartOfWeek.AddDays(dayIndex);
 
-            // 🔵 Spojení data + času na DateTime
-            var startDateTime = date.Date + NewStart;
-            var endDateTime = date.Date + NewEnd;
+            if (NewEnd <= NewStart)
+                NewEnd = NewStart + TimeSpan.FromHours(1);
 
-            // 🔵 Vytvoření Meet odkazu
-            var meetLink = await _calendar.CreateMeetEventAsync(
-                startDateTime,
-                endDateTime,
-                title,
+            var meet = await _calendar.CreateMeetEventAsync(
+                date + NewStart,
+                date + NewEnd,
+                $"{subject?.Name} – {topic?.Name}",
                 student.Email,
                 "zakalois@ucitelzak.eu",
                 student.FirstName,
-                student.LastName
+                student.LastName,
+                "#90CAF9"
             );
 
-            // 🔵 Vygenerování HTML e‑mailu
-            var html = await _emailBuilder.BuildAsync(
+            var html = await _emailBuilder.BuildPlannedAsync(
                 $"{student.FirstName} {student.LastName}",
                 subject?.Name ?? "",
                 topic?.Name ?? "",
                 date,
-                NewStart,      // ← správně: TimeSpan
-                meetLink
+                NewStart,
+                meet.MeetLink
             );
 
-            // 🔵 Odeslání e‑mailu studentovi
-            await _email.SendAsync(
-                  student.Email,
-                  "Plánovaná lekce",
-                  html
-            );
+            await _email.SendAsync(student.Email, "Plánovaná lekce", html);
 
-            // 🔵 Uložení plánované hodiny do DB
             var plan = new LessonPlan
             {
                 StudentId = NewStudentId,
@@ -208,46 +165,67 @@ private static readonly string[] StudentColors = new[]
                 Start = NewStart,
                 End = NewEnd,
                 Date = date,
-                MeetLink = meetLink
+                MeetLink = meet.MeetLink,
+                GoogleEventId = meet.EventId,
+                NotifyOnDelete = NotifyStudentOnDelete
             };
 
             _context.LessonPlans.Add(plan);
             await _context.SaveChangesAsync();
 
-            // 🔵 Návrat zpět na rozvrh
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
-        // 🔵 ODUČENÍ – BEZ GENEROVÁNÍ MEET
-        public async Task<IActionResult> OnPostTeachAsync(int id)
+        public async Task<IActionResult> OnPostEditStartAsync(int id)
+        {
+            ComputeWeek();
+            await LoadDropdownsAsync();
+
+            EditPlan = await _context.LessonPlans
+                .Include(p => p.Student)
+                .Include(p => p.Subject)
+                .Include(p => p.SubjectTopic)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            Plans = await _context.LessonPlans
+                .Include(p => p.Student)
+                .Include(p => p.Subject)
+                .Include(p => p.SubjectTopic)
+                .Where(p => p.Date >= StartOfWeek && p.Date <= EndOfWeek)
+                .OrderBy(p => p.Date)
+                .ThenBy(p => p.Start)
+                .ToListAsync();
+
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostUpdateAsync(
+            int id,
+            int StudentId,
+            int SubjectId,
+            int? SubjectTopicId,
+            TimeSpan Start,
+            TimeSpan End)
         {
             ComputeWeek();
 
-            var plan = await _context.LessonPlans
-                .Include(p => p.Student)
-                .Include(p => p.Subject)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
+            var plan = await _context.LessonPlans.FindAsync(id);
             if (plan == null)
                 return NotFound();
 
-            int hours = (int)(plan.End - plan.Start).TotalHours;
-
-            var lesson = new Lesson
-            {
-                StudentId = plan.StudentId,
-                SubjectId = plan.SubjectId,
-                SubjectTopicId = plan.SubjectTopicId,
-                Date = plan.Date,
-                Hours = hours,
-                IsTaught = true
-            };
-
-            _context.Lessons.Add(lesson);
-            plan.IsTaught = true;
+            plan.StudentId = StudentId;
+            plan.SubjectId = SubjectId;
+            plan.SubjectTopicId = SubjectTopicId;
+            plan.Start = Start;
+            plan.End = End;
 
             await _context.SaveChangesAsync();
 
+            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
+        }
+
+        public IActionResult OnPostEditCancel()
+        {
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
@@ -255,10 +233,30 @@ private static readonly string[] StudentColors = new[]
         {
             ComputeWeek();
 
-            var plan = await _context.LessonPlans.FindAsync(id);
+            var plan = await _context.LessonPlans
+                .Include(p => p.Student)
+                .Include(p => p.Subject)
+                .Include(p => p.SubjectTopic)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (plan != null)
             {
+                if (!string.IsNullOrEmpty(plan.GoogleEventId))
+                {
+                    await _calendar.DeleteEventAsync(plan.GoogleEventId, plan.NotifyOnDelete);
+                }
+
+                var html = await _emailBuilder.BuildCanceledAsync(
+                    $"{plan.Student.FirstName} {plan.Student.LastName}",
+                    plan.Subject?.Name ?? "",
+                    plan.SubjectTopic?.Name ?? "",
+                    plan.Date,
+                    plan.Start,
+                    plan.End
+                );
+
+                await _email.SendAsync(plan.Student.Email, "Zrušená lekce", html);
+
                 var hours = (int)(plan.End - plan.Start).TotalHours;
 
                 var lesson = await _context.Lessons
@@ -270,60 +268,9 @@ private static readonly string[] StudentColors = new[]
                         l.IsTaught == true);
 
                 if (lesson != null)
-                {
                     _context.Lessons.Remove(lesson);
-                }
 
                 _context.LessonPlans.Remove(plan);
-
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
-        }
-
-        [BindProperty]
-        public LessonPlan EditPlan { get; set; }
-
-        public async Task<IActionResult> OnPostEditAsync(int id)
-        {
-            ComputeWeek();
-            await LoadDropdownsAsync();
-
-            EditPlan = await _context.LessonPlans
-                .Include(p => p.Student)
-                .Include(p => p.Subject)
-                .Include(p => p.SubjectTopic)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            return Page();
-        }
-
-        public async Task<IActionResult> OnPostSaveAsync()
-        {
-            ComputeWeek();
-
-            var plan = await _context.LessonPlans.FindAsync(EditPlan.Id);
-
-            if (plan != null)
-            {
-                plan.StudentId = EditPlan.StudentId;
-                plan.SubjectId = EditPlan.SubjectId;
-                plan.SubjectTopicId = EditPlan.SubjectTopicId;
-                plan.Start = EditPlan.Start;
-                plan.End = EditPlan.End;
-                plan.Day = EditPlan.Day;
-
-                if (EditPlan.Date != default && EditPlan.Date != plan.Date)
-                {
-                    plan.Date = EditPlan.Date.Date;
-                }
-                else
-                {
-                    int dayIndex = plan.Day == DayOfWeek.Sunday ? 6 : ((int)plan.Day - 1);
-                    plan.Date = StartOfWeek.AddDays(dayIndex);
-                }
-
                 await _context.SaveChangesAsync();
             }
 

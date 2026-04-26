@@ -22,6 +22,9 @@ builder.Services.AddScoped<LessonPlanEmailBuilder>();
 // TemplateService
 builder.Services.AddScoped<TemplateService>();
 
+// 🔵 DŮLEŽITÉ – CHYBĚJÍCÍ REGISTRACE
+builder.Services.AddScoped<LessonEmailBuilder>();
+
 // Razor Pages + HttpContext + DB context
 builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
@@ -106,6 +109,12 @@ app.Use(async (context, next) =>
 
     await next();
 });
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/Dashboard/Admin");
+    return Task.CompletedTask;
+});
+
 
 app.MapRazorPages();
 

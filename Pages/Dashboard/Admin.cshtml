@@ -2,6 +2,7 @@
 @model Vyuka.Pages.Dashboard.AdminModel
 @using Microsoft.AspNetCore.Http
 
+
 @{
     Layout = null;
     ViewData["Title"] = "Řídicí panel Administrátora";
@@ -352,7 +353,16 @@
         <a class="btn" href="/Lessons">Hodiny</a>
         <a class="btn" href="/Offers/Create">Vytvořit nabídku</a>
         <a class="btn" href="/Payments/Index">Finance</a>
+
+        <div>
+            <form method="post" asp-page-handler="Backup" style="display:inline;">
+                <button type="submit" class="btn btn-green">
+                    💾 Zálohovat databázi
+                </button>
+            </form>
+        </div>
     </div>
+
 
     <div class="online-box">
         <h3>Online služby</h3>

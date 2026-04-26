@@ -8,24 +8,29 @@ using Google.Apis.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Načtení SMTP nastavení
+// ---------------------------------------------------------
+// SMTP nastavení
+// ---------------------------------------------------------
 builder.Services.Configure<SmtpSettings>(
-    builder.Configuration.GetSection("Smtp")
+    builder.Configuration.GetSection("SmtpSettings")
 );
 
-// Registrace EmailService
+// EmailService
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Registrace builderu e‑mailových šablon
+// ---------------------------------------------------------
+// Šablony e‑mailů
+// ---------------------------------------------------------
 builder.Services.AddScoped<LessonPlanEmailBuilder>();
-
-// TemplateService
-builder.Services.AddScoped<TemplateService>();
-
-// 🔵 DŮLEŽITÉ – CHYBĚJÍCÍ REGISTRACE
 builder.Services.AddScoped<LessonEmailBuilder>();
+builder.Services.AddScoped<OfferEmailBuilder>();
 
-// Razor Pages + HttpContext + DB context
+// TemplateService (správně přes interface)
+builder.Services.AddScoped<ITemplateService, TemplateService>();
+
+// ---------------------------------------------------------
+// Razor Pages + DB + HttpContext
+// ---------------------------------------------------------
 builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
 
@@ -33,7 +38,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+// ---------------------------------------------------------
 // Google Calendar API klient
+// ---------------------------------------------------------
 builder.Services.AddSingleton(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
@@ -60,7 +67,9 @@ builder.Services.AddSingleton(provider =>
 // Služba pro práci s Google Calendar
 builder.Services.AddScoped<GoogleCalendarService>();
 
-// SESSION – nutné pro login a role
+// ---------------------------------------------------------
+// SESSION
+// ---------------------------------------------------------
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(12);
@@ -70,7 +79,9 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
+// ---------------------------------------------------------
 // Pipeline
+// ---------------------------------------------------------
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -84,19 +95,19 @@ app.UseRouting();
 
 app.UseSession();
 
-// 🔥 OCHRANA PŘED NEPŘIHLÁŠENÝMI UŽIVATELI (session varianta)
+// ---------------------------------------------------------
+// Ochrana před nepřihlášenými uživateli
+// ---------------------------------------------------------
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value?.ToLower();
 
-    // Stránky, které jsou veřejné
     var allowed = new[]
     {
         "/login",
         "/forgotpassword"
     };
 
-    // Pokud není přihlášený a není na povolené stránce → redirect
     if (!allowed.Contains(path))
     {
         var userId = context.Session.GetInt32("UserId");
@@ -109,12 +120,13 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+// Defaultní redirect
 app.MapGet("/", context =>
 {
     context.Response.Redirect("/Dashboard/Admin");
     return Task.CompletedTask;
 });
-
 
 app.MapRazorPages();
 

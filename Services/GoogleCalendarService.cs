@@ -55,7 +55,11 @@ namespace Vyuka.Services
                 Attendees = new List<EventAttendee>
                 {
                     new EventAttendee { Email = studentEmail },
-                    new EventAttendee { Email = teacherEmail }
+                    new EventAttendee { Email = teacherEmail },
+                    new EventAttendee { Email = "zakalois@gmail.com" },
+                    new EventAttendee { Email = "zakalois@ucitelzak.eu" }
+
+
                 },
 
                 ConferenceData = new ConferenceData

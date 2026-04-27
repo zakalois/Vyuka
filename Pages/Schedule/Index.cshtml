@@ -2,36 +2,44 @@
 @using System.Globalization
 @model Vyuka.Pages.Schedule.ScheduleIndexModel
 
+@{
+    var safeStart = Model.StartOfWeek == DateTime.MinValue
+        ? DateTime.Today
+        : Model.StartOfWeek;
+
+    var safeEnd = Model.EndOfWeek == DateTime.MinValue
+        ? safeStart.AddDays(6)
+        : Model.EndOfWeek;
+}
+
 <h1>Týdenní rozvrh</h1>
 
-<!-- NAVIGACE TÝDNŮ -->
 <div class="d-flex justify-content-between align-items-center mb-4">
 
     <a class="btn btn-secondary"
-           asp-page="./Index"
-           asp-route-week="@Model.StartOfWeek.AddDays(-7).ToString("yyyy-MM-dd")">
+       asp-page="./Index"
+       asp-route-week="@safeStart.AddDays(-7).ToString("yyyy-MM-dd")">
         ← Předchozí týden
     </a>
 
     <div class="text-center">
-        <h4>@Model.StartOfWeek.ToString("dd.MM.yyyy") – @Model.EndOfWeek.ToString("dd.MM.yyyy")</h4>
+        <h4>@safeStart.ToString("dd.MM.yyyy") – @safeEnd.ToString("dd.MM.yyyy")</h4>
 
         <a class="btn btn-info mt-2"
-               asp-page="./Index"
-               asp-route-week="@DateTime.Today.ToString("yyyy-MM-dd")">
+           asp-page="./Index"
+           asp-route-week="@DateTime.Today.ToString("yyyy-MM-dd")">
             Aktuální týden
         </a>
     </div>
 
     <a class="btn btn-secondary"
-           asp-page="./Index"
-           asp-route-week="@Model.StartOfWeek.AddDays(7).ToString("yyyy-MM-dd")">
+       asp-page="./Index"
+       asp-route-week="@safeStart.AddDays(7).ToString("yyyy-MM-dd")">
         Další týden →
     </a>
 
 </div>
 
-<!-- FORMULÁŘ PRO PŘIDÁNÍ HODINY -->
 @if (Model.EditPlan == null)
 {
     <div class="card p-3 mb-4 shadow-sm">
@@ -39,10 +47,14 @@
 
         <form method="post" asp-page-handler="Add">
 
+            <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
+
             <div class="row">
+
+                <!-- STUDENT -->
                 <div class="col-md-3">
                     <label>Student</label>
-                    <select asp-for="NewStudentId" class="form-control">
+                    <select name="NewStudentId" class="form-control">
                         @foreach (var s in Model.Students)
                         {
                             <option value="@s.Id">@s.LastName @s.FirstName</option>
@@ -50,9 +62,10 @@
                     </select>
                 </div>
 
+                <!-- PŘEDMĚT -->
                 <div class="col-md-3">
                     <label>Předmět</label>
-                    <select asp-for="NewSubjectId" class="form-select" id="subjectSelect">
+                    <select name="NewSubjectId" class="form-select" id="subjectSelect">
                         <option value="">-- Vyber předmět --</option>
                         @foreach (var s in Model.Subjects)
                         {
@@ -61,46 +74,54 @@
                     </select>
                 </div>
 
+                <!-- TÉMA -->
                 <div class="col-md-3">
                     <label>Téma</label>
-                    <select asp-for="NewTopicId" class="form-select" id="topicSelect">
+                    <select name="NewTopicId" class="form-select" id="topicSelect">
                         <option value="">-- Vyber téma --</option>
                     </select>
                 </div>
 
+                <!-- DEN (správné hodnoty enumu DayOfWeek) -->
                 <div class="col-md-3">
                     <label>Den</label>
-                    <select asp-for="NewDay" class="form-control">
-                        <option value="Monday">Pondělí</option>
-                        <option value="Tuesday">Úterý</option>
-                        <option value="Wednesday">Středa</option>
-                        <option value="Thursday">Čtvrtek</option>
-                        <option value="Friday">Pátek</option>
-                        <option value="Saturday">Sobota</option>
-                        <option value="Sunday">Neděle</option>
+                    <select name="NewDay" class="form-control">
+                        <option value="1">Pondělí</option>
+                        <option value="2">Úterý</option>
+                        <option value="3">Středa</option>
+                        <option value="4">Čtvrtek</option>
+                        <option value="5">Pátek</option>
+                        <option value="6">Sobota</option>
+                        <option value="0">Neděle</option>
                     </select>
                 </div>
+
             </div>
 
             <div class="row mt-3">
+
+                <!-- ZAČÁTEK -->
                 <div class="col-md-3">
                     <label>Začátek</label>
-                    <input asp-for="NewStart" type="time" class="form-control" />
+                    <input name="NewStart" type="time" class="form-control" />
                 </div>
 
+                <!-- KONEC -->
                 <div class="col-md-3">
                     <label>Konec</label>
-                    <input asp-for="NewEnd" type="time" class="form-control" />
+                    <input name="NewEnd" type="time" class="form-control" />
                 </div>
 
+                <!-- NOTIFIKACE -->
                 <div class="col-md-6 d-flex align-items-end">
                     <div class="form-check mt-4">
-                        <input asp-for="NotifyStudentOnDelete" class="form-check-input" type="checkbox" />
-                        <label class="form-check-label" for="NotifyStudentOnDelete">
+                        <input name="NotifyStudentOnDelete" class="form-check-input" type="checkbox" />
+                        <label class="form-check-label">
                             Odeslat zrušení studentovi při smazání lekce
                         </label>
                     </div>
                 </div>
+
             </div>
 
             <button class="btn btn-primary mt-3">Přidat hodinu</button>
@@ -108,80 +129,106 @@
         </form>
     </div>
 }
+
 else
 {
-    <!-- EDITAČNÍ FORMULÁŘ -->
     <div class="card p-3 mb-4 shadow-sm bg-warning-subtle">
         <h5>Upravit hodinu</h5>
 
         <form method="post" asp-page-handler="Update">
 
+            <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
             <input type="hidden" name="id" value="@Model.EditPlan.Id" />
 
             <div class="row">
+
+                <!-- STUDENT -->
                 <div class="col-md-3">
                     <label>Student</label>
                     <select name="StudentId" class="form-control">
                         @foreach (var s in Model.Students)
                         {
-                            <option value="@s.Id" selected="@(s.Id == Model.EditPlan.StudentId)">
+                            <option value="@s.Id"
+                                    selected="@(s.Id == Model.EditPlan.StudentId)">
                                 @s.LastName @s.FirstName
                             </option>
                         }
                     </select>
                 </div>
 
+                <!-- PŘEDMĚT -->
                 <div class="col-md-3">
                     <label>Předmět</label>
                     <select name="SubjectId" class="form-select">
                         @foreach (var s in Model.Subjects)
                         {
-                            <option value="@s.Id" selected="@(s.Id == Model.EditPlan.SubjectId)">
+                            <option value="@s.Id"
+                                    selected="@(s.Id == Model.EditPlan.SubjectId)">
                                 @s.Name
                             </option>
                         }
                     </select>
                 </div>
 
+                <!-- TÉMA -->
                 <div class="col-md-3">
                     <label>Téma</label>
                     <select name="SubjectTopicId" class="form-select">
                         <option value="">-- Vyber téma --</option>
                         @foreach (var t in Model.Topics.Where(t => t.SubjectId == Model.EditPlan.SubjectId))
                         {
-                            <option value="@t.Id" selected="@(t.Id == Model.EditPlan.SubjectTopicId)">
+                            <option value="@t.Id"
+                                    selected="@(t.Id == Model.EditPlan.SubjectTopicId)">
                                 @t.Name
                             </option>
                         }
                     </select>
                 </div>
 
+                <!-- ZAČÁTEK -->
                 <div class="col-md-3">
                     <label>Začátek</label>
-                    <input name="Start" type="time" class="form-control"
-                           value="@Model.EditPlan.Start.ToString(@"hh\:mm")" />
+                    <input name="Start"
+                           type="time"
+                           class="form-control"
+                           value="@Model.EditPlan.Start.ToString("hh\\:mm")" />
                 </div>
 
+                <!-- KONEC -->
                 <div class="col-md-3 mt-3">
                     <label>Konec</label>
-                    <input name="End" type="time" class="form-control"
-                           value="@Model.EditPlan.End.ToString(@"hh\:mm")" />
+                    <input name="End"
+                           type="time"
+                           class="form-control"
+                           value="@Model.EditPlan.End.ToString("hh\\:mm")" />
                 </div>
+
             </div>
 
             <button class="btn btn-success mt-3">Uložit</button>
-            <button class="btn btn-secondary mt-3" formmethod="post" formaction="?handler=EditCancel">Zrušit</button>
+
+            <button class="btn btn-secondary mt-3"
+                    formmethod="post"
+                    formaction="?handler=EditCancel">
+                Zrušit
+            </button>
 
         </form>
     </div>
 }
 
-<!-- TÝDENNÍ ROZVRH -->
+
+@{
+    var safeStart2 = Model.StartOfWeek == DateTime.MinValue
+        ? DateTime.Today
+        : Model.StartOfWeek;
+}
+
 <div class="row">
 
     @for (int i = 0; i < 7; i++)
     {
-        var date = Model.StartOfWeek.AddDays(i);
+        var date = safeStart2.AddDays(i);
 
         <div class="col-12 col-md-1 border p-2 text-center" style="min-width: 180px;">
 
@@ -221,6 +268,8 @@ else
                         {
                             <form method="post" asp-page-handler="Teach" class="m-0 p-0">
                                 <input type="hidden" name="id" value="@p.Id" />
+                                <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
+
                                 <button class="btn btn-success btn-sm px-1 py-0"
                                         title="Označit jako odučené">
                                     ✔
@@ -230,6 +279,8 @@ else
 
                         <form method="post" asp-page-handler="EditStart" class="m-0 p-0">
                             <input type="hidden" name="id" value="@p.Id" />
+                            <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
+
                             <button class="btn btn-warning btn-sm px-1 py-0"
                                     title="Upravit lekci">
                                 ✏
@@ -238,6 +289,8 @@ else
 
                         <form method="post" asp-page-handler="Delete" class="m-0 p-0">
                             <input type="hidden" name="id" value="@p.Id" />
+                            <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
+
                             <button class="btn btn-danger btn-sm px-1 py-0"
                                     title="Smazat lekci">
                                 🗑
@@ -255,19 +308,27 @@ else
 
 @section Scripts {
     <script>
-        document.getElementById("subjectSelect")?.addEventListener("change", function () {
-            var subjectId = this.value;
+        const subjectSelect = document.getElementById("subjectSelect");
+        const topicSelect = document.getElementById("topicSelect");
 
-            fetch(`?handler=Topics&subjectId=${subjectId}`)
-                .then(response => response.json())
-                .then(data => {
-                    var topicSelect = document.getElementById("topicSelect");
-                    topicSelect.innerHTML = '<option value="">-- Vyber téma --</option>';
+        if (subjectSelect && topicSelect) {
+            subjectSelect.addEventListener("change", function () {
+                const subjectId = this.value;
 
-                    data.forEach(t => {
-                        topicSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                    });
-                });
-        });
+                fetch(`?handler=Topics&subjectId=${subjectId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        topicSelect.innerHTML = '<option value="">-- Vyber téma --</option>';
+
+                        data.forEach(t => {
+                            const opt = document.createElement("option");
+                            opt.value = t.id;
+                            opt.textContent = t.name;
+                            topicSelect.appendChild(opt);
+                        });
+                    })
+                    .catch(err => console.error("Chyba při načítání témat:", err));
+            });
+        }
     </script>
 }

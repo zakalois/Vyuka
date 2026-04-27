@@ -25,7 +25,6 @@ namespace Vyuka.Pages.Schedule
             _emailBuilder = emailBuilder;
         }
 
-        // 🔵 Barvy studentů
         private static readonly string[] StudentColors = new[]
         {
             "#FFCDD2","#F8BBD0","#E1BEE7","#D1C4E9","#C5CAE9",
@@ -117,8 +116,10 @@ namespace Vyuka.Pages.Schedule
             return new JsonResult(topics);
         }
 
-        public async Task<IActionResult> OnPostAddAsync()
+        // ADD
+        public async Task<IActionResult> OnPostAddAsync(DateTime Week)
         {
+            this.Week = Week;
             ComputeWeek();
             await LoadDropdownsAsync();
 
@@ -176,8 +177,10 @@ namespace Vyuka.Pages.Schedule
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
-        public async Task<IActionResult> OnPostEditStartAsync(int id)
+        // EDIT START
+        public async Task<IActionResult> OnPostEditStartAsync(int id, DateTime Week)
         {
+            this.Week = Week;
             ComputeWeek();
             await LoadDropdownsAsync();
 
@@ -199,14 +202,17 @@ namespace Vyuka.Pages.Schedule
             return Page();
         }
 
+        // UPDATE
         public async Task<IActionResult> OnPostUpdateAsync(
             int id,
             int StudentId,
             int SubjectId,
             int? SubjectTopicId,
             TimeSpan Start,
-            TimeSpan End)
+            TimeSpan End,
+            DateTime Week)
         {
+            this.Week = Week;
             ComputeWeek();
 
             var plan = await _context.LessonPlans.FindAsync(id);
@@ -224,13 +230,18 @@ namespace Vyuka.Pages.Schedule
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
-        public IActionResult OnPostEditCancel()
+        // CANCEL EDIT
+        public IActionResult OnPostEditCancel(DateTime Week)
         {
+            this.Week = Week;
+            ComputeWeek();
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
 
-        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        // DELETE
+        public async Task<IActionResult> OnPostDeleteAsync(int id, DateTime Week)
         {
+            this.Week = Week;
             ComputeWeek();
 
             var plan = await _context.LessonPlans
@@ -273,6 +284,38 @@ namespace Vyuka.Pages.Schedule
                 _context.LessonPlans.Remove(plan);
                 await _context.SaveChangesAsync();
             }
+
+            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
+        }
+
+        // TEACH
+        public async Task<IActionResult> OnPostTeachAsync(int id, DateTime Week)
+        {
+            this.Week = Week;
+            ComputeWeek();
+
+            var plan = await _context.LessonPlans
+                .Include(p => p.Student)
+                .Include(p => p.Subject)
+                .Include(p => p.SubjectTopic)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (plan == null)
+                return NotFound();
+
+            var hours = (int)(plan.End - plan.Start).TotalHours;
+
+            _context.Lessons.Add(new Lesson
+            {
+                StudentId = plan.StudentId,
+                SubjectId = plan.SubjectId,
+                Date = plan.Date,
+                Hours = hours,
+                IsTaught = true
+            });
+
+            plan.IsTaught = true;
+            await _context.SaveChangesAsync();
 
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }

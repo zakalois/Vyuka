@@ -1,125 +1,121 @@
-﻿using Google.Apis.Calendar.v3;
+﻿using Google.Apis.Auth.OAuth2;
+using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
+using Google.Apis.Services;
+using Microsoft.Extensions.Configuration;
 
-namespace Vyuka.Services
+public class GoogleCalendarService
 {
-    public class GoogleCalendarService
+    private readonly IConfiguration _config;
+
+    public GoogleCalendarService(IConfiguration config)
     {
-        private readonly CalendarService _calendar;
+        _config = config;
+    }
 
-        public GoogleCalendarService(CalendarService calendar)
+    private CalendarService CreateCalendarService()
+    {
+        var clientId = _config["GoogleOAuth:ClientId"];
+        var clientSecret = _config["GoogleOAuth:ClientSecret"];
+        var refreshToken = _config["GoogleOAuth:RefreshToken"];
+
+        var credential = GoogleCredential.FromJson($@"
+        {{
+            ""client_id"": ""{clientId}"",
+            ""client_secret"": ""{clientSecret}"",
+            ""refresh_token"": ""{refreshToken}"",
+            ""type"": ""authorized_user""
+        }}");
+
+        return new CalendarService(new BaseClientService.Initializer
         {
-            _calendar = calendar;
-        }
+            HttpClientInitializer = credential,
+            ApplicationName = "VyukaApp"
+        });
+    }
 
-        // ------------------------------------------------------
-        // 🔵 Vytvoření Meet události + barva podle studenta (bez PATCH)
-        // ------------------------------------------------------
-        public async Task<(string MeetLink, string EventId)> CreateMeetEventAsync(
-            DateTime start,
-            DateTime end,
-            string title,
-            string studentEmail,
-            string teacherEmail,
-            string studentFirstName,
-            string studentLastName,
-            string studentHexColor
-        )
+    // ⭐ NOVÁ 8-parametrová verze s barvou + jménem studenta
+    public async Task<(string MeetLink, string EventId)> CreateMeetEventAsync(
+        DateTime start,
+        DateTime end,
+        string title,
+        string studentEmail,
+        string teacherEmail,
+        string studentFirstName,
+        string studentLastName,
+        string hexColor)
+    {
+        var service = CreateCalendarService();
+
+        // převod HEX → Google ColorId
+        string colorId = MapHexToGoogleColorId(hexColor);
+
+        var ev = new Event
         {
-            var initial = studentFirstName[0];
-
-            // 1️⃣ převedeme HEX barvu na Google colorId
-            var colorId = MapHexToGoogleColorId(studentHexColor);
-
-            // 2️⃣ vytvoříme událost s barvou už při INSERT
-            var ev = new Event
+            Summary = $"{title} – {studentLastName} {studentFirstName[0]}.",
+            Description = "Online lekce přes Google Meet",
+            ColorId = colorId,
+            Start = new EventDateTime
             {
-                Summary = $"{title} – {studentLastName} {initial}.",
-                Description = "Online lekce přes Google Meet",
-
-                Start = new EventDateTime
+                DateTime = start,
+                TimeZone = "Europe/Prague"
+            },
+            End = new EventDateTime
+            {
+                DateTime = end,
+                TimeZone = "Europe/Prague"
+            },
+            Attendees = new List<EventAttendee>
+            {
+                new EventAttendee { Email = studentEmail },
+                new EventAttendee { Email = teacherEmail }
+            },
+            ConferenceData = new ConferenceData
+            {
+                CreateRequest = new CreateConferenceRequest
                 {
-                    DateTime = start,
-                    TimeZone = "Europe/Prague"
-                },
-                End = new EventDateTime
-                {
-                    DateTime = end,
-                    TimeZone = "Europe/Prague"
-                },
-
-                ColorId = colorId, // ← 🔥 barva už při vytvoření
-
-                Transparency = "opaque",
-
-                Attendees = new List<EventAttendee>
-                {
-                    new EventAttendee { Email = studentEmail },
-                    new EventAttendee { Email = teacherEmail },
-                    new EventAttendee { Email = "zakalois@gmail.com" },
-                    new EventAttendee { Email = "zakalois@ucitelzak.eu" }
-
-
-                },
-
-                ConferenceData = new ConferenceData
-                {
-                    CreateRequest = new CreateConferenceRequest
-                    {
-                        RequestId = Guid.NewGuid().ToString()
-                    }
+                    RequestId = Guid.NewGuid().ToString()
                 }
-            };
+            }
+        };
 
-            // 3️⃣ vytvoření události
-            var request = _calendar.Events.Insert(ev, "zakalois@ucitelzak.eu");
-            request.ConferenceDataVersion = 1;
+        var request = service.Events.Insert(ev, "zakalois@ucitelzak.eu");
+        request.ConferenceDataVersion = 1;
 
-            var created = await request.ExecuteAsync();
+        var created = await request.ExecuteAsync();
 
-            // 4️⃣ vracíme Meet link + EventId
-            return (created.HangoutLink, created.Id);
-        }
+        return (created.HangoutLink, created.Id);
+    }
 
-        // ------------------------------------------------------
-        // 🔵 Mazání události + volba odeslat / neodeslat zrušení
-        // ------------------------------------------------------
-        public async Task DeleteEventAsync(string eventId, bool notifyStudent)
+    // ⭐ Mazání události – opraveno
+    public async Task DeleteEventAsync(string eventId)
+    {
+        var service = CreateCalendarService();
+        var request = service.Events.Delete("zakalois@ucitelzak.eu", eventId);
+        await request.ExecuteAsync();
+    }
+
+    // ⭐ Mapování HEX → Google ColorId
+    private string MapHexToGoogleColorId(string hex)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            var request = _calendar.Events.Delete("zakalois@ucitelzak.eu", eventId);
+            { "#F44336", "11" }, // red
+            { "#E91E63", "3" },  // pink
+            { "#9C27B0", "6" },  // purple
+            { "#673AB7", "9" },  // deep purple
+            { "#3F51B5", "1" },  // indigo
+            { "#2196F3", "2" },  // blue
+            { "#03A9F4", "10" }, // light blue
+            { "#00BCD4", "4" },  // cyan
+            { "#009688", "5" },  // teal
+            { "#4CAF50", "7" },  // green
+            { "#8BC34A", "8" }   // light green
+        };
 
-            request.SendUpdates = notifyStudent
-                ? EventsResource.DeleteRequest.SendUpdatesEnum.All
-                : EventsResource.DeleteRequest.SendUpdatesEnum.None;
+        if (map.TryGetValue(hex, out var id))
+            return id;
 
-            await request.ExecuteAsync();
-        }
-
-        // ------------------------------------------------------
-        // 🔵 Mapování HEX → Google Calendar colorId (1–11)
-        // ------------------------------------------------------
-        private string MapHexToGoogleColorId(string hex)
-        {
-            if (string.IsNullOrWhiteSpace(hex))
-                return "1";
-
-            string[] palette = new[]
-            {
-                "#FFCDD2","#F8BBD0","#E1BEE7","#D1C4E9","#C5CAE9",
-                "#BBDEFB","#B3E5FC","#B2EBF2","#B2DFDB","#C8E6C9",
-                "#DCEDC8","#F0F4C3","#FFF9C4","#FFECB3","#FFE0B2",
-                "#FFCCBC","#D7CCC8","#CFD8DC","#F5F5F5","#E0F7FA",
-                "#E8F5E9","#FFF3E0","#F3E5F5","#EDE7F6","#E1F5FE"
-            };
-
-            int index = Array.IndexOf(palette, hex);
-
-            if (index < 0)
-                return "1";
-
-            int googleId = (index % 11) + 1;
-
-            return googleId.ToString();
-        }
+        return "2"; // default: modrá
     }
 }

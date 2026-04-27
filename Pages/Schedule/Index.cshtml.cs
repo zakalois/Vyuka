@@ -254,7 +254,8 @@ namespace Vyuka.Pages.Schedule
             {
                 if (!string.IsNullOrEmpty(plan.GoogleEventId))
                 {
-                    await _calendar.DeleteEventAsync(plan.GoogleEventId, plan.NotifyOnDelete);
+                    await _calendar.DeleteEventAsync(plan.GoogleEventId);
+
                 }
 
                 var html = await _emailBuilder.BuildCanceledAsync(

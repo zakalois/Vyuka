@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 Secrets/vyukameet-887de6c28b47.json
+appsettings.json

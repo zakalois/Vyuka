@@ -53,3 +53,40 @@ body {
     padding: 6px !important;
     font-size: 14px;
 }
+.saturday {
+    background-color: #fff7cc; /* světle žlutá */
+}
+
+.sunday {
+    background-color: #ffe0e0; /* světle červená */
+}
+.lesson-taught {
+    background-color: #c8f7c5 !important;
+}
+
+.lesson-planned {
+    background-color: #cfe2ff !important;
+}
+
+/* Všechny buňky na střed */
+table td, table th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+    /* První sloupec vlevo */
+    table td:first-child,
+    table th:first-child {
+        text-align: left;
+    }
+
+/* Barvy víkendů */
+.saturday {
+    background-color: #fff7cc;
+}
+
+.sunday {
+    background-color: #ffe0e0;
+}
+
+

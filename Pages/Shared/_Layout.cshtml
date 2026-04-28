@@ -1,43 +1,32 @@
 ﻿@using Microsoft.AspNetCore.Http
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <style>
-            .lesson-taught {
-                background-color: #c8f7c5 !important;
-            }
-
-            .lesson-planned {
-                background-color: #cfe2ff !important;
-            }
-
-            /* Všechny buňky na střed */
-            table td, table th {
-                text-align: center;
-                vertical-align: middle;
-            }
-
-                /* První sloupec vlevo */
-                table td:first-child, table th:first-child {
-                    text-align: left;
-                }
-    </style>
-
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Vyuka</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Vyuka.styles.css" asp-append-version="true" />
 </head>
 
 <body>
+
+    <!-- DEBUG / RELEASE proužek pomocí environment tagů -->
+    <environment include="Development">
+        <div style="background:#ffcccc;padding:6px;text-align:center;font-weight:bold;">
+            Vývojová verze (DEBUG)
+        </div>
+    </environment>
+
+    <environment exclude="Development">
+        <div style="background:#ccffcc;padding:6px;text-align:center;font-weight:bold;">
+            Publish verze (RELEASE)
+        </div>
+    </environment>
+
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
@@ -48,19 +37,9 @@
                 </button>
 
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+
+                    <!-- LEVÁ STRANA NAVBARU -->
                     <ul class="navbar-nav flex-grow-1">
-
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Communications/Index">Komunikace</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Reports/Overview">Přehled výuky</a>
-                        </li>
 
                         <li class="nav-item">
                             <a class="nav-link" asp-page="/Lessons/Index">Odučené hodiny</a>
@@ -91,28 +70,14 @@
                     </ul>
 
                     <!-- PRAVÁ STRANA NAVBARU -->
-                    <ul class="navbar-nav ms-auto">
-                        @if (Context.Session.GetString("UserName") != null)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Profile">
-                                    @Context.Session.GetString("UserName") (@Context.Session.GetString("UserRole"))
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Logout">Odhlásit</a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Login">Přihlásit</a>
-                            </li>
-                        }
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-page="/Logout">Odhlásit se</a>
+                        </li>
                     </ul>
 
                 </div>
+
             </div>
         </nav>
     </header>
@@ -123,16 +88,8 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Vyuka - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
 
-    @await RenderSectionAsync("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

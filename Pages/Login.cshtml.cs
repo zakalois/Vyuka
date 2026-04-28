@@ -50,33 +50,41 @@ namespace Vyuka.Pages
 
         public IActionResult OnPost()
         {
+            // Najdeme uživatele
             var user = _context.Users.FirstOrDefault(u => u.Email == Email);
+
+            // Naplníme dropdown (musí být vždy)
+            Users = _context.Users
+                .Select(u => new SelectListItem
+                {
+                    Value = u.Email,
+                    Text = $"{u.Name} ({u.Role})"
+                })
+                .ToList();
 
             if (user == null)
             {
                 ErrorMessage = "Uživatel nenalezen.";
-                OnGet();
                 return Page();
             }
 
-            // Hash hesla
+            // Hash hesla – musí být tady, aby bylo dostupné níže
             string hashed = HashPassword(Password);
 
             if (hashed != user.PasswordHash)
             {
                 ErrorMessage = "Nesprávné heslo.";
-                OnGet();
                 return Page();
             }
 
-            // 🔥 Uložení do session
+            // Uložení do session
             HttpContext.Session.SetInt32("UserId", user.Id);
             HttpContext.Session.SetString("UserName", user.Name);
             HttpContext.Session.SetString("UserRole", user.Role);
 
-            // 🔥 Redirect na router dashboardu
             return RedirectToPage("/Dashboard/Index");
         }
+
 
         private string HashPassword(string password)
         {

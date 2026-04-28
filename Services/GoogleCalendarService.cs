@@ -1,4 +1,5 @@
-﻿using Google.Apis.Auth.OAuth2;
+﻿using Google;
+using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
@@ -92,8 +93,22 @@ public class GoogleCalendarService
     {
         var service = CreateCalendarService();
         var request = service.Events.Delete("zakalois@ucitelzak.eu", eventId);
-        await request.ExecuteAsync();
+
+        try
+        {
+            await request.ExecuteAsync();
+        }
+        catch (GoogleApiException ex)
+        {
+            // Událost už neexistuje → ignorujeme
+            if (ex.HttpStatusCode == System.Net.HttpStatusCode.Gone)
+                return;
+
+            // Pokud je jiná chyba, propustíme dál
+            throw;
+        }
     }
+
 
     // ⭐ Mapování HEX → Google ColorId
     private string MapHexToGoogleColorId(string hex)

@@ -34,7 +34,8 @@ namespace Vyuka.Models
             foreach (var pm in pageModels)
                 modelBuilder.Ignore(pm);
 
-            modelBuilder.Ignore<Vyuka.Pages.Payments.PaymentsIndexModel.GlobalPaymentRow>();
+            // ❌ TENTO ŘÁDEK SMAZAT
+            // modelBuilder.Ignore<Vyuka.Pages.Payments.PaymentsIndexModel.GlobalPaymentRow>();
 
             modelBuilder.Entity<StudentSubject>()
                 .HasKey(ss => new { ss.StudentId, ss.SubjectId });
@@ -51,5 +52,6 @@ namespace Vyuka.Models
                 .Property(p => p.HoursPurchased)
                 .HasPrecision(18, 2);
         }
+
     }
 }

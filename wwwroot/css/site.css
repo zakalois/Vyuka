@@ -88,5 +88,15 @@ table td, table th {
 .sunday {
     background-color: #ffe0e0;
 }
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+}
+
+.day-column {
+    min-height: 200px;
+}
+
 
 

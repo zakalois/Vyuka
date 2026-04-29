@@ -1,74 +1,157 @@
 ﻿@page
-@model Vyuka.Pages.Lessons.LessonsIndexModel
+@model Vyuka.Pages.Lessons.IndexModel
 
-<h2>Odučené hodiny</h2>
+<div class="container mt-4">
 
-<!-- Výběr studenta -->
-<form method="get" class="mb-3">
-    <label>Student:</label>
-    <select asp-for="SelectedStudentId"
-            asp-items="Model.StudentList"
-            class="form-select"
-            onchange="this.form.submit()">
-        <option value="">-- vyberte studenta --</option>
-    </select>
-</form>
+    <h2 class="mb-4">Hodiny studenta</h2>
 
-@if (Model.SelectedStudentId > 0)
-{
-    <!-- Filtr podle datumu -->
-    <form method="get" class="row g-3 mb-3">
+    <form method="get" class="row g-3 mb-4">
 
-        <!-- zachování studenta -->
-        <input type="hidden" asp-for="SelectedStudentId" />
-
-        <div class="col-auto">
-            <label>Od:</label>
-            <input type="date" asp-for="FromDate" class="form-control" />
+        <div class="col-md-4">
+            <label class="form-label">Student</label>
+            <select asp-for="SelectedStudentId"
+                    asp-items="Model.StudentList"
+                    class="form-select"
+                    onchange="this.form.submit()">
+                <option value="0">Všichni studenti</option>
+            </select>
         </div>
 
-        <div class="col-auto">
-            <label>Do:</label>
-            <input type="date" asp-for="ToDate" class="form-control" />
+        <div class="col-md-3">
+            <label class="form-label">Od</label>
+            <input asp-for="DateFrom" type="date" class="form-control" />
         </div>
 
-        <div class="col-auto align-self-end">
-            <button type="submit" class="btn btn-primary">Filtrovat</button>
+        <div class="col-md-3">
+            <label class="form-label">Do</label>
+            <input asp-for="DateTo" type="date" class="form-control" />
         </div>
 
-        <div class="col-auto align-self-end">
-            <a href="/Lessons?SelectedStudentId=@Model.SelectedStudentId"
-                   class="btn btn-secondary">
-                Reset
-            </a>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary w-100">Filtrovat</button>
         </div>
+
     </form>
 
-    <!-- Součet hodin -->
-    <div class="alert alert-info">
-        <strong>Celkem odučeno:</strong> @Model.TotalTaughtHours hodin
+    @if (Model.SelectedStudentId == 0)
+    {
+        <div class="row text-center mb-4">
+
+            <div class="col-md-4">
+                <div class="p-3 rounded" style="background:#e3f2fd;">
+                    <h5>Předplacené hodiny</h5>
+                    <h3>@Model.SelectedStudentPrepaidHours h</h3>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 rounded" style="background:#e8f5e9;">
+                    <h5>Odučené hodiny</h5>
+                    <h3>@Model.SelectedStudentTaughtHours h</h3>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 rounded" style="background:#fff3e0;">
+                    <h5>Zůstatek</h5>
+                    <h3>@Model.SelectedStudentBalance h</h3>
+                </div>
+            </div>
+
+        </div>
+
+        return;
+    }
+
+    <div class="row text-center mb-4">
+
+        <div class="col-md-4">
+            <div class="p-3 rounded" style="background:#e3f2fd;">
+                <h5>Předplacené hodiny</h5>
+                <h3>@Model.SelectedStudentPrepaidHours h</h3>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3 rounded" style="background:#e8f5e9;">
+                <h5>Odučené hodiny</h5>
+                <h3>@Model.SelectedStudentTaughtHours h</h3>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3 rounded" style="background:#fff3e0;">
+                <h5>Zůstatek</h5>
+                <h3>@Model.SelectedStudentBalance h</h3>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Tabulka -->
-    <table class="table table-striped">
-        <thead>
+    @{
+        var nextPlanned = Model.LessonOverview
+            .Where(r => r.Type == "Plánovaná")
+            .OrderBy(r => r.Date)
+            .FirstOrDefault();
+    }
+
+    @if (nextPlanned != null)
+    {
+        <div class="mb-4 text-center p-3 rounded"
+             style="background:#ffebee; color:#c62828; font-size:1.2rem; font-weight:600;">
+            Další plánovaná hodina:
+            <strong>@nextPlanned.Date.ToString("dd.MM.yyyy")</strong>,
+            @nextPlanned.Subject,
+            @nextPlanned.Hours h
+        </div>
+    }
+    else
+    {
+        <div class="mb-4 text-center p-3 rounded"
+             style="background:#e8f5e9; color:#2e7d32; font-size:1.2rem; font-weight:600;">
+            Student nemá plánované hodiny.
+        </div>
+    }
+
+
+    <h4 class="mt-4 mb-3">Plánované a odučené hodiny</h4>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
             <tr>
                 <th>Datum</th>
                 <th>Předmět</th>
                 <th>Téma</th>
                 <th>Hodin</th>
+                <th>Typ</th>
             </tr>
         </thead>
+
         <tbody>
-            @foreach (var l in Model.Lessons)
+            @foreach (var row in Model.LessonOverview)
             {
-                <tr>
-                    <td>@l.Date.ToString("dd.MM.yyyy")</td>
-                    <td>@l.Subject?.Name</td>
-                    <td>@l.SubjectTopic?.Name</td>
-                    <td>@l.Hours</td>
+                if (row.IsSeparator)
+                {
+                    <tr><td colspan="5" style="height:14px; background:white;"></td></tr>
+                    continue;
+                }
+
+                var bg = row.Type switch
+                {
+                    "Plánovaná" => "#fffde7",
+                    "Plánovaná → Odučená" => "#e3f2fd",
+                    _ => "#e8f5e9"
+                };
+
+                <tr style="background:@bg;">
+                    <td>@row.Date.ToString("dd.MM.yyyy")</td>
+                    <td>@row.Subject</td>
+                    <td>@row.Topic</td>
+                    <td>@row.Hours</td>
+                    <td>@row.Type</td>
                 </tr>
             }
         </tbody>
     </table>
-}
+
+</div>

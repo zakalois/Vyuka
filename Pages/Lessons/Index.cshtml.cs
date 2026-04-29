@@ -6,62 +6,175 @@ using Vyuka.Models;
 
 namespace Vyuka.Pages.Lessons
 {
-    public class LessonsIndexModel : PageModel
+    public class IndexModel : PageModel
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext _db;
 
-        public LessonsIndexModel(AppDbContext context)
+        public IndexModel(AppDbContext db)
         {
-            _context = context;
+            _db = db;
         }
-
-        [BindProperty(SupportsGet = true)]
-        public DateTime? FromDate { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public DateTime? ToDate { get; set; }
-
-        public SelectList StudentList { get; set; } = default!;
-        public List<Lesson> Lessons { get; set; } = new();
-
-        public decimal TotalTaughtHours { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public int SelectedStudentId { get; set; }
 
-        public async Task OnGetAsync()
+        [BindProperty(SupportsGet = true)]
+        public DateTime? DateFrom { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? DateTo { get; set; }
+
+        public SelectList StudentList { get; set; }
+
+        public decimal SelectedStudentPrepaidHours { get; set; }
+        public decimal SelectedStudentTaughtHours { get; set; }
+        public decimal SelectedStudentBalance { get; set; }
+
+        public List<LessonRow> LessonOverview { get; set; } = new();
+        public LessonRow NextPlannedLesson { get; set; }
+
+        public class LessonRow
         {
-            // Načteme studenty – třídění podle příjmení a pak jména
-            var students = await _context.Students
+            public DateTime Date { get; set; }
+            public string Subject { get; set; }
+            public string Topic { get; set; }
+            public decimal Hours { get; set; }
+            public string Type { get; set; }
+            public bool IsSeparator { get; set; }
+        }
+
+        public void OnGet()
+        {
+            var students = _db.Students
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
-                .ToListAsync();
+                .ToList();
 
-            // Dropdown: PŘÍJMENÍ + JMÉNO (používá FullName z modelu)
             StudentList = new SelectList(students, "Id", "FullName");
 
-            if (SelectedStudentId > 0)
+            if (SelectedStudentId == 0)
             {
-                var query = _context.Lessons
-                    .Include(l => l.Subject)
-                    .Include(l => l.SubjectTopic)
-                    .Where(l => l.StudentId == SelectedStudentId && l.IsTaught)
-                    .AsQueryable();
-
-                // Filtr od data
-                if (FromDate.HasValue)
-                    query = query.Where(l => l.Date >= FromDate.Value);
-
-                // Filtr do data
-                if (ToDate.HasValue)
-                    query = query.Where(l => l.Date <= ToDate.Value);
-
-                Lessons = await query
-                    .OrderByDescending(l => l.Date)
-                    .ToListAsync();
-
-                TotalTaughtHours = Lessons.Sum(l => l.Hours);
+                LessonOverview = new();
+                return;
             }
+
+            LoadForSingleStudent();
+        }
+
+        private void LoadForSingleStudent()
+        {
+            // NEFILTROVANÉ – pro výpočet další plánované
+            var allPlanned = _db.LessonPlans
+                .Include(l => l.Subject)
+                .Include(l => l.SubjectTopic)
+                .Where(l => l.StudentId == SelectedStudentId)
+                .ToList();
+
+            var allTaught = _db.Lessons
+                .Include(l => l.Subject)
+                .Include(l => l.SubjectTopic)
+                .Where(l => l.StudentId == SelectedStudentId)
+                .ToList();
+
+            // FILTROVANÉ – jen pro tabulku
+            var plannedForTable = allPlanned.ToList();
+            var taughtForTable = allTaught.ToList();
+
+            ApplyDateFilter(ref plannedForTable, ref taughtForTable);
+
+            SelectedStudentPrepaidHours = _db.Payments
+                .Where(p => p.StudentId == SelectedStudentId)
+                .Sum(p => p.HoursPurchased);
+
+            SelectedStudentTaughtHours = taughtForTable.Sum(l => l.Hours);
+
+            SelectedStudentBalance = SelectedStudentPrepaidHours - SelectedStudentTaughtHours;
+
+            BuildLessonOverview(allPlanned, allTaught, plannedForTable, taughtForTable);
+        }
+
+        private void ApplyDateFilter(ref List<LessonPlan> planned, ref List<Lesson> taught)
+        {
+            if (DateFrom.HasValue)
+            {
+                var from = DateFrom.Value.Date;
+                planned = planned.Where(l => l.Date.Date >= from).ToList();
+                taught = taught.Where(l => l.Date.Date >= from).ToList();
+            }
+
+            if (DateTo.HasValue)
+            {
+                var to = DateTo.Value.Date;
+                planned = planned.Where(l => l.Date.Date <= to).ToList();
+                taught = taught.Where(l => l.Date.Date <= to).ToList();
+            }
+        }
+
+        private void BuildLessonOverview(
+            List<LessonPlan> allPlanned,
+            List<Lesson> allTaught,
+            List<LessonPlan> planned,
+            List<Lesson> taught)
+        {
+            LessonOverview = new List<LessonRow>();
+
+            // ⭐ 1) Pivot = max(dnešní datum, poslední odučená hodina)
+            DateTime pivotDate = DateTime.Today;
+
+            if (allTaught.Any())
+            {
+                var lastTaught = allTaught.Max(t => t.Date.Date);
+                if (lastTaught > pivotDate)
+                    pivotDate = lastTaught;
+            }
+
+            // ⭐ 2) Najít první plánovanou hodinu PO pivotu
+            NextPlannedLesson = allPlanned
+                .Where(p => p.Date.Date > pivotDate)
+                .OrderBy(p => p.Date)
+                .Select(l => new LessonRow
+                {
+                    Date = l.Date,
+                    Subject = l.Subject.Name,
+                    Topic = l.SubjectTopic?.Name ?? "",
+                    Hours = (decimal)(l.End - l.Start).TotalHours,
+                    Type = "Plánovaná"
+                })
+                .FirstOrDefault();
+
+            if (NextPlannedLesson == null)
+            {
+                NextPlannedLesson = new LessonRow
+                {
+                    Type = "Student nemá plánovanou hodinu"
+                };
+            }
+
+            // ⭐ 3) Tabulka – plánované + odučené (FILTROVANÉ)
+            var plannedRows = planned
+                .Select(l => new LessonRow
+                {
+                    Date = l.Date,
+                    Subject = l.Subject.Name,
+                    Topic = l.SubjectTopic?.Name ?? "",
+                    Hours = (decimal)(l.End - l.Start).TotalHours,
+                    Type = "Plánovaná"
+                });
+
+            var taughtRows = taught
+                .Select(l => new LessonRow
+                {
+                    Date = l.Date,
+                    Subject = l.Subject.Name,
+                    Topic = l.SubjectTopic?.Name ?? "",
+                    Hours = l.Hours,
+                    Type = "Odučená"
+                });
+
+            LessonOverview = plannedRows
+                .Concat(taughtRows)
+                .OrderByDescending(r => r.Date) // nejnovější nahoře
+                .ToList();
         }
     }
 }

@@ -1,246 +1,183 @@
 ﻿@page
-@model Vyuka.Pages.Payments.PaymentsIndexModel
+@model Vyuka.Pages.Payments.IndexModel
 
-<h2>Celkový přehled</h2>
+<h2>Platby</h2>
 
+<!-- Celkový přehled -->
 <div class="row mb-4">
-    <div class="col-md-3">
+
+    <div class="col-md-2">
         <div class="alert alert-primary text-center">
             <strong>Studentů:</strong><br />
             @Model.TotalStudents
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="alert alert-success text-center">
             <strong>Aktivních:</strong><br />
             @Model.ActiveStudents
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="alert alert-secondary text-center">
             <strong>Neaktivních:</strong><br />
             @Model.InactiveStudents
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="alert alert-info text-center">
             <strong>Celkem zaplaceno:</strong><br />
-            @Model.TotalPaidAmount Kč
+            @Model.TotalPaid Kč
         </div>
     </div>
-</div>
 
-<div class="row mb-4">
-    <div class="col-md-4">
+    <div class="col-md-2">
         <div class="alert alert-warning text-center">
             <strong>Předplacené hodiny:</strong><br />
-            @Model.TotalPrepaidHours.ToString("0.#") h
+            @Model.TotalPrepaidHours h
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="alert alert-warning text-center">
+    <div class="col-md-2">
+        <div class="alert alert-danger text-center">
             <strong>Odučené hodiny:</strong><br />
-            @Model.TotalTaughtHours.ToString("0.#") h
+            @Model.TotalTaughtHours h
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="alert alert-warning text-center">
-            <strong>Zůstatek:</strong><br />
-            @Model.TotalBalance.ToString("0.#") h
-        </div>
-    </div>
 </div>
 
-<h1>Přehled plateb</h1>
+<!-- Filtry -->
+<form method="get" class="row g-3 mb-4">
 
-<form method="get" class="mb-4">
-    <div class="row">
-
-        <div class="col-md-3">
-            <label class="form-label">Vyber studenta</label>
-
-            <!-- JEDINÁ ÚPRAVA: AUTO-SUBMIT -->
-            <select asp-for="SelectedStudentId"
-                    asp-items="Model.StudentList"
-                    class="form-select"
-                    onchange="this.form.submit()">
-                <option value="0">Všichni studenti</option>
-            </select>
-        </div>
-
-        <div class="col-md-2">
-            <label class="form-label">Od</label>
-            <input asp-for="DateFrom" type="date" class="form-control" />
-        </div>
-
-        <div class="col-md-2">
-            <label class="form-label">Do</label>
-            <input asp-for="DateTo" type="date" class="form-control" />
-        </div>
-
-        <div class="col-md-2 d-flex align-items-end">
-            <button class="btn btn-primary w-100">Filtrovat</button>
-        </div>
-
-        <div class="col-md-3 d-flex align-items-end justify-content-end">
-            <a asp-page="/Payments/Create" class="btn btn-success">Přidat platbu</a>
-        </div>
-
+    <div class="col-md-4">
+        <label class="form-label">Vyber studenta:</label>
+        <select asp-for="SelectedStudentId"
+                asp-items="Model.StudentList"
+                class="form-select"
+                onchange="this.form.submit()">
+            <option value="0">Všichni studenti</option>
+        </select>
     </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Od:</label>
+        <input asp-for="FromDate" type="date" class="form-control" />
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Do:</label>
+        <input asp-for="ToDate" type="date" class="form-control" />
+    </div>
+
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Filtrovat</button>
+    </div>
+
 </form>
 
-<h2>
-    @(Model.SelectedStudentId > 0 ? "Přehled studenta" : "Přehled všech studentů")
-</h2>
-
-<div class="row mb-4">
-
-    <div class="col-md-4">
-        <div class="alert alert-primary text-center">
-            <strong>Předplacené hodiny:</strong><br />
-            @Model.SelectedStudentPrepaidHours.ToString("0.#") h
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="alert alert-warning text-center">
-            <strong>Odučené hodiny:</strong><br />
-            @Model.SelectedStudentTaughtHours.ToString("0.#") h
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="alert alert-info text-center">
-            <strong>Zůstatek:</strong><br />
-            <span class="@(Model.SelectedStudentBalance < 0 ? "text-danger fw-bold" : "text-success fw-bold")">
-                @Model.SelectedStudentBalance.ToString("0.#") h
-            </span>
-        </div>
-    </div>
-
+<!-- Tlačítko přes celou šířku -->
+<div class="mb-4">
+    <a asp-page="/Payments/Create" class="btn btn-success w-100 py-2 fs-5">
+        ➕ Přidat platbu
+    </a>
 </div>
-
-@if (Model.SelectedStudentId == 0)
-{
-    <h2>Platební statistiky všech studentů</h2>
-
-    <div class="row mb-4">
-
-        <div class="col-md-4">
-            <div class="alert alert-success text-center">
-                <strong>Celkem zaplaceno:</strong><br />
-                @Model.TotalPaidFiltered Kč
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="alert alert-primary text-center">
-                <strong>Počet plateb:</strong><br />
-                @Model.TotalPaymentsCount
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="alert alert-info text-center">
-                <strong>Poslední platba:</strong><br />
-
-                @if (Model.LastPayment != null)
-                {
-                    <div><strong>Datum:</strong> @Model.LastPayment.Date.ToShortDateString()</div>
-                    <div><strong>Částka:</strong> @Model.LastPayment.Amount Kč</div>
-                    <div><strong>Hodiny:</strong> @Model.LastPayment.HoursPurchased.ToString("0.#") h</div>
-                }
-                else
-                {
-                    <div>Žádné platby</div>
-                }
-            </div>
-        </div>
-
-    </div>
-}
 
 @if (Model.SelectedStudentId > 0)
 {
-    <h2>Platební statistiky studenta</h2>
+    <!-- Přehled studenta -->
+    <h3>Přehled studenta</h3>
+
+    <div class="row mb-4">
+
+        <div class="col-md-4">
+            <div class="alert alert-primary text-center">
+                <strong>Předplacené hodiny:</strong><br />
+                @Model.SelectedStudentPrepaidHours h
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="alert alert-warning text-center">
+                <strong>Odučené hodiny:</strong><br />
+                @Model.SelectedStudentTaughtHours h
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="alert alert-info text-center">
+                <strong>Zůstatek:</strong><br />
+                @Model.SelectedStudentBalance h
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Platební statistiky -->
+    <h3>Platební statistiky studenta</h3>
 
     <div class="row mb-4">
 
         <div class="col-md-4">
             <div class="alert alert-success text-center">
                 <strong>Celkem zaplaceno:</strong><br />
-                @Model.Payments.Sum(p => p.Amount) Kč
+                @Model.SelectedStudentTotalPaid Kč
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="alert alert-primary text-center">
+            <div class="alert alert-secondary text-center">
                 <strong>Počet plateb:</strong><br />
-                @Model.Payments.Count()
+                @Model.SelectedStudentPaymentCount
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="alert alert-info text-center">
+            <div class="alert alert-dark text-center">
                 <strong>Poslední platba:</strong><br />
-
-                @if (Model.Payments.Any())
-                {
-                    var last = Model.Payments.OrderByDescending(p => p.Date).First();
-
-                    <div><strong>Datum:</strong> @last.Date.ToShortDateString()</div>
-                    <div><strong>Částka:</strong> @last.Amount Kč</div>
-                    <div><strong>Hodiny:</strong> @last.HoursPurchased.ToString("0.#") h</div>
-                }
-                else
-                {
-                    <div>Žádné platby</div>
-                }
+                @Model.SelectedStudentLastPaymentDate?.ToShortDateString() <br />
+                @Model.SelectedStudentLastPaymentAmount Kč — @Model.SelectedStudentLastPaymentHours h
             </div>
         </div>
 
     </div>
 }
 
-<h3>Výsledky</h3>
-
-<table class="table table-striped text-center">
-    <thead>
-        <tr>
-            <th>Datum</th>
-            <th>Částka</th>
-            <th>Předplacené hodiny</th>
-            <th>Cena/hod</th>
-            <th>Způsob</th>
-            <th class="text-start">Student</th>
-            <th>Akce</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var p in Model.Payments)
-        {
+<!-- Tabulka plateb -->
+@if (!Model.Payments.Any())
+{
+    <p class="text-muted">Žádné platby nenalezeny.</p>
+}
+else
+{
+    <table class="table table-bordered text-center">
+        <thead>
             <tr>
-                <td>@p.Date.ToShortDateString()</td>
-                <td>@p.Amount Kč</td>
-                <td>@p.HoursPurchased.ToString("0.#") h</td>
-                <td>@p.PricePerHour?.ToString("0.#") Kč</td>
-                <td>@p.Method</td>
-
-                <td class="text-start">
-                    @p.Student.LastName @p.Student.FirstName
-                </td>
-
-                <td>
-                    <a asp-page="/Payments/Delete" asp-route-id="@p.Id" class="text-danger">
-                        Smazat
-                    </a>
-                </td>
+                <th>Datum</th>
+                <th class="text-start">Student</th>
+                <th>Částka</th>
+                <th>Předplacené hodiny</th>
+                <th>Cena za hodinu</th>
+                <th>Způsob platby</th>
+                <th>Poznámka</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.Payments)
+            {
+                <tr>
+                    <td>@p.Date.ToShortDateString()</td>
+                    <td class="text-start">@p.Student.LastName @p.Student.FirstName</td>
+                    <td>@p.Amount Kč</td>
+                    <td>@p.HoursPurchased</td>
+                    <td>@p.PricePerHour Kč</td>
+                    <td>@p.Method</td>
+                    <td>@p.Note</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

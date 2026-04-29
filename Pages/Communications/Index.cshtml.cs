@@ -106,7 +106,7 @@ namespace Vyuka.Pages.Communications
                             { "StudentName", $"{student.FirstName} {student.LastName}" },
                             { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
                             { "LessonDate", plan.Date.ToString("dd.MM.yyyy") },
-                            { "LessonTime", plan.Start.ToString(@"hh\\:mm") },
+                            { "LessonTime", plan.Start.ToString(@"hh\:mm") },
                             { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
                             { "TeacherName", "Alois Učitel" }
                         };
@@ -208,7 +208,7 @@ namespace Vyuka.Pages.Communications
                             { "StudentName", $"{student.FirstName} {student.LastName}" },
                             { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
                             { "LessonDate", plan.Date.ToString("dd.MM.yyyy") },
-                            { "LessonTime", plan.Start.ToString(@"hh\\:mm") },
+                            { "LessonTime", plan.Start.ToString(@"hh\:mm") },
                             { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
                             { "TeacherName", "Alois Učitel" }
                         };

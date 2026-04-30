@@ -37,14 +37,14 @@
     <div class="col-md-2">
         <div class="alert alert-warning text-center">
             <strong>Předplacené hodiny:</strong><br />
-            @Model.TotalPrepaidHours h
+            @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentPrepaidHours) h
         </div>
     </div>
 
     <div class="col-md-2">
         <div class="alert alert-danger text-center">
             <strong>Odučené hodiny:</strong><br />
-            @Model.TotalTaughtHours h
+            @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentTaughtHours) h
         </div>
     </div>
 
@@ -103,7 +103,7 @@
         <div class="col-md-4">
             <div class="alert alert-warning text-center">
                 <strong>Odučené hodiny:</strong><br />
-                @Model.SelectedStudentTaughtHours h
+                @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentTaughtHours) h
             </div>
         </div>
 

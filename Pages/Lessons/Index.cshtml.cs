@@ -32,6 +32,11 @@ namespace Vyuka.Pages.Lessons
 
         public List<LessonRow> LessonOverview { get; set; } = new();
         public LessonRow NextPlannedLesson { get; set; }
+        public static string FormatHours(decimal hours)
+        {
+            return hours.ToString("0.#"); // vždy jedno desetinné místo
+        }
+
 
         public class LessonRow
         {

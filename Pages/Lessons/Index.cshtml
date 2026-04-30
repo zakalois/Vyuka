@@ -40,14 +40,14 @@
             <div class="col-md-4">
                 <div class="p-3 rounded" style="background:#e3f2fd;">
                     <h5>Předplacené hodiny</h5>
-                    <h3>@Model.SelectedStudentPrepaidHours h</h3>
+                    <h3>@Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentPrepaidHours) h</h3>
                 </div>
             </div>
 
             <div class="col-md-4">
                 <div class="p-3 rounded" style="background:#e8f5e9;">
                     <h5>Odučené hodiny</h5>
-                    <h3>@Model.SelectedStudentTaughtHours h</h3>
+                    <h3>@Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentTaughtHours) h</h3>
                 </div>
             </div>
 
@@ -68,34 +68,32 @@
         <div class="col-md-4">
             <div class="p-3 rounded" style="background:#e3f2fd;">
                 <h5>Předplacené hodiny</h5>
-                <h3>@Model.SelectedStudentPrepaidHours h</h3>
+                <h3>@Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentPrepaidHours) h</h3>
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="p-3 rounded" style="background:#e8f5e9;">
                 <h5>Odučené hodiny</h5>
-                <h3>@Model.SelectedStudentTaughtHours h</h3>
+                <h3>@Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentTaughtHours) h</h3>
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="p-3 rounded" style="background:#fff3e0;">
                 <h5>Zůstatek</h5>
-                <h3>@Model.SelectedStudentBalance h</h3>
+                <h3>@Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentBalance) h</h3>
             </div>
         </div>
 
     </div>
 
     @{
-        var nextPlanned = Model.LessonOverview
-            .Where(r => r.Type == "Plánovaná")
-            .OrderBy(r => r.Date)
-            .FirstOrDefault();
+        // ⭐ TADY JE OPRAVA – používáme backendovou hodnotu
+        var nextPlanned = Model.NextPlannedLesson;
     }
 
-    @if (nextPlanned != null)
+    @if (nextPlanned != null && nextPlanned.Type == "Plánovaná")
     {
         <div class="mb-4 text-center p-3 rounded"
              style="background:#ffebee; color:#c62828; font-size:1.2rem; font-weight:600;">
@@ -147,7 +145,8 @@
                     <td>@row.Date.ToString("dd.MM.yyyy")</td>
                     <td>@row.Subject</td>
                     <td>@row.Topic</td>
-                    <td>@row.Hours</td>
+                    <td>@Vyuka.Pages.Lessons.IndexModel.FormatHours(row.Hours)
+                    </td>
                     <td>@row.Type</td>
                 </tr>
             }

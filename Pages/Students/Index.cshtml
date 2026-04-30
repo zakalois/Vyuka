@@ -9,9 +9,12 @@
 
 <h1>Seznam studentů</h1>
 
-<p>
-    <a class="btn btn-primary" asp-page="Create">Nový student</a>
-</p>
+<!-- Tlačítko přes celou šířku řádku -->
+<div class="d-grid mb-3">
+    <a class="btn btn-primary btn-lg w-100" asp-page="Create">
+        Přidat studenta
+    </a>
+</div>
 
 <table class="table table-striped">
     <thead>
@@ -27,8 +30,6 @@
             <th>Příjmení rodiče</th>
             <th>Telefon rodiče</th>
             <th>Email rodiče</th>
-
-            <!-- ⭐ Pevná šířka + centrování -->
             <th class="text-center" style="width:110px;">Akce</th>
         </tr>
     </thead>
@@ -36,7 +37,6 @@
     <tbody>
         @foreach (var item in Model.Students)
         {
-            <!-- NEAKTIVNÍ STUDENT = růžový řádek -->
             <tr class="@(item.IsActive ? "" : "row-pink")">
 
                 <td>@item.LastName</td>
@@ -55,9 +55,11 @@
                     <a asp-page="Edit" asp-route-id="@item.Id" class="text-primary me-2" title="Upravit">
                         <i class="bi bi-pencil-square"></i>
                     </a>
+
                     <a asp-page="Details" asp-route-id="@item.Id" class="text-info me-2" title="Detail">
                         <i class="bi bi-search"></i>
                     </a>
+
                     <a asp-page="Delete" asp-route-id="@item.Id" class="text-danger me-3" title="Smazat">
                         <i class="bi bi-trash"></i>
                     </a>
@@ -65,14 +67,12 @@
                     <form method="post" asp-page="Toggle" asp-route-id="@item.Id" style="display:inline;">
                         @if (item.IsActive)
                         {
-                            <!-- Student je aktivní → nabídni DEAKTIVACI -->
                             <button class="btn btn-danger btn-sm" title="Deaktivovat">
                                 <i class="bi bi-person-dash"></i>
                             </button>
                         }
                         else
                         {
-                            <!-- Student je neaktivní → nabídni AKTIVACI -->
                             <button class="btn btn-success btn-sm" title="Aktivovat">
                                 <i class="bi bi-person-check"></i>
                             </button>

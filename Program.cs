@@ -1,12 +1,18 @@
-using Microsoft.EntityFrameworkCore;
-using Vyuka.Models;
-using Vyuka.Services;
-
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Vyuka.Models;
+using Vyuka.Secrets;
+using Vyuka.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ---------------------------------------------------------
+// TimeProvider – nutné pro Identity v .NET 8
+// ---------------------------------------------------------
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
 // ---------------------------------------------------------
 // SMTP nastavení
@@ -25,7 +31,7 @@ builder.Services.AddScoped<LessonPlanEmailBuilder>();
 builder.Services.AddScoped<LessonEmailBuilder>();
 builder.Services.AddScoped<OfferEmailBuilder>();
 
-// TemplateService (správně přes interface)
+// TemplateService
 builder.Services.AddScoped<ITemplateService, TemplateService>();
 
 // ---------------------------------------------------------
@@ -37,6 +43,18 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+
+// ---------------------------------------------------------
+// Identity – čistá konfigurace bez migrací
+// ---------------------------------------------------------
+builder.Services.AddIdentityCore<IdentityUser>(options =>
+{
+    options.User.RequireUniqueEmail = true;
+})
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
 
 // ---------------------------------------------------------
 // Google Calendar API klient
@@ -78,6 +96,25 @@ builder.Services.AddSession(options =>
 });
 
 var app = builder.Build();
+
+// ---------------------------------------------------------
+// Inicializace rolí při startu aplikace (bez async/await)
+// ---------------------------------------------------------
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    string[] roleNames = { Roles.Admin, Roles.Teacher, Roles.Student };
+
+    foreach (var roleName in roleNames)
+    {
+        var exists = roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult();
+        if (!exists)
+        {
+            roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
+        }
+    }
+}
 
 // ---------------------------------------------------------
 // Pipeline

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Http; // 🔥 nutné pro Session
 using System.Security.Cryptography;
 using System.Text;
 using Vyuka.Models;
@@ -29,15 +28,15 @@ namespace Vyuka.Pages
 
         public IActionResult OnGet()
         {
-            // 🔥 Pokud už je přihlášený → pryč z loginu
+            // Pokud už je přihlášený → pryč z loginu
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId != null)
             {
                 return RedirectToPage("/Dashboard/Index");
             }
 
-            // Naplnění dropdownu
-            Users = _context.Users
+            // Naplnění dropdownu z AppUsers
+            Users = _context.AppUsers
                 .Select(u => new SelectListItem
                 {
                     Value = u.Email,
@@ -50,11 +49,8 @@ namespace Vyuka.Pages
 
         public IActionResult OnPost()
         {
-            // Najdeme uživatele
-            var user = _context.Users.FirstOrDefault(u => u.Email == Email);
-
             // Naplníme dropdown (musí být vždy)
-            Users = _context.Users
+            Users = _context.AppUsers
                 .Select(u => new SelectListItem
                 {
                     Value = u.Email,
@@ -62,13 +58,16 @@ namespace Vyuka.Pages
                 })
                 .ToList();
 
+            // Najdeme uživatele v AppUsers
+            var user = _context.AppUsers.FirstOrDefault(u => u.Email == Email);
+
             if (user == null)
             {
                 ErrorMessage = "Uživatel nenalezen.";
                 return Page();
             }
 
-            // Hash hesla – musí být tady, aby bylo dostupné níže
+            // Hash hesla
             string hashed = HashPassword(Password);
 
             if (hashed != user.PasswordHash)
@@ -84,7 +83,6 @@ namespace Vyuka.Pages
 
             return RedirectToPage("/Dashboard/Index");
         }
-
 
         private string HashPassword(string password)
         {

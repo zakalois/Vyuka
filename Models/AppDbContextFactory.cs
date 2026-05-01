@@ -9,7 +9,6 @@ namespace Vyuka.Models
         {
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
 
-            // 🔵 Cesta k tvému connection stringu
             optionsBuilder.UseSqlServer(
                 "Server=(localdb)\\mssqllocaldb;Database=Vyuka;Trusted_Connection=True;MultipleActiveResultSets=true");
 

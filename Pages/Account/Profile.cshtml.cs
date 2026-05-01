@@ -2,30 +2,33 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Vyuka.Models;
 
-public class ProfileModel : PageModel
+namespace Vyuka.Pages.Account
 {
-    private readonly AppDbContext _context;
-
-    public ProfileModel(AppDbContext context)
+    public class ProfileModel : PageModel
     {
-        _context = context;
-    }
+        private readonly AppDbContext _context;
 
-    public Vyuka.Models.AppUser User { get; set; }
+        public ProfileModel(AppDbContext context)
+        {
+            _context = context;
+        }
 
+        // ⭐ Jediný správný typ
+        public AppUser UserData { get; set; }
 
-    public IActionResult OnGet()
-    {
-        var userId = HttpContext.Session.GetInt32("UserId");
+        public IActionResult OnGet()
+        {
+            var sessionUserId = HttpContext.Session.GetInt32("UserId");
+            if (sessionUserId == null)
+                return RedirectToPage("/Login");
 
-        if (userId == null)
-            return RedirectToPage("/Login");
+            // ⭐ Používáme AppUsers (správná tabulka)
+            UserData = _context.AppUsers.FirstOrDefault(u => u.Id == sessionUserId.Value);
 
-        User = _context.Users.FirstOrDefault(u => u.Id == userId);
+            if (UserData == null)
+                return RedirectToPage("/Login");
 
-        if (User == null)
-            return RedirectToPage("/Login");
-
-        return Page();
+            return Page();
+        }
     }
 }

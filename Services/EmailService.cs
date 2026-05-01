@@ -13,11 +13,13 @@ namespace Vyuka.Services
             _config = config;
         }
 
+        // ⭐ Základní odeslání bez příloh
         public async Task SendAsync(string to, string subject, string html)
         {
             await SendAsync(to, subject, html, null);
         }
 
+        // ⭐ Odeslání s přílohami (QR kódy, obrázky)
         public async Task SendAsync(
             string to,
             string subject,
@@ -40,7 +42,8 @@ namespace Vyuka.Services
             {
                 HtmlBody = html
             };
-            // ⭐ Přidání loga jako embedded obrázek
+
+            // ⭐ Logo jako embedded obrázek
             var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logo.jpg");
             if (File.Exists(logoPath))
             {
@@ -51,7 +54,7 @@ namespace Vyuka.Services
                 logo.ContentType.MediaSubtype = "jpeg";
             }
 
-            // ⭐ QR kódy jako embedded obrázky
+            // ⭐ QR kódy / jiné obrázky jako embedded
             if (attachments != null)
             {
                 foreach (var att in attachments)
@@ -59,11 +62,9 @@ namespace Vyuka.Services
                     var img = builder.LinkedResources.Add(att.FilePath);
                     img.ContentId = att.ContentId;
 
-                    // Gmail vyžaduje INLINE
                     img.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
                     img.ContentType.Name = Path.GetFileName(att.FilePath);
 
-                    // Typ souboru
                     if (att.FilePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                         att.FilePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
                     {
@@ -82,7 +83,7 @@ namespace Vyuka.Services
 
             using var client = new SmtpClient();
 
-            // ⭐ Gmail – správné připojení (port 587 + STARTTLS)
+            // ⭐ Gmail STARTTLS (port 587)
             await client.ConnectAsync(
                 _config["Smtp:Host"],
                 int.Parse(_config["Smtp:Port"]),
@@ -96,6 +97,28 @@ namespace Vyuka.Services
 
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
+        }
+
+        // ⭐ Nová metoda pro reset hesla
+        public async Task SendPasswordResetEmail(string email, string name, string token)
+        {
+            // URL aplikace z appsettings.json
+            var baseUrl = _config["App:BaseUrl"] ?? "https://localhost:5001";
+
+            var resetLink = $"{baseUrl}/Account/ResetPassword?token={token}";
+
+            var subject = "Reset hesla";
+
+            var html = $@"
+                <p>Ahoj <strong>{name}</strong>,</p>
+                <p>pro reset hesla klikni na následující odkaz:</p>
+                <p><a href=""{resetLink}"">Resetovat heslo</a></p>
+                <p>Odkaz je platný 1 hodinu.</p>
+                <br>
+                <img src=""cid:logo"" style=""width:150px;"" />
+            ";
+
+            await SendAsync(email, subject, html, null);
         }
     }
 }

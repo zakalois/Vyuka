@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using System.Reflection;
 
 namespace Vyuka.Models
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<IdentityUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
@@ -12,10 +14,12 @@ namespace Vyuka.Models
 
         public DbSet<Student> Students { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
-        public DbSet<AppUser> Users { get; set; }
+
+        // ✔ Přejmenováno – žádný konflikt s AspNetUsers
+        public DbSet<AppUser> AppUsers { get; set; }
+
         public DbSet<Reward> Rewards { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
-
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<StudentSubject> StudentSubjects { get; set; }
@@ -34,9 +38,6 @@ namespace Vyuka.Models
             foreach (var pm in pageModels)
                 modelBuilder.Ignore(pm);
 
-            // ❌ TENTO ŘÁDEK SMAZAT
-            // modelBuilder.Ignore<Vyuka.Pages.Payments.PaymentsIndexModel.GlobalPaymentRow>();
-
             modelBuilder.Entity<StudentSubject>()
                 .HasKey(ss => new { ss.StudentId, ss.SubjectId });
 
@@ -52,6 +53,5 @@ namespace Vyuka.Models
                 .Property(p => p.HoursPurchased)
                 .HasPrecision(18, 2);
         }
-
     }
 }

@@ -1,54 +1,79 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Vyuka.Models;
 using System.Security.Cryptography;
 using System.Text;
+using Vyuka.Models;
 
-public class ChangePasswordModel : PageModel
+namespace Vyuka.Pages.Account
 {
-    private readonly AppDbContext _context;
-
-    public ChangePasswordModel(AppDbContext context)
+    public class ChangePasswordModel : PageModel
     {
-        _context = context;
-    }
+        private readonly AppDbContext _context;
 
-    [BindProperty] public string CurrentPassword { get; set; }
-    [BindProperty] public string NewPassword { get; set; }
-    public string Message { get; set; }
-
-    public IActionResult OnGet()
-    {
-        if (HttpContext.Session.GetInt32("UserId") == null)
-            return RedirectToPage("/Login");
-
-        return Page();
-    }
-
-    public IActionResult OnPost()
-    {
-        var userId = HttpContext.Session.GetInt32("UserId");
-        if (userId == null) return RedirectToPage("/Login");
-
-        var user = _context.Users.FirstOrDefault(u => u.Id == userId);
-        if (user == null) return RedirectToPage("/Login");
-
-        if (user.PasswordHash != Hash(CurrentPassword))
+        public ChangePasswordModel(AppDbContext context)
         {
-            Message = "Současné heslo není správné.";
+            _context = context;
+        }
+
+        [BindProperty]
+        public ChangePasswordInput Input { get; set; }
+
+        public string ErrorMessage { get; set; }
+        public string SuccessMessage { get; set; }
+
+        public class ChangePasswordInput
+        {
+            public string OldPassword { get; set; }
+            public string NewPassword { get; set; }
+            public string ConfirmPassword { get; set; }
+        }
+
+        public IActionResult OnGet()
+        {
+            if (HttpContext.Session.GetInt32("UserId") == null)
+                return RedirectToPage("/Login");
+
             return Page();
         }
 
-        user.PasswordHash = Hash(NewPassword);
-        _context.SaveChanges();
+        public IActionResult OnPost()
+        {
+            var sessionUserId = HttpContext.Session.GetInt32("UserId");
+            if (sessionUserId == null)
+                return RedirectToPage("/Login");
 
-        Message = "Heslo bylo úspěšně změněno.";
-        return Page();
-    }
+            var user = _context.AppUsers.FirstOrDefault(u => u.Id == sessionUserId.Value);
+            if (user == null)
+                return RedirectToPage("/Login");
 
-    private string Hash(string input)
-    {
-        using var sha = SHA256.Create();
-        return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(input)));
+            // 1) Ověření starého hesla
+            var oldHash = HashPassword(Input.OldPassword);
+            if (oldHash != user.PasswordHash)
+            {
+                ErrorMessage = "Současné heslo není správné.";
+                return Page();
+            }
+
+            // 2) Ověření nového hesla
+            if (Input.NewPassword != Input.ConfirmPassword)
+            {
+                ErrorMessage = "Nové heslo a potvrzení hesla se neshodují.";
+                return Page();
+            }
+
+            // 3) Uložení nového hesla
+            user.PasswordHash = HashPassword(Input.NewPassword);
+            _context.SaveChanges();
+
+            SuccessMessage = "Heslo bylo úspěšně změněno.";
+            return Page();
+        }
+
+        private string HashPassword(string password)
+        {
+            using var sha = SHA256.Create();
+            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToHexString(bytes);
+        }
     }
 }

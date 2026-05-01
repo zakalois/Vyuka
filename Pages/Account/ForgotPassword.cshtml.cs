@@ -1,61 +1,54 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Vyuka.Models;
 using Vyuka.Services;
-using System.Security.Cryptography;
-using System.Text;
 
-public class ForgotPasswordModel : PageModel
+namespace Vyuka.Pages.Account
 {
-    private readonly AppDbContext _context;
-    private readonly IEmailService _email;
-
-    public ForgotPasswordModel(AppDbContext context, IEmailService email)
+    public class ForgotPasswordModel : PageModel
     {
-        _context = context;
-        _email = email;
-    }
+        private readonly AppDbContext _context;
+        private readonly IEmailService _email;
 
-    [BindProperty] public string Email { get; set; }
-    public List<SelectListItem> Users { get; set; }
-    public string Message { get; set; }
-
-    public void OnGet()
-    {
-        Users = _context.Users
-            .Select(u => new SelectListItem { Value = u.Email, Text = u.Name })
-            .ToList();
-    }
-
-    public async Task<IActionResult> OnPost()
-
-    {
-        var user = _context.Users.FirstOrDefault(u => u.Email == Email);
-        if (user == null)
+        public ForgotPasswordModel(AppDbContext context, IEmailService email)
         {
-            Message = "Uživatel nenalezen.";
-            return Page();
+            _context = context;
+            _email = email;
         }
 
-        var newPassword = GeneratePassword();
-        user.PasswordHash = Hash(newPassword);
-        _context.SaveChanges();
+        [BindProperty]
+        public string Email { get; set; }
 
-        await _email.SendAsync(user.Email, "Nové heslo", $"Vaše nové heslo je: {newPassword}");
+        public void OnGet()
+        {
+        }
 
-        Message = "Nové heslo bylo odesláno na e‑mail.";
-        return Page();
-    }
+        public IActionResult OnPost()
+        {
+            if (string.IsNullOrWhiteSpace(Email))
+                return Page();
 
-    private string GeneratePassword()
-    {
-        return Guid.NewGuid().ToString("N")[..8];
-    }
+            // Najdeme uživatele v AppUsers
+            var user = _context.AppUsers.FirstOrDefault(u => u.Email == Email);
+            if (user == null)
+                return Page(); // neprozrazujeme, že neexistuje
 
-    private string Hash(string input)
-    {
-        using var sha = SHA256.Create();
-        return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(input)));
+            // Vytvoříme token
+            var token = Guid.NewGuid().ToString("N");
+
+            _context.PasswordResetTokens.Add(new PasswordResetToken
+            {
+                UserId = user.Id,
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddHours(1)   // ⭐ správný název vlastnosti
+            });
+
+            _context.SaveChanges();
+
+            // Odešleme e‑mail (async → ale nemusí být awaited, protože vracíme redirect)
+            _email.SendPasswordResetEmail(user.Email, user.Name, token);
+
+            return RedirectToPage("/Account/ForgotPasswordConfirmation");
+        }
     }
 }

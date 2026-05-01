@@ -163,8 +163,12 @@ else
                 <th>Cena za hodinu</th>
                 <th>Způsob platby</th>
                 <th>Poznámka</th>
+
+                <!-- ⭐ Sloupec Akce -->
+                <th class="text-center" style="width:110px;">Akce</th>
             </tr>
         </thead>
+
         <tbody>
             @foreach (var p in Model.Payments)
             {
@@ -176,7 +180,19 @@ else
                     <td>@p.PricePerHour Kč</td>
                     <td>@p.Method</td>
                     <td>@p.Note</td>
+
+                    <!-- ⭐ Ikony pro editaci a mazání -->
+                    <td class="text-center" style="white-space:nowrap;">
+                        <a asp-page="Edit" asp-route-id="@p.Id" class="text-primary me-2" title="Upravit">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+
+                        <a asp-page="Delete" asp-route-id="@p.Id" class="text-danger" title="Smazat">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
                 </tr>
+
             }
         </tbody>
     </table>

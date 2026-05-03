@@ -1,0 +1,26 @@
+﻿@page
+@model Vyuka.Pages.StudentPortal.ProfileModel
+
+<div class="container mt-4">
+
+    <h2>Můj profil</h2>
+
+    <div class="card mt-4">
+        <div class="card-body">
+
+            <p><strong>Jméno:</strong> @Model.FullName</p>
+            <p><strong>Email:</strong> @Model.Email</p>
+            <p><strong>Telefon:</strong> @Model.Phone</p>
+            <p><strong>Datum registrace:</strong> @Model.CreatedAt</p>
+            <p><strong>Poslední přihlášení:</strong> @Model.LastLogin</p>
+            <p><strong>Role:</strong> Student</p>
+
+            <div class="mt-4">
+                <a asp-page="/Account/Manage/ChangePassword" class="btn btn-primary w-100 mb-2">Změnit heslo</a>
+                <a asp-page="/StudentPortal/EditProfile" class="btn btn-outline-dark w-100">Upravit profil</a>
+            </div>
+
+        </div>
+    </div>
+
+</div>

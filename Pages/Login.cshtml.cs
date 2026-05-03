@@ -32,7 +32,7 @@ namespace Vyuka.Pages
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId != null)
             {
-                return RedirectToPage("/Dashboard/Index");
+                return RedirectToPage("/Admin/Dashboard");
             }
 
             // Naplnění dropdownu z AppUsers
@@ -81,7 +81,7 @@ namespace Vyuka.Pages
             HttpContext.Session.SetString("UserName", user.Name);
             HttpContext.Session.SetString("UserRole", user.Role);
 
-            return RedirectToPage("/Dashboard/Index");
+            return RedirectToPage("/Admin/Dashboard");
         }
 
         private string HashPassword(string password)

@@ -1,15 +1,14 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Vyuka.Models;
 using System.Linq;
-using Microsoft.Data.SqlClient;
 
-namespace Vyuka.Pages.Dashboard
+namespace Vyuka.Pages.Admin
 {
-    public class AdminModel : PageModel
+    public class DashboardModel : PageModel
     {
         private readonly AppDbContext _context;
 
-        public AdminModel(AppDbContext context)
+        public DashboardModel(AppDbContext context)
         {
             _context = context;
         }
@@ -35,6 +34,5 @@ namespace Vyuka.Pages.Dashboard
                 .OrderBy(dt => dt)
                 .FirstOrDefault();
         }
-
     }
 }

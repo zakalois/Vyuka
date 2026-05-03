@@ -30,21 +30,21 @@
     <div class="col-md-2">
         <div class="alert alert-info text-center">
             <strong>Celkem zaplaceno:</strong><br />
-            @Model.TotalPaid Kč
+            @Model.TotalPaid.ToString("N0") Kč
         </div>
     </div>
 
     <div class="col-md-2">
         <div class="alert alert-warning text-center">
             <strong>Předplacené hodiny:</strong><br />
-            @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentPrepaidHours) h
+            @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.TotalPrepaidHours) h
         </div>
     </div>
 
     <div class="col-md-2">
         <div class="alert alert-danger text-center">
             <strong>Odučené hodiny:</strong><br />
-            @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentTaughtHours) h
+            @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.TotalTaughtHours) h
         </div>
     </div>
 

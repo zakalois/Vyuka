@@ -161,7 +161,7 @@ app.Use(async (context, next) =>
 // Defaultní redirect
 app.MapGet("/", context =>
 {
-    context.Response.Redirect("/Dashboard/Admin");
+    context.Response.Redirect("/Admin/Dashboard");
     return Task.CompletedTask;
 });
 

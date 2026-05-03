@@ -34,7 +34,7 @@ namespace Vyuka.Pages.Lessons
         public LessonRow NextPlannedLesson { get; set; }
         public static string FormatHours(decimal hours)
         {
-            return hours.ToString("0.#"); // vždy jedno desetinné místo
+            return hours.ToString("0.0"); // vždy jedno desetinné místo
         }
 
 
@@ -59,7 +59,7 @@ namespace Vyuka.Pages.Lessons
 
             if (SelectedStudentId == 0)
             {
-                LessonOverview = new();
+                LoadForAllStudents();
                 return;
             }
 
@@ -97,6 +97,48 @@ namespace Vyuka.Pages.Lessons
 
             BuildLessonOverview(allPlanned, allTaught, plannedForTable, taughtForTable);
         }
+        private void LoadForAllStudents()
+        {
+            // Součet všech předplacených hodin
+            SelectedStudentPrepaidHours = _db.Payments.Sum(p => p.HoursPurchased);
+
+            // Součet všech odučených hodin
+            SelectedStudentTaughtHours = _db.Lessons.Sum(l => l.Hours);
+
+            // Zůstatek
+            SelectedStudentBalance = SelectedStudentPrepaidHours - SelectedStudentTaughtHours;
+
+            // Tabulka se nezobrazuje → LessonOverview necháme prázdný
+            LessonOverview = new();
+
+            // NextPlannedLesson – první plánovaná hodina v budoucnu
+            var next = _db.LessonPlans
+                .Include(l => l.Subject)
+                .Include(l => l.SubjectTopic)
+                .Where(l => l.Date > DateTime.Now)
+                .OrderBy(l => l.Date)
+                .FirstOrDefault();
+
+            if (next != null)
+            {
+                NextPlannedLesson = new LessonRow
+                {
+                    Date = next.Date,
+                    Subject = next.Subject.Name,
+                    Topic = next.SubjectTopic?.Name ?? "",
+                    Hours = (decimal)(next.End - next.Start).TotalHours,
+                    Type = "Plánovaná"
+                };
+            }
+            else
+            {
+                NextPlannedLesson = new LessonRow
+                {
+                    Type = "Žádná plánovaná hodina"
+                };
+            }
+        }
+
 
         private void ApplyDateFilter(ref List<LessonPlan> planned, ref List<Lesson> taught)
         {

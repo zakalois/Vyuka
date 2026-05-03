@@ -1,25 +1,38 @@
+/* ============================================================
+   1) ZÁKLADNÍ STYLY APLIKACE
+   ============================================================ */
+
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    html {
+        font-size: 16px;
+    }
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+/* ============================================================
+   2) OBRÁZKY A SCHEDULE
+   ============================================================ */
+
 .subject-image {
     width: 120px;
     height: 120px;
@@ -27,6 +40,7 @@ body {
     border-radius: 6px;
     border: 1px solid #ddd;
 }
+
 .image-preview {
     width: 150px;
     height: 150px;
@@ -35,59 +49,7 @@ body {
     border: 1px solid #ddd;
     margin-top: 10px;
 }
-.schedule-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 12px;
-}
 
-.day-column .card {
-    height: 100%;
-}
-
-.day-column .card-body {
-    padding: 8px;
-}
-
-.day-column .border {
-    padding: 6px !important;
-    font-size: 14px;
-}
-.saturday {
-    background-color: #fff7cc; /* světle žlutá */
-}
-
-.sunday {
-    background-color: #ffe0e0; /* světle červená */
-}
-.lesson-taught {
-    background-color: #c8f7c5 !important;
-}
-
-.lesson-planned {
-    background-color: #cfe2ff !important;
-}
-
-/* Všechny buňky na střed */
-table td, table th {
-    text-align: center;
-    vertical-align: middle;
-}
-
-    /* První sloupec vlevo */
-    table td:first-child,
-    table th:first-child {
-        text-align: left;
-    }
-
-/* Barvy víkendů */
-.saturday {
-    background-color: #fff7cc;
-}
-
-.sunday {
-    background-color: #ffe0e0;
-}
 .schedule-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -98,5 +60,236 @@ table td, table th {
     min-height: 200px;
 }
 
+    .day-column .card {
+        height: 100%;
+    }
 
+    .day-column .card-body {
+        padding: 8px;
+    }
 
+    .day-column .border {
+        padding: 6px !important;
+        font-size: 14px;
+    }
+
+.saturday {
+    background-color: #fff7cc;
+}
+
+.sunday {
+    background-color: #ffe0e0;
+}
+
+.lesson-taught {
+    background-color: #c8f7c5 !important;
+}
+
+.lesson-planned {
+    background-color: #cfe2ff !important;
+}
+
+/* Všechny buňky na střed */
+table td,
+table th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+    table td:first-child,
+    table th:first-child {
+        text-align: left;
+    }
+
+/* ============================================================
+   3) DASHBOARD – GLOBÁLNÍ PROMĚNNÉ A DARK MODE
+   ============================================================ */
+
+:root {
+    --primary: #1e3a8a;
+    --primary-light: #3b82f6;
+    --bg: #f1f5f9;
+    --text: #1e293b;
+    --white: #ffffff;
+}
+
+body.dark {
+    --bg: #0f172a;
+    --text: #f8fafc;
+    --white: #1e293b;
+    --primary: #60a5fa;
+    --primary-light: #93c5fd;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    transition: 0.3s;
+}
+
+/* ============================================================
+   4) DASHBOARD – KOMPONENTY
+   ============================================================ */
+
+.user-kpi-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.profile-inline {
+    text-align: center;
+}
+
+    .profile-inline img {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary-light);
+    }
+
+    .profile-inline .profile-name {
+        margin-top: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .profile-inline .profile-role {
+        margin-top: 4px;
+        font-size: 15px;
+        font-weight: 600;
+        opacity: 0.8;
+        color: var(--primary-light);
+    }
+
+    .profile-inline .logout-link {
+        margin-top: 10px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+        .profile-inline .logout-link a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+            .profile-inline .logout-link a:hover {
+                color: var(--primary);
+            }
+
+.kpi-inline-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.kpi-box {
+    background: var(--white);
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.kpi-title {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+.kpi-value {
+    font-size: 34px;
+    font-weight: 700;
+    margin-top: 8px;
+    color: var(--primary);
+}
+
+.kpi-sub {
+    font-size: 18px;
+    margin-top: 4px;
+    opacity: 0.8;
+}
+
+.actions {
+    margin-bottom: 32px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+    /* ⭐ OPRAVA – TLAČÍTKA JEN PRO DASHBOARD */
+    .actions .btn,
+    .google-switch a,
+    .gmail-box .btn {
+        background: var(--primary-light);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+        .actions .btn:hover,
+        .google-switch a:hover,
+        .gmail-box .btn:hover {
+            background: var(--primary);
+        }
+
+.gmail-box {
+    background: var(--white);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    margin-bottom: 32px;
+}
+
+    .gmail-box h3 {
+        margin-top: 0;
+        text-align: center;
+    }
+
+.google-switch a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px;
+    padding: 12px 20px;
+    background: var(--primary-light);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+    .google-switch a:hover {
+        background: var(--primary);
+    }
+
+.google-icon {
+    width: 22px;
+    height: 22px;
+}
+
+/* ============================================================
+   RESET IKON – PŮVODNÍ VZHLED
+   ============================================================ */
+
+.bi {
+    color: #333 !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.dark .bi {
+    color: #ddd !important;
+}

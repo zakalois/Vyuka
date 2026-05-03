@@ -1,0 +1,122 @@
+﻿@page "/Admin/Dashboard"
+@model Vyuka.Pages.Admin.DashboardModel
+@using Microsoft.AspNetCore.Http
+
+@{
+    ViewData["Title"] = "Řídicí panel Administrátora";
+
+    var userName = !string.IsNullOrEmpty(User.Identity?.Name)
+        ? User.Identity.Name
+        : "Přihlášený uživatel";
+
+    var userRole = HttpContext.Session.GetString("UserRole") ?? "Role neznámá";
+}
+
+<h1 class="mb-4">Řídicí panel Administrátora</h1>
+
+<div class="user-kpi-row">
+    <div class="profile-inline">
+        <img src="/images/profile-user.jpg" alt="Profil">
+        <div class="profile-name">@userName</div>
+        <div class="profile-role">@userRole</div>
+
+        <div class="logout-link">
+            <a href="/Logout">Odhlásit se</a>
+        </div>
+    </div>
+
+    <div class="kpi-inline-grid">
+        <div class="kpi-box">
+            <div class="kpi-title">Studenti</div>
+            <div class="kpi-value">24</div>
+        </div>
+
+        <div class="kpi-box">
+            <div class="kpi-title">Hodiny tento týden</div>
+            <div class="kpi-value">8</div>
+        </div>
+
+        <div class="kpi-box">
+            <div class="kpi-title">Nejbližší lekce</div>
+            <div class="kpi-value">
+                @(Model.NextLessonDate?.ToString("d. MMMM") ?? "Žádná lekce")
+            </div>
+            <div class="kpi-sub">
+                @(Model.NextLessonDate?.ToString("HH:mm") ?? "")
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="actions">
+    <a class="btn" href="/Admin/Students/Create">Přidat studenta</a>
+    <a class="btn" href="/Admin/Students">Studenti</a>
+    <a class="btn" href="/Schedule">Rozvrh</a>
+    <a class="btn" href="/Offers/Create">Vytvořit nabídku</a>
+    <a class="btn" href="/Payments/Index">Finance</a>
+</div>
+
+<div class="gmail-box">
+    <h3>Online služby</h3>
+
+    <div class="google-switch" style="text-align:center; margin-bottom:15px;">
+        <a href="https://mail.google.com" target="_blank">
+            <img class="google-icon" src="https://www.gstatic.com/images/branding/product/1x/gmail_48dp.png" alt="">
+            Gmail
+        </a>
+
+        <a href="https://calendar.google.com" target="_blank">
+            <img class="google-icon" src="https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png" alt="">
+            Kalendář
+        </a>
+
+        <a href="https://meet.google.com" target="_blank">
+            <img class="google-icon" src="https://www.gstatic.com/images/branding/product/1x/meet_48dp.png" alt="">
+            Meet
+        </a>
+
+        <a href="https://drive.google.com" target="_blank">
+            <img class="google-icon" src="https://www.gstatic.com/images/branding/product/1x/drive_48dp.png" alt="">
+            Drive
+        </a>
+
+        <a href="https://web.whatsapp.com" target="_blank">
+            <img class="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="">
+            WhatsApp
+        </a>
+
+        <a href="/Communications">
+            <img class="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg" alt="">
+            E‑mailová komunikace
+        </a>
+    </div>
+
+    <p style="text-align:center; opacity:0.7; font-size:14px;">
+        Google služby se otevřou v novém okně.
+        E‑mailová komunikace se otevře zde v aplikaci.
+    </p>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const body = document.body;
+            const toggle = document.getElementById('darkToggle');
+
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark') {
+                body.classList.add('dark');
+                if (toggle) toggle.textContent = 'Světlý režim';
+            }
+
+            if (toggle) {
+                toggle.addEventListener('click', function () {
+                    body.classList.toggle('dark');
+                    const isDark = body.classList.contains('dark');
+                    toggle.textContent = isDark ? 'Světlý režim' : 'Tmavý režim';
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                });
+            }
+        })();
+    </script>
+}

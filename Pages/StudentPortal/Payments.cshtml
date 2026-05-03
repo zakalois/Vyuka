@@ -1,0 +1,51 @@
+﻿@page
+@model Vyuka.Pages.StudentPortal.PaymentsModel
+
+<div class="container mt-4">
+
+    <h2>Moje platby – @Model.StudentName</h2>
+
+    <div class="row text-center mb-4 mt-4">
+
+        <div class="col-md-6">
+            <div class="p-3 rounded" style="background:#e3f2fd;">
+                <h5>Celkem zakoupených hodin</h5>
+                <h3>@Model.TotalPurchasedHours.ToString("0.0") h</h3>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="p-3 rounded" style="background:#e8f5e9;">
+                <h5>Celkem zaplaceno</h5>
+                <h3>@Model.TotalPaidAmount Kč</h3>
+            </div>
+        </div>
+
+    </div>
+
+    <h4 class="mt-4 mb-3">Historie plateb</h4>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>Datum</th>
+                <th>Částka</th>
+                <th>Hodin</th>
+                <th>Metoda</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var p in Model.Payments)
+            {
+                <tr>
+                    <td>@p.Date.ToString("dd.MM.yyyy")</td>
+                    <td>@p.Amount Kč</td>
+                    <td>@p.HoursPurchased.ToString("0.0")</td>
+                    <td>@p.Method</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>

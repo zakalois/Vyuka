@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Vyuka.Models;
 
-namespace Vyuka.Pages.Students
+namespace Vyuka.Pages.Admin.Students
+
 {
     public class ToggleModel : PageModel
     {

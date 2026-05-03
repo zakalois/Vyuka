@@ -15,7 +15,6 @@ namespace Vyuka.Pages.Payments
             _context = context;
         }
 
-        // Filtry
         [BindProperty(SupportsGet = true)]
         public int SelectedStudentId { get; set; }
 
@@ -25,10 +24,8 @@ namespace Vyuka.Pages.Payments
         [BindProperty(SupportsGet = true)]
         public DateTime? ToDate { get; set; }
 
-        // Dropdown studentů
         public SelectList StudentList { get; set; } = default!;
 
-        // Globální přehled
         public int TotalStudents { get; set; }
         public int ActiveStudents { get; set; }
         public int InactiveStudents { get; set; }
@@ -36,24 +33,20 @@ namespace Vyuka.Pages.Payments
         public decimal TotalPrepaidHours { get; set; }
         public decimal TotalTaughtHours { get; set; }
 
-        // Přehled studenta
         public decimal SelectedStudentPrepaidHours { get; set; }
         public decimal SelectedStudentTaughtHours { get; set; }
         public decimal SelectedStudentBalance => SelectedStudentPrepaidHours - SelectedStudentTaughtHours;
 
-        // Platební statistiky studenta
         public decimal SelectedStudentTotalPaid { get; set; }
         public int SelectedStudentPaymentCount { get; set; }
         public DateTime? SelectedStudentLastPaymentDate { get; set; }
         public decimal SelectedStudentLastPaymentAmount { get; set; }
         public decimal SelectedStudentLastPaymentHours { get; set; }
 
-        // Tabulka plateb
         public List<Payment> Payments { get; set; } = new();
 
         public async Task OnGetAsync()
         {
-            // Dropdown studentů
             var students = await _context.Students
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
@@ -69,7 +62,6 @@ namespace Vyuka.Pages.Payments
                 "FullName"
             );
 
-            // Globální přehled
             TotalStudents = await _context.Students.CountAsync();
             ActiveStudents = await _context.Students.CountAsync(s => s.IsActive);
             InactiveStudents = TotalStudents - ActiveStudents;
@@ -77,13 +69,13 @@ namespace Vyuka.Pages.Payments
             TotalPaid = await _context.Payments
                 .SumAsync(p => (decimal?)p.Amount) ?? 0;
 
-            TotalPrepaidHours = await _context.Payments
-                .SumAsync(p => (decimal?)p.HoursPurchased) ?? 0;
+            // ⭐ OPRAVA – zaokrouhlení na 1 desetinné místo
+            TotalPrepaidHours = Math.Round(
+                await _context.Payments.SumAsync(p => (decimal?)p.HoursPurchased) ?? 0, 1);
 
-            TotalTaughtHours = await _context.Lessons
-                .SumAsync(l => (decimal?)l.Hours) ?? 0;
+            TotalTaughtHours = Math.Round(
+                await _context.Lessons.SumAsync(l => (decimal?)l.Hours) ?? 0, 1);
 
-            // Základní dotaz na platby
             var query = _context.Payments
                 .Include(p => p.Student)
                 .AsQueryable();
@@ -101,16 +93,17 @@ namespace Vyuka.Pages.Payments
                 .OrderByDescending(p => p.Date)
                 .ToListAsync();
 
-            // Přehled a statistiky vybraného studenta
             if (SelectedStudentId > 0)
             {
-                SelectedStudentPrepaidHours = await _context.Payments
-                    .Where(p => p.StudentId == SelectedStudentId)
-                    .SumAsync(p => (decimal?)p.HoursPurchased) ?? 0;
+                SelectedStudentPrepaidHours = Math.Round(
+                    await _context.Payments
+                        .Where(p => p.StudentId == SelectedStudentId)
+                        .SumAsync(p => (decimal?)p.HoursPurchased) ?? 0, 1);
 
-                SelectedStudentTaughtHours = await _context.Lessons
-                    .Where(l => l.StudentId == SelectedStudentId)
-                    .SumAsync(l => (decimal?)l.Hours) ?? 0;
+                SelectedStudentTaughtHours = Math.Round(
+                    await _context.Lessons
+                        .Where(l => l.StudentId == SelectedStudentId)
+                        .SumAsync(l => (decimal?)l.Hours) ?? 0, 1);
 
                 SelectedStudentTotalPaid = await _context.Payments
                     .Where(p => p.StudentId == SelectedStudentId)

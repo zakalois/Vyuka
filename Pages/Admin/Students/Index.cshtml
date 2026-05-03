@@ -1,5 +1,6 @@
-﻿@page
-@model Vyuka.Pages.Students.StudentsIndexModel
+﻿@page "/Admin/Students"
+@model Vyuka.Pages.Admin.Students.IndexModel
+
 
 <style>
     .row-pink {
@@ -52,6 +53,7 @@
                 <td>@item.ParentEmail</td>
 
                 <td class="text-center" style="white-space:nowrap;">
+
                     <a asp-page="Edit" asp-route-id="@item.Id" class="text-primary me-2" title="Upravit">
                         <i class="bi bi-pencil-square"></i>
                     </a>
@@ -78,7 +80,9 @@
                             </button>
                         }
                     </form>
+
                 </td>
+
             </tr>
         }
     </tbody>

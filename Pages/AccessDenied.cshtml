@@ -1,0 +1,13 @@
+﻿@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Přístup zamítnut";
+}
+
+<div class="container mt-5" style="max-width: 600px;">
+    <div class="alert alert-danger p-4">
+        <h3 class="mb-3">Přístup zamítnut</h3>
+        <p>Nemáte oprávnění pro zobrazení této stránky.</p>
+        <a href="/Dashboard/Index" class="btn btn-primary mt-3">Zpět na hlavní stránku</a>
+    </div>
+</div>

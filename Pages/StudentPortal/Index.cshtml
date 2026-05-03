@@ -1,0 +1,50 @@
+﻿@page
+@model Vyuka.Pages.StudentPortal.IndexModel
+
+<div class="container mt-4">
+
+    <h2>Vítej, @Model.StudentName</h2>
+
+    <div class="row mt-4">
+
+        <div class="col-md-4">
+            <div class="p-3 rounded text-center" style="background:#e3f2fd;">
+                <h5>Zůstatek hodin</h5>
+                <h3>@Model.FormattedBalance h</h3>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3 rounded text-center" style="background:#fff3e0;">
+                <h5>Nejbližší lekce</h5>
+
+                @if (Model.NextLesson != null)
+                {
+                    <h4>@Model.NextLesson.Date.ToString("dd.MM.yyyy")</h4>
+                    <p>@Model.NextLesson.Subject</p>
+                }
+                else
+                {
+                    <h4>—</h4>
+                    <p>Žádná plánovaná hodina</p>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="p-3 rounded text-center" style="background:#e8f5e9;">
+                <h5>Poslední platba</h5>
+                <h4>@Model.LastPaymentAmount Kč</h4>
+                <p>@Model.LastPaymentDate</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mt-4">
+        <a asp-page="/StudentPortal/Lessons" class="btn btn-primary w-100 mb-2">Moje hodiny</a>
+        <a asp-page="/StudentPortal/Payments" class="btn btn-secondary w-100 mb-2">Moje platby</a>
+        <a asp-page="/StudentPortal/Profile" class="btn btn-outline-dark w-100">Můj profil</a>
+    </div>
+
+</div>

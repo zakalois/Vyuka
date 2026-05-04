@@ -36,7 +36,14 @@ namespace Vyuka.Pages.Schedule
 
         public string GetColorForStudent(int studentId)
         {
-            return StudentColors[studentId % StudentColors.Length];
+            if (StudentColors == null || StudentColors.Length == 0)
+                return "#cccccc";
+
+            if (studentId <= 0)
+                return "#cccccc";
+
+            int index = studentId % StudentColors.Length;
+            return StudentColors[index];
         }
 
         public IList<LessonPlan> Plans { get; set; } = new List<LessonPlan>();
@@ -47,11 +54,8 @@ namespace Vyuka.Pages.Schedule
         [BindProperty(SupportsGet = true)]
         public DateTime Week { get; set; }
 
-        [BindProperty]
-        public DateTime StartOfWeek { get; set; }
-
-        [BindProperty]
-        public DateTime EndOfWeek { get; set; }
+        [BindProperty] public DateTime StartOfWeek { get; set; }
+        [BindProperty] public DateTime EndOfWeek { get; set; }
 
         [BindProperty] public int NewStudentId { get; set; }
         [BindProperty] public int NewSubjectId { get; set; }
@@ -60,6 +64,8 @@ namespace Vyuka.Pages.Schedule
         [BindProperty] public TimeSpan NewStart { get; set; }
         [BindProperty] public TimeSpan NewEnd { get; set; }
         [BindProperty] public bool NotifyStudentOnDelete { get; set; }
+        [BindProperty] public DateTime NewDate { get; set; }
+
 
         [BindProperty]
         public LessonPlan EditPlan { get; set; }
@@ -95,14 +101,18 @@ namespace Vyuka.Pages.Schedule
             ComputeWeek();
             await LoadDropdownsAsync();
 
-            Plans = await _context.LessonPlans
+            Plans = new List<LessonPlan>();
+
+            var result = await _context.LessonPlans
                 .Include(p => p.Student)
                 .Include(p => p.Subject)
                 .Include(p => p.SubjectTopic)
-                .Where(p => p.Date >= StartOfWeek && p.Date <= EndOfWeek)
+                .Where(p => p.Date != default && p.Date >= StartOfWeek && p.Date <= EndOfWeek)
                 .OrderBy(p => p.Date)
                 .ThenBy(p => p.Start)
                 .ToListAsync();
+
+            Plans = result ?? new List<LessonPlan>();
         }
 
         public async Task<JsonResult> OnGetTopicsAsync(int subjectId)
@@ -129,8 +139,8 @@ namespace Vyuka.Pages.Schedule
                 ? await _context.SubjectTopics.FindAsync(NewTopicId.Value)
                 : null;
 
-            int dayIndex = NewDay == DayOfWeek.Sunday ? 6 : ((int)NewDay - 1);
-            var date = StartOfWeek.AddDays(dayIndex);
+            // ⭐ OPRAVA – použít datum z formuláře
+            var date = NewDate;
 
             if (NewEnd <= NewStart)
                 NewEnd = NewStart + TimeSpan.FromHours(1);
@@ -162,10 +172,9 @@ namespace Vyuka.Pages.Schedule
                 StudentId = NewStudentId,
                 SubjectId = NewSubjectId,
                 SubjectTopicId = NewTopicId,
-                Day = NewDay,
                 Start = NewStart,
                 End = NewEnd,
-                Date = date,
+                Date = date, // ⭐ OPRAVENO
                 MeetLink = meet.MeetLink,
                 GoogleEventId = meet.EventId,
                 NotifyOnDelete = NotifyStudentOnDelete
@@ -176,6 +185,7 @@ namespace Vyuka.Pages.Schedule
 
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
         }
+
 
         // EDIT START
         public async Task<IActionResult> OnPostEditStartAsync(int id, DateTime Week)
@@ -194,7 +204,7 @@ namespace Vyuka.Pages.Schedule
                 .Include(p => p.Student)
                 .Include(p => p.Subject)
                 .Include(p => p.SubjectTopic)
-                .Where(p => p.Date >= StartOfWeek && p.Date <= EndOfWeek)
+                .Where(p => p.Date != default && p.Date >= StartOfWeek && p.Date <= EndOfWeek)
                 .OrderBy(p => p.Date)
                 .ThenBy(p => p.Start)
                 .ToListAsync();
@@ -210,6 +220,7 @@ namespace Vyuka.Pages.Schedule
             int? SubjectTopicId,
             TimeSpan Start,
             TimeSpan End,
+            DateTime Date,
             DateTime Week)
         {
             this.Week = Week;
@@ -224,10 +235,13 @@ namespace Vyuka.Pages.Schedule
             plan.SubjectTopicId = SubjectTopicId;
             plan.Start = Start;
             plan.End = End;
+            plan.Date = Date;
 
             await _context.SaveChangesAsync();
 
-            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
+            var newWeekStart = Date.AddDays(-(int)Date.DayOfWeek + 1);
+
+            return RedirectToPage(new { week = newWeekStart.ToString("yyyy-MM-dd") });
         }
 
         // CANCEL EDIT
@@ -268,7 +282,6 @@ namespace Vyuka.Pages.Schedule
 
                 await _email.SendAsync(plan.Student.Email, "Zrušená lekce", html);
 
-                // najít odpovídající odučenou lekci podle studenta, předmětu, data a času
                 var lesson = await _context.Lessons
                     .FirstOrDefaultAsync(l =>
                         l.StudentId == plan.StudentId &&

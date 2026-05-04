@@ -17,8 +17,8 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
 
     <a class="btn btn-secondary"
-       asp-page="./Index"
-       asp-route-week="@safeStart.AddDays(-7).ToString("yyyy-MM-dd")">
+           asp-page="./Index"
+           asp-route-week="@safeStart.AddDays(-7).ToString("yyyy-MM-dd")">
         ← Předchozí týden
     </a>
 
@@ -26,15 +26,15 @@
         <h4>@safeStart.ToString("dd.MM.yyyy") – @safeEnd.ToString("dd.MM.yyyy")</h4>
 
         <a class="btn btn-info mt-2"
-           asp-page="./Index"
-           asp-route-week="@DateTime.Today.ToString("yyyy-MM-dd")">
+               asp-page="./Index"
+               asp-route-week="@DateTime.Today.ToString("yyyy-MM-dd")">
             Aktuální týden
         </a>
     </div>
 
     <a class="btn btn-secondary"
-       asp-page="./Index"
-       asp-route-week="@safeStart.AddDays(7).ToString("yyyy-MM-dd")">
+           asp-page="./Index"
+           asp-route-week="@safeStart.AddDays(7).ToString("yyyy-MM-dd")">
         Další týden →
     </a>
 
@@ -82,19 +82,10 @@
                     </select>
                 </div>
 
-                <!-- DEN (správné hodnoty enumu DayOfWeek) -->
+                <!-- DATUM LEKCE -->
                 <div class="col-md-3">
-                    <label>Den</label>
-                    <select name="NewDay" class="form-control">
-                        <option value="1">Pondělí</option>
-                        <option value="2">Úterý</option>
-                        <option value="3">Středa</option>
-                        <option value="4">Čtvrtek</option>
-                        <option value="5">Pátek</option>
-                        <option value="6" style="background-color: #ffffcc; color: black;">Sobota</option>
-                        <option value="0" style="background-color: #ffcccc; color: black;">Neděle</option>
-
-                    </select>
+                    <label>Datum lekce</label>
+                    <input type="date" name="NewDate" class="form-control" />
                 </div>
 
             </div>
@@ -126,14 +117,13 @@
             </div>
 
             <button class="btn btn-success w-100 py-2 fs-5">Přidat hodinu</button>
-            
 
         </form>
     </div>
 }
-
 else
 {
+    <!-- EDITAČNÍ FORMULÁŘ -->
     <div class="card p-3 mb-4 shadow-sm bg-warning-subtle">
         <h5>Upravit hodinu</h5>
 
@@ -187,8 +177,17 @@ else
                     </select>
                 </div>
 
-                <!-- ZAČÁTEK -->
+                <!-- DATUM LEKCE -->
                 <div class="col-md-3">
+                    <label>Datum lekce</label>
+                    <input name="Date"
+                           type="date"
+                           class="form-control"
+                           value="@Model.EditPlan.Date.ToString("yyyy-MM-dd")" />
+                </div>
+
+                <!-- ZAČÁTEK -->
+                <div class="col-md-3 mt-3">
                     <label>Začátek</label>
                     <input name="Start"
                            type="time"
@@ -219,12 +218,12 @@ else
     </div>
 }
 
-
 @{
     var safeStart2 = Model.StartOfWeek == DateTime.MinValue
         ? DateTime.Today
         : Model.StartOfWeek;
 }
+
 <div class="container mt-4">
     <div class="schedule-grid">
 
@@ -246,14 +245,16 @@ else
 
                 <hr />
 
-                @foreach (var p in Model.Plans.Where(p => p.Date.Date == date.Date))
+                @foreach (var p in Model.Plans.Where(p => p.Date != default && p.Date.Date == date.Date))
                 {
                     var taughtStyle = p.IsTaught
                         ? "opacity:0.7;border-left:4px solid #28a745;"
                         : "";
 
+                    var bgColor = Model.GetColorForStudent(p.StudentId) ?? "#cccccc";
+
                     <div class="p-2 mb-2 rounded text-start"
-                         style="background-color:@Model.GetColorForStudent(p.StudentId);@taughtStyle">
+                         style="background-color:@bgColor;@taughtStyle">
 
                         <strong>@p.Student.LastName @p.Student.FirstName</strong><br />
                         @p.Subject.Name – @p.SubjectTopic?.Name<br />
@@ -307,12 +308,6 @@ else
         }
 
     </div>
-</div>
-
-
-
-    
-
 </div>
 
 @section Scripts {

@@ -9,7 +9,12 @@
     <div class="profile-card">
 
         <div class="profile-photo-section">
-            <img src="/images/profile-placeholder.png" class="profile-photo" alt="Profilová fotka" />
+
+            <!-- ⭐ PROFILOVÁ FOTKA – skutečná nebo placeholder -->
+            <img src="@(string.IsNullOrEmpty(Model.UserData.PhotoPath) 
+                ? "/images/profile-placeholder.png" 
+                : Model.UserData.PhotoPath)" 
+                class="profile-photo" alt="Profilová fotka" />
 
             <div class="domain-box">
                 <span class="domain-label">Doména</span>
@@ -19,10 +24,12 @@
 
         <div class="profile-info-section">
 
-            <h2 class="profile-name">@Model.UserData.Name</h2>
+            <!-- ⭐ Jméno + příjmení -->
+            <h2 class="profile-name">@Model.UserData.FirstName @Model.UserData.LastName</h2>
 
             <div class="profile-info">
                 <p><strong>Email:</strong> @Model.UserData.Email</p>
+                <p><strong>Telefon:</strong> @Model.UserData.Phone</p>
                 <p><strong>Role:</strong> @Model.UserData.Role</p>
             </div>
 

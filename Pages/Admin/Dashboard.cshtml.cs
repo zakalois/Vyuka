@@ -13,19 +13,22 @@ namespace Vyuka.Pages.Admin
             _context = context;
         }
 
-        // ENVIRONMENT INFO
-        public string EnvironmentName { get; set; }
-        public bool IsProduction => EnvironmentName == "Production";
+        // PRODUKCE / VÝVOJ
+        public bool IsProduction { get; set; }
 
-        // NEXT LESSON
+        // NEJBLIŽŠÍ LEKCE
         public DateTime? NextLessonDate { get; set; }
 
         public void OnGet()
         {
-            // 1) Zjistit prostředí
-            EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown";
+            // ⭐ ROZLIŠENÍ PRODUKCE / VÝVOJE
+#if DEBUG
+            IsProduction = false;   // vývojová verze
+#else
+            IsProduction = true;    // produkční verze
+#endif
 
-            // 2) Najít nejbližší lekci
+            // ⭐ NAČTENÍ NEJBLIŽŠÍ LEKCE
             var lessons = _context.LessonPlans
                 .Where(x => x.Date >= DateTime.Today)
                 .ToList();

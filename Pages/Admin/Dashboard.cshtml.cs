@@ -13,10 +13,19 @@ namespace Vyuka.Pages.Admin
             _context = context;
         }
 
+        // ENVIRONMENT INFO
+        public string EnvironmentName { get; set; }
+        public bool IsProduction => EnvironmentName == "Production";
+
+        // NEXT LESSON
         public DateTime? NextLessonDate { get; set; }
 
         public void OnGet()
         {
+            // 1) Zjistit prostředí
+            EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown";
+
+            // 2) Najít nejbližší lekci
             var lessons = _context.LessonPlans
                 .Where(x => x.Date >= DateTime.Today)
                 .ToList();

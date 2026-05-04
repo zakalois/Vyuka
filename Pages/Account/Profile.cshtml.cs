@@ -22,7 +22,7 @@ namespace Vyuka.Pages.Account
             if (sessionUserId == null)
                 return RedirectToPage("/Login");
 
-            // ⭐ Používáme AppUsers (správná tabulka)
+            // ⭐ Používáme Users (správná tabulka)
             UserData = _context.AppUsers.FirstOrDefault(u => u.Id == sessionUserId.Value);
 
             if (UserData == null)

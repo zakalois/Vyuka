@@ -35,7 +35,7 @@ namespace Vyuka.Pages
                 return RedirectToPage("/Admin/Dashboard");
             }
 
-            // Naplnění dropdownu z AppUsers
+            // Naplnění dropdownu z Users
             Users = _context.AppUsers
                 .Select(u => new SelectListItem
                 {
@@ -58,7 +58,7 @@ namespace Vyuka.Pages
                 })
                 .ToList();
 
-            // Najdeme uživatele v AppUsers
+            // Najdeme uživatele v Users
             var user = _context.AppUsers.FirstOrDefault(u => u.Email == Email);
 
             if (user == null)

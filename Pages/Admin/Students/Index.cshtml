@@ -1,7 +1,6 @@
 ﻿@page "/Admin/Students"
 @model Vyuka.Pages.Admin.Students.IndexModel
 
-
 <style>
     .row-pink {
         background-color: #f8d7da !important;
@@ -31,6 +30,10 @@
             <th>Příjmení rodiče</th>
             <th>Telefon rodiče</th>
             <th>Email rodiče</th>
+
+            <!-- ⭐ NOVÝ SLOUPEC -->
+            <th>Odučeno</th>
+
             <th class="text-center" style="width:110px;">Akce</th>
         </tr>
     </thead>
@@ -51,6 +54,9 @@
                 <td>@item.ParentLastName</td>
                 <td>@item.ParentPhone</td>
                 <td>@item.ParentEmail</td>
+
+                <!-- ⭐ ZDE SE ZOBRAZÍ ODUČENÉ HODINY -->
+                <td>@Model.TaughtHours[item.Id] h</td>
 
                 <td class="text-center" style="white-space:nowrap;">
 

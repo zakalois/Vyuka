@@ -255,7 +255,6 @@ namespace Vyuka.Pages.Schedule
                 if (!string.IsNullOrEmpty(plan.GoogleEventId))
                 {
                     await _calendar.DeleteEventAsync(plan.GoogleEventId);
-
                 }
 
                 var html = await _emailBuilder.BuildCanceledAsync(
@@ -269,14 +268,14 @@ namespace Vyuka.Pages.Schedule
 
                 await _email.SendAsync(plan.Student.Email, "Zrušená lekce", html);
 
-                var hours = (int)(plan.End - plan.Start).TotalHours;
-
+                // najít odpovídající odučenou lekci podle studenta, předmětu, data a času
                 var lesson = await _context.Lessons
                     .FirstOrDefaultAsync(l =>
                         l.StudentId == plan.StudentId &&
                         l.SubjectId == plan.SubjectId &&
                         l.Date.Date == plan.Date.Date &&
-                        l.Hours == hours &&
+                        l.Start == plan.Start &&
+                        l.End == plan.End &&
                         l.IsTaught == true);
 
                 if (lesson != null)
@@ -304,15 +303,20 @@ namespace Vyuka.Pages.Schedule
             if (plan == null)
                 return NotFound();
 
-            var hours = (int)(plan.End - plan.Start).TotalHours;
+            var hours = (decimal)(plan.End - plan.Start).TotalHours;
 
             _context.Lessons.Add(new Lesson
             {
                 StudentId = plan.StudentId,
                 SubjectId = plan.SubjectId,
+                SubjectTopicId = plan.SubjectTopicId,
                 Date = plan.Date,
+                Day = (int)plan.Day,
+                Start = plan.Start,
+                End = plan.End,
                 Hours = hours,
-                IsTaught = true
+                IsTaught = true,
+                MeetLink = plan.MeetLink
             });
 
             plan.IsTaught = true;

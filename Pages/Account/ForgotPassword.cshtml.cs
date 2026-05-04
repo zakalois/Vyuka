@@ -28,7 +28,7 @@ namespace Vyuka.Pages.Account
             if (string.IsNullOrWhiteSpace(Email))
                 return Page();
 
-            // Najdeme uživatele v AppUsers
+            // Najdeme uživatele v Users
             var user = _context.AppUsers.FirstOrDefault(u => u.Email == Email);
             if (user == null)
                 return Page(); // neprozrazujeme, že neexistuje

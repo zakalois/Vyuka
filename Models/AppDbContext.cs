@@ -17,7 +17,7 @@ namespace Vyuka.Models
 
         // ✔ Přejmenováno – žádný konflikt s AspNetUsers
         public DbSet<AppUser> AppUsers { get; set; }
-
+        
         public DbSet<Reward> Rewards { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
         public DbSet<Subject> Subjects { get; set; }
@@ -28,6 +28,8 @@ namespace Vyuka.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("dbo");
+
             base.OnModelCreating(modelBuilder);
 
             var pageModelType = typeof(Microsoft.AspNetCore.Mvc.RazorPages.PageModel);
@@ -53,5 +55,6 @@ namespace Vyuka.Models
                 .Property(p => p.HoursPurchased)
                 .HasPrecision(18, 2);
         }
+
     }
 }

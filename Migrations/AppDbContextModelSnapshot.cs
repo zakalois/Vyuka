@@ -17,6 +17,7 @@ namespace Vyuka.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("dbo")
                 .HasAnnotation("ProductVersion", "8.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -68,7 +69,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("SubjectTopicId");
 
-                    b.ToTable("Lessons");
+                    b.ToTable("Lessons", "dbo");
                 });
 
             modelBuilder.Entity("LessonPlan", b =>
@@ -120,7 +121,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("SubjectTopicId");
 
-                    b.ToTable("LessonPlans");
+                    b.ToTable("LessonPlans", "dbo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -147,7 +148,7 @@ namespace Vyuka.Migrations
                         .HasDatabaseName("RoleNameIndex")
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("AspNetRoles", "dbo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -172,7 +173,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
+                    b.ToTable("AspNetRoleClaims", "dbo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
@@ -237,7 +238,7 @@ namespace Vyuka.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", "dbo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -262,7 +263,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
+                    b.ToTable("AspNetUserClaims", "dbo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -284,7 +285,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
+                    b.ToTable("AspNetUserLogins", "dbo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -299,7 +300,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
+                    b.ToTable("AspNetUserRoles", "dbo");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -318,7 +319,7 @@ namespace Vyuka.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("AspNetUserTokens", "dbo");
                 });
 
             modelBuilder.Entity("Vyuka.Models.AppUser", b =>
@@ -333,12 +334,23 @@ namespace Vyuka.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhotoPath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
@@ -347,7 +359,7 @@ namespace Vyuka.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppUsers");
+                    b.ToTable("AppUsers", "dbo");
                 });
 
             modelBuilder.Entity("Vyuka.Models.PasswordResetToken", b =>
@@ -372,7 +384,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PasswordResetTokens");
+                    b.ToTable("PasswordResetTokens", "dbo");
                 });
 
             modelBuilder.Entity("Vyuka.Models.Payment", b =>
@@ -411,7 +423,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", "dbo");
                 });
 
             modelBuilder.Entity("Vyuka.Models.Reward", b =>
@@ -440,7 +452,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("Rewards");
+                    b.ToTable("Rewards", "dbo");
                 });
 
             modelBuilder.Entity("Vyuka.Models.Student", b =>
@@ -497,7 +509,7 @@ namespace Vyuka.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", "dbo");
                 });
 
             modelBuilder.Entity("Vyuka.Models.StudentSubject", b =>
@@ -512,7 +524,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("StudentSubjects");
+                    b.ToTable("StudentSubjects", "dbo");
                 });
 
             modelBuilder.Entity("Vyuka.Models.Subject", b =>
@@ -535,7 +547,7 @@ namespace Vyuka.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subjects", "dbo");
                 });
 
             modelBuilder.Entity("Vyuka.Models.SubjectTopic", b =>
@@ -557,7 +569,7 @@ namespace Vyuka.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("SubjectTopics");
+                    b.ToTable("SubjectTopics", "dbo");
                 });
 
             modelBuilder.Entity("Lesson", b =>

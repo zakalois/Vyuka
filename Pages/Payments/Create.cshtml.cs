@@ -87,6 +87,12 @@ namespace Vyuka.Pages.Payments
             // 2) Načíst studenta
             var student = await _context.Students.FindAsync(SelectedStudentId);
 
+            if (student == null)
+            {
+                ModelState.AddModelError("", "Student neexistuje.");
+                return Page();
+            }
+
             // 3) Načíst HTML šablonu
             var templatePath = Path.Combine(_env.ContentRootPath, "EmailsTemplates", "PaymentConfirmation.html");
             var html = await System.IO.File.ReadAllTextAsync(templatePath);
@@ -102,11 +108,28 @@ namespace Vyuka.Pages.Payments
                             ? ""
                             : $"<p><strong>Poznámka:</strong> {Note}</p>");
 
-            // 5) Odeslat e‑mail
-            await _email.SendAsync(student.Email, "Potvrzení platby", html);
+            // ⭐ 5) Odeslat e‑mail pouze pokud existuje alespoň jeden email
+            string emailToSend = null;
+
+            // preferujeme rodiče
+            if (!string.IsNullOrWhiteSpace(student.ParentEmail))
+                emailToSend = student.ParentEmail;
+
+            // pokud rodič nemá email, použijeme email studenta
+            else if (!string.IsNullOrWhiteSpace(student.Email))
+                emailToSend = student.Email;
+
+            // pokud existuje alespoň jeden email → pošleme
+            if (emailToSend != null)
+            {
+                await _email.SendAsync(emailToSend, "Potvrzení platby", html);
+            }
+
+            // pokud není email žádný → NIC NEPOSÍLÁME, ale aplikace běží dál
 
             // 6) Přesměrování
             return RedirectToPage("/Payments/Index");
+
         }
     }
 }

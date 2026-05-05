@@ -69,6 +69,20 @@ namespace Vyuka.Pages.Payments
                 return Page();
             }
 
+            // 0) OCHRANA PROTI DUPLICITÁM
+            var exists = await _context.Payments.AnyAsync(p =>
+                p.StudentId == SelectedStudentId &&
+                p.Amount == Amount &&
+                p.Date == Date &&
+                p.HoursPurchased == HoursPurchased
+            );
+
+            if (exists)
+            {
+                // už existuje → neukládat, neposílat e-mail
+                return RedirectToPage("/Payments/Index");
+            }
+
             // 1) Uložit platbu
             var payment = new Payment
             {
@@ -108,28 +122,15 @@ namespace Vyuka.Pages.Payments
                             ? ""
                             : $"<p><strong>Poznámka:</strong> {Note}</p>");
 
-            // ⭐ 5) Odeslat e‑mail pouze pokud existuje alespoň jeden email
-            string emailToSend = null;
+            // 5) Odeslat e-mail
+            string emailToSend = student.ParentEmail ?? student.Email;
 
-            // preferujeme rodiče
-            if (!string.IsNullOrWhiteSpace(student.ParentEmail))
-                emailToSend = student.ParentEmail;
-
-            // pokud rodič nemá email, použijeme email studenta
-            else if (!string.IsNullOrWhiteSpace(student.Email))
-                emailToSend = student.Email;
-
-            // pokud existuje alespoň jeden email → pošleme
-            if (emailToSend != null)
-            {
+            if (!string.IsNullOrWhiteSpace(emailToSend))
                 await _email.SendAsync(emailToSend, "Potvrzení platby", html);
-            }
 
-            // pokud není email žádný → NIC NEPOSÍLÁME, ale aplikace běží dál
-
-            // 6) Přesměrování
+            // 6) Redirect (zabrání opakovanému POST)
             return RedirectToPage("/Payments/Index");
-
         }
+
     }
 }

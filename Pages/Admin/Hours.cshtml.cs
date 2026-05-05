@@ -43,8 +43,9 @@ namespace Vyuka.Pages.Admin
 
             var yearStart = new DateTime(DateTime.Today.Year, 1, 1);
 
-            From = from ?? yearStart;
-            To = to;
+            // OPRAVA – žádné MinValue, žádné automatické datum
+            From = (from.HasValue && from.Value != DateTime.MinValue) ? from : null;
+            To = (to.HasValue && to.Value != DateTime.MinValue) ? to : null;
 
             // studenti
             Students = await _context.Students
@@ -63,12 +64,18 @@ namespace Vyuka.Pages.Admin
                 .Where(l => l.Date >= yearStart && l.IsTaught)
                 .ToListAsync();
 
-            TotalTaughtHours = taughtLessonsYear
-                .Sum(l => l.End > l.Start
-                    ? (l.End - l.Start).TotalHours
-                    : (double)l.Hours);
+            // OPRAVA – přesný výpočet pomocí decimal + zaokrouhlení
+            var taughtYearDecimal = taughtLessonsYear.Sum(l =>
+                l.End > l.Start
+                    ? (decimal)Math.Round((l.End - l.Start).TotalHours, 1)
+                    : l.Hours
+            );
 
+            TotalTaughtHours = (double)taughtYearDecimal;
+
+            // zbývá odučit
             TotalRemainingHours = TotalPrepaidHours - TotalTaughtHours;
+
 
             // pokud není vybrán student → konec
             if (studentId == null)
@@ -116,24 +123,32 @@ namespace Vyuka.Pages.Admin
                 MeetLink = l.MeetLink
             }));
 
-            // filtr pro tabulku
+            // OPRAVA – filtr bez .Value
             unified = unified
-                .Where(u => u.Date >= From.Value && (!To.HasValue || u.Date <= To.Value))
+                .Where(u =>
+                    (!From.HasValue || u.Date >= From.Value) &&
+                    (!To.HasValue || u.Date <= To.Value)
+                )
                 .ToList();
 
-            // plánované v intervalu – z LessonPlans
+            // plánované v intervalu
             var plannedInterval = plans
-                .Where(lp => lp.Date >= From.Value && (!To.HasValue || lp.Date <= To.Value))
+                .Where(lp =>
+                    (!From.HasValue || lp.Date >= From.Value) &&
+                    (!To.HasValue || lp.Date <= To.Value)
+                )
                 .ToList();
 
             PlannedHours = plannedInterval
                 .Sum(lp => (lp.End - lp.Start).TotalHours);
 
-            // odučené v intervalu – z Lessons (s fallbackem na Hours)
+            // odučené v intervalu
             var taughtInterval = lessons
-                .Where(l => l.IsTaught &&
-                            l.Date >= From.Value &&
-                            (!To.HasValue || l.Date <= To.Value))
+                .Where(l =>
+                    l.IsTaught &&
+                    (!From.HasValue || l.Date >= From.Value) &&
+                    (!To.HasValue || l.Date <= To.Value)
+                )
                 .ToList();
 
             TaughtHours = taughtInterval
@@ -150,7 +165,7 @@ namespace Vyuka.Pages.Admin
 
             RemainingHours = PaidHours - taughtAllYear;
 
-            // řazení tabulky – nejmladší nahoře, plánované nad odučenými
+            // řazení tabulky
             UnifiedLessons = unified
                 .OrderByDescending(u => u.Date)
                 .ThenBy(u => u.IsTaught)

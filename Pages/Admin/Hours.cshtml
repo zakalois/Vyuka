@@ -49,14 +49,19 @@
         <div class="col-md-3">
             <label class="form-label">Od:</label>
             <input type="date" name="from" class="form-control"
-                   value="@Model.From?.ToString("yyyy-MM-dd")" />
+                   value="@(Model.From.HasValue && Model.From.Value != DateTime.MinValue
+                                              ? Model.From.Value.ToString("yyyy-MM-dd")
+                                              : "")" />
         </div>
 
         <div class="col-md-3">
             <label class="form-label">Do:</label>
             <input type="date" name="to" class="form-control"
-                   value="@Model.To?.ToString("yyyy-MM-dd")" />
+                   value="@(Model.To.HasValue && Model.To.Value != DateTime.MinValue
+                                              ? Model.To.Value.ToString("yyyy-MM-dd")
+                                              : "")" />
         </div>
+
 
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary w-100">Filtrovat</button>

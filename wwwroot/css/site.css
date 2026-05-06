@@ -4,6 +4,8 @@
 
 html {
     font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -12,13 +14,11 @@ html {
     }
 }
 
-html {
-    position: relative;
-    min-height: 100%;
-}
-
 body {
     margin-bottom: 60px;
+    background: var(--bg);
+    color: var(--text);
+    transition: 0.3s;
 }
 
 .btn:focus,
@@ -33,20 +33,21 @@ body {
    2) OBRÁZKY A SCHEDULE
    ============================================================ */
 
-.subject-image {
-    width: 120px;
-    height: 120px;
+.subject-image,
+.image-preview {
     object-fit: cover;
     border-radius: 6px;
     border: 1px solid #ddd;
 }
 
+.subject-image {
+    width: 120px;
+    height: 120px;
+}
+
 .image-preview {
     width: 150px;
     height: 150px;
-    object-fit: cover;
-    border-radius: 6px;
-    border: 1px solid #ddd;
     margin-top: 10px;
 }
 
@@ -89,47 +90,89 @@ body {
     background-color: #cfe2ff !important;
 }
 
-/* Všechny buňky na střed */
-table td,
-table th {
+/* Tabulky – zarovnání */
+table td, table th {
     text-align: center;
     vertical-align: middle;
 }
 
-    table td:first-child,
-    table th:first-child {
+    table td:first-child, table th:first-child {
         text-align: left;
     }
 
 /* ============================================================
-   3) DASHBOARD – GLOBÁLNÍ PROMĚNNÉ A DARK MODE
+   3) LIGHT MODE – VÝCHOZÍ PROMĚNNÉ
    ============================================================ */
 
 :root {
     --primary: #1e3a8a;
     --primary-light: #3b82f6;
-    --bg: #f1f5f9;
+    --bg: #f1f5f9; /* světle šedé pozadí */
+    --bg-secondary: #ffffff;
     --text: #1e293b;
+    --text-muted: #475569;
+    --border: #d0d7e2;
     --white: #ffffff;
 }
 
+/* ============================================================
+   4) DARK MODE – JEMNÉ ZTMAVENÍ (O ~15 %)
+   ============================================================ */
+
 body.dark {
-    --bg: #0f172a;
-    --text: #f8fafc;
-    --white: #1e293b;
-    --primary: #60a5fa;
-    --primary-light: #93c5fd;
+    --bg: #b1b5bc; /* o 15 % tmavší než light */
+    --bg-secondary: #e2e5eb; /* menu, header */
+    --text: #1e293b; /* text zůstává tmavý */
+    --text-muted: #475569;
+    --border: #c2c7d0;
+    --white: #ffffff; /* tabulky zůstávají bílé */
 }
 
-body {
-    background: var(--bg);
-    color: var(--text);
-    transition: 0.3s;
+/* Přepínač režimu */
+.admin-dark-btn {
+    background: var(--primary-light) !important;
+    color: white !important;
+    border: none;
+}
+
+body.dark .admin-dark-btn {
+    background: #1e3a8a !important;
+    color: white !important;
 }
 
 /* ============================================================
-   4) DASHBOARD – KOMPONENTY
+   5) TABULKY – ZŮSTÁVAJÍ SVĚTLÉ I V DARK MODE
    ============================================================ */
+
+/* NIC SE NEMĚNÍ – TABULKY JSOU VŽDY SVĚTLÉ */
+
+/* ============================================================
+   6) DASHBOARD – KOMPONENTY
+   ============================================================ */
+
+.admin-header {
+    background: var(--primary);
+    color: white;
+}
+
+body.dark .admin-header {
+    background: var(--bg-secondary);
+    color: var(--text);
+}
+
+.admin-menu {
+    background: var(--white);
+    border-bottom: 1px solid #ddd;
+}
+
+body.dark .admin-menu {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+    body.dark .admin-menu a {
+        color: var(--text);
+    }
 
 .user-kpi-row {
     display: grid;
@@ -221,7 +264,6 @@ body {
     justify-content: center;
 }
 
-    /* ⭐ OPRAVA – TLAČÍTKA JEN PRO DASHBOARD */
     .actions .btn,
     .google-switch a,
     .gmail-box .btn {
@@ -277,7 +319,7 @@ body {
 }
 
 /* ============================================================
-   RESET IKON – PŮVODNÍ VZHLED
+   RESET IKON
    ============================================================ */
 
 .bi {
@@ -291,5 +333,5 @@ body {
 }
 
 .dark .bi {
-    color: #ddd !important;
+    color: var(--text) !important;
 }

@@ -1,18 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Security.Cryptography;
-using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Vyuka.Models;
 
 namespace Vyuka.Pages.Account
 {
     public class ChangePasswordModel : PageModel
     {
-        private readonly AppDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
 
-        public ChangePasswordModel(AppDbContext context)
+        public ChangePasswordModel(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
-            _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         [BindProperty]
@@ -30,50 +31,43 @@ namespace Vyuka.Pages.Account
 
         public IActionResult OnGet()
         {
-            if (HttpContext.Session.GetInt32("UserId") == null)
+            if (HttpContext.Session.GetString("UserId") == null)
                 return RedirectToPage("/Login");
 
             return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
-            var sessionUserId = HttpContext.Session.GetInt32("UserId");
+            var sessionUserId = HttpContext.Session.GetString("UserId");
             if (sessionUserId == null)
                 return RedirectToPage("/Login");
 
-            var user = _context.AppUsers.FirstOrDefault(u => u.Id == sessionUserId.Value);
+            var user = await _userManager.FindByIdAsync(sessionUserId);
             if (user == null)
                 return RedirectToPage("/Login");
 
-            // 1) Ověření starého hesla
-            var oldHash = HashPassword(Input.OldPassword);
-            if (oldHash != user.PasswordHash)
-            {
-                ErrorMessage = "Současné heslo není správné.";
-                return Page();
-            }
-
-            // 2) Ověření nového hesla
+            // 1) Ověření nového hesla
             if (Input.NewPassword != Input.ConfirmPassword)
             {
                 ErrorMessage = "Nové heslo a potvrzení hesla se neshodují.";
                 return Page();
             }
 
-            // 3) Uložení nového hesla
-            user.PasswordHash = HashPassword(Input.NewPassword);
-            _context.SaveChanges();
+            // 2) Pokus o změnu hesla přes Identity
+            var result = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                ErrorMessage = "Současné heslo není správné.";
+                return Page();
+            }
+
+            // 3) Refresh přihlášení
+            await _signInManager.RefreshSignInAsync(user);
 
             SuccessMessage = "Heslo bylo úspěšně změněno.";
             return Page();
-        }
-
-        private string HashPassword(string password)
-        {
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToHexString(bytes);
         }
     }
 }

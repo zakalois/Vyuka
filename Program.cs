@@ -45,16 +45,26 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 // ---------------------------------------------------------
-// Identity – čistá konfigurace bez migrací
+// Identity – správná konfigurace pro AppUser
 // ---------------------------------------------------------
-builder.Services.AddIdentityCore<IdentityUser>(options =>
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.User.RequireUniqueEmail = true;
+
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
 })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddSignInManager()
-    .AddDefaultTokenProviders();
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+// ---------------------------------------------------------
+// Authentication + Authorization
+// ---------------------------------------------------------
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 // ---------------------------------------------------------
 // Google Calendar API klient
@@ -98,11 +108,12 @@ builder.Services.AddSession(options =>
 var app = builder.Build();
 
 // ---------------------------------------------------------
-// Inicializace rolí při startu aplikace (bez async/await)
+// Inicializace rolí + ADMIN účtu při startu aplikace
 // ---------------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
 
     string[] roleNames = { Roles.Admin, Roles.Teacher, Roles.Student };
 
@@ -114,6 +125,39 @@ using (var scope = app.Services.CreateScope())
             roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
         }
     }
+
+    // ---------------------------------------------------------
+    // AUTOMATICKÉ VYTVOŘENÍ ADMINA, POKUD NEEXISTUJE
+    // ---------------------------------------------------------
+    string adminEmail = "zakalois@ucitelzak.eu";
+    string adminPassword = "zlastaLO";
+
+    var admin = userManager.FindByEmailAsync(adminEmail).GetAwaiter().GetResult();
+
+    if (admin == null)
+    {
+        admin = new AppUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true,
+
+            // ✔ doplněné údaje
+            FirstName = "Alois",
+            LastName = "Žák",
+            PhoneNumber = "",
+            PhotoPath = "",
+            Role = Roles.Admin
+        };
+
+        var result = userManager.CreateAsync(admin, adminPassword).GetAwaiter().GetResult();
+
+        if (result.Succeeded)
+        {
+            userManager.AddToRoleAsync(admin, Roles.Admin).GetAwaiter().GetResult();
+        }
+    }
+
 }
 
 // ---------------------------------------------------------
@@ -131,6 +175,8 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseSession();
+app.UseAuthentication();
+app.UseAuthorization();
 
 // ---------------------------------------------------------
 // Ochrana před nepřihlášenými uživateli
@@ -142,12 +188,13 @@ app.Use(async (context, next) =>
     var allowed = new[]
     {
         "/login",
-        "/forgotpassword"
+        "/forgotpassword",
+        "/account/resetpassword"
     };
 
     if (!allowed.Contains(path))
     {
-        var userId = context.Session.GetInt32("UserId");
+        var userId = context.Session.GetString("UserId");
         if (userId == null)
         {
             context.Response.Redirect("/Login");

@@ -10,21 +10,29 @@
     <h2 class="mb-4 text-center">Přihlášení</h2>
 
     <form method="post">
+
+        <!-- EMAIL -->
         <div class="mb-3">
-            <label class="form-label">Uživatel</label>
-            <select asp-for="Email" asp-items="Model.Users" class="form-select"></select>
+            <label class="form-label">Email</label>
+            <input type="email" asp-for="Email" class="form-control" required />
         </div>
 
+        <!-- HESLO -->
         <div class="mb-3">
             <label class="form-label">Heslo</label>
-            <input type="password" asp-for="Password" class="form-control" />
+            <input type="password" asp-for="Password" class="form-control" required />
         </div>
 
         <button type="submit" class="btn btn-primary w-100">Přihlásit</button>
-    </form>
 
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger mt-3">@Model.ErrorMessage</div>
-    }
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger mt-3">@Model.ErrorMessage</div>
+        }
+
+        <div class="mt-3 text-center">
+            <a href="/Account/ForgotPassword">Zapomenuté heslo?</a>
+        </div>
+
+    </form>
 </div>

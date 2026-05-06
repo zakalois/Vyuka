@@ -1,0 +1,22 @@
+﻿@page "{id}"
+@model Vyuka.Pages.Admin.Teachers.TeacherDetailModel
+
+<h2>Detail učitele</h2>
+
+<div class="card" style="max-width: 500px;">
+    <div class="card-body">
+        <h4>@Model.Teacher.FirstName @Model.Teacher.LastName</h4>
+
+        <p><strong>Email:</strong><a href="mailto:@Model.Teacher.Email">@Model.Teacher.Email</a></p>
+        <p><strong>Telefon:</strong> @Model.Teacher.PhoneNumber</p>
+        <p><strong>Role:</strong> @Model.Teacher.Role</p>
+
+        @if (!string.IsNullOrEmpty(Model.Teacher.PhotoPath))
+        {
+            <p><strong>Foto:</strong></p>
+            <img src="@Model.Teacher.PhotoPath" style="max-width: 200px;" />
+        }
+
+        <a asp-page="/Admin/Teachers/Teachers" class="btn btn-secondary mt-3">Zpět</a>
+    </div>
+</div>

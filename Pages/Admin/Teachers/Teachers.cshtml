@@ -1,0 +1,44 @@
+﻿@page
+@model Vyuka.Pages.Admin.Teachers.TeachersModel
+
+<h2>Učitelé – přehled</h2>
+
+<a asp-page="/Admin/Teachers/Create" class="btn btn-success mb-3">
+    + Nový učitel
+</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Jméno</th>
+            <th>Příjmení</th>
+            <th>Email</th>
+            <th>Telefon</th>
+            <th>Předměty</th>
+            <th>Studenti</th>
+            <th>Hodiny tento měsíc</th>
+            <th>Stav</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in Model.Teachers)
+        {
+            <tr>
+                <td>@t.FirstName</td>
+                <td>@t.LastName</td>
+                <td><a href="mailto:@t.Email">@t.Email</a></td>
+                <td>@t.Phone</td>
+                <td>@t.Subjects</td>
+                <td>@t.StudentsCount</td>
+                <td>@t.HoursThisMonth</td>
+                <td><span class="badge bg-success">Aktivní</span></td>
+                <td>
+                    <a asp-page="/Admin/Teachers/TeacherDetail" asp-route-id="@t.Id" class="btn btn-sm btn-primary">
+                        Detail
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

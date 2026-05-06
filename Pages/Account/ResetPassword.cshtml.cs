@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Security.Cryptography;
-using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Vyuka.Models;
 
 namespace Vyuka.Pages.Account
@@ -9,84 +8,77 @@ namespace Vyuka.Pages.Account
     public class ResetPasswordModel : PageModel
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public ResetPasswordModel(AppDbContext context)
+        public ResetPasswordModel(AppDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
+
+        [BindProperty]
+        public string Token { get; set; }
 
         [BindProperty]
         public string NewPassword { get; set; }
 
-        public string Message { get; set; }
+        [BindProperty]
+        public string ConfirmPassword { get; set; }
+
+        public string ErrorMessage { get; set; }
+        public string SuccessMessage { get; set; }
 
         public IActionResult OnGet(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
-            {
-                Message = "Neplatný odkaz.";
-                return Page();
-            }
+                return RedirectToPage("/Login");
 
-            var reset = _context.PasswordResetTokens.FirstOrDefault(t => t.Token == token);
-
-            // ⭐ Opraveno: ExpiresAt místo Expiration
-            if (reset == null || reset.ExpiresAt < DateTime.UtcNow)
-            {
-                Message = "Odkaz je neplatný nebo expiroval.";
-                return Page();
-            }
-
-            // token je platný → uložíme si ho do TempData
-            TempData["token"] = token;
-
+            Token = token;
             return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
-            var token = TempData["token"]?.ToString();
-
-            if (string.IsNullOrWhiteSpace(token))
+            if (NewPassword != ConfirmPassword)
             {
-                Message = "Token chybí.";
+                ErrorMessage = "Hesla se neshodují.";
                 return Page();
             }
 
-            var reset = _context.PasswordResetTokens.FirstOrDefault(t => t.Token == token);
-
-            // ⭐ Opraveno: ExpiresAt místo Expiration
-            if (reset == null || reset.ExpiresAt < DateTime.UtcNow)
+            // ✔ Najdeme token
+            var resetToken = _context.PasswordResetTokens.FirstOrDefault(t => t.Token == Token);
+            if (resetToken == null || resetToken.ExpiresAt < DateTime.UtcNow)
             {
-                Message = "Odkaz je neplatný nebo expiroval.";
+                ErrorMessage = "Token je neplatný nebo vypršel.";
                 return Page();
             }
 
-            var user = _context.AppUsers.FirstOrDefault(u => u.Id == reset.UserId);
-
+            // ✔ Najdeme uživatele podle string UserId
+            var user = await _userManager.FindByIdAsync(resetToken.UserId);
             if (user == null)
             {
-                Message = "Uživatel nenalezen.";
+                ErrorMessage = "Uživatel nenalezen.";
                 return Page();
             }
 
-            // Hash nového hesla
-            user.PasswordHash = HashPassword(NewPassword);
+            // ✔ Identity potřebuje vlastní reset token
+            var identityToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // Token smažeme
-            _context.PasswordResetTokens.Remove(reset);
+            // ✔ Reset hesla přes Identity
+            var result = await _userManager.ResetPasswordAsync(user, identityToken, NewPassword);
 
-            _context.SaveChanges();
+            if (!result.Succeeded)
+            {
+                ErrorMessage = "Nepodařilo se změnit heslo.";
+                return Page();
+            }
 
-            Message = "Heslo bylo úspěšně změněno.";
+            // ✔ Token smažeme
+            _context.PasswordResetTokens.Remove(resetToken);
+            await _context.SaveChangesAsync();
+
+            SuccessMessage = "Heslo bylo úspěšně změněno.";
             return Page();
-        }
-
-        private string HashPassword(string password)
-        {
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToHexString(bytes);
         }
     }
 }

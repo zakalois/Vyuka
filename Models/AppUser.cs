@@ -1,34 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Vyuka.Models
 {
-    [Table("AppUsers", Schema = "dbo")]
-    public class AppUser
+    public class AppUser : IdentityUser
     {
-        public int Id { get; set; }
-
-        [Required]
         public string FirstName { get; set; }
-
-        [Required]
         public string LastName { get; set; }
 
-        public string Name => $"{FirstName} {LastName}";
-
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
-
-        public string Role { get; set; }
-
-        public string PasswordHash { get; set; }
-
-        [Required]
-        [Phone]
-        public string Phone { get; set; }
-
+        // Fotka uživatele
         public string? PhotoPath { get; set; }
-    }
 
+        // Role (pokud ji chceš ukládat navíc)
+        public string? Role { get; set; }
+
+        // Spojené jméno
+        [NotMapped]
+        public string Name => $"{FirstName} {LastName}";
+    }
 }

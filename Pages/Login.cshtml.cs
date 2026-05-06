@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Security.Cryptography;
-using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 
 namespace Vyuka.Pages
@@ -22,73 +20,51 @@ namespace Vyuka.Pages
         [BindProperty]
         public string Password { get; set; }
 
-        public List<SelectListItem> Users { get; set; }
-
         public string ErrorMessage { get; set; }
 
-        public IActionResult OnGet()
+        public void OnGet()
         {
-            // Pokud už je přihlášený → pryč z loginu
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId != null)
-            {
-                return RedirectToPage("/Admin/Dashboard");
-            }
-
-            // Naplnění dropdownu z Users
-            Users = _context.AppUsers
-                .Select(u => new SelectListItem
-                {
-                    Value = u.Email,
-                    Text = $"{u.Name} ({u.Role})"
-                })
-                .ToList();
-
-            return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
-            // Naplníme dropdown (musí být vždy)
-            Users = _context.AppUsers
-                .Select(u => new SelectListItem
-                {
-                    Value = u.Email,
-                    Text = $"{u.Name} ({u.Role})"
-                })
-                .ToList();
+            if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+            {
+                ErrorMessage = "Vyplňte email i heslo.";
+                return Page();
+            }
 
-            // Najdeme uživatele v Users
-            var user = _context.AppUsers.FirstOrDefault(u => u.Email == Email);
+            // ✔ Najdeme uživatele v AspNetUsers
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == Email);
 
             if (user == null)
             {
-                ErrorMessage = "Uživatel nenalezen.";
+                ErrorMessage = "Nesprávný email nebo heslo.";
                 return Page();
             }
 
-            // Hash hesla
-            string hashed = HashPassword(Password);
+            // ✔ Ověření hesla (Identity hash)
+            var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<AppUser>();
+            var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, Password);
 
-            if (hashed != user.PasswordHash)
+            if (result == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
-                ErrorMessage = "Nesprávné heslo.";
+                ErrorMessage = "Nesprávný email nebo heslo.";
                 return Page();
             }
 
-            // Uložení do session
-            HttpContext.Session.SetInt32("UserId", user.Id);
-            HttpContext.Session.SetString("UserName", user.Name);
-            HttpContext.Session.SetString("UserRole", user.Role);
+            // ✔ Uložíme session
+            HttpContext.Session.SetString("UserId", user.Id);
 
-            return RedirectToPage("/Admin/Dashboard");
-        }
+            // ✔ Redirect podle role
+            if (user.Role == "Admin")
+                return RedirectToPage("/Admin/Dashboard");
 
-        private string HashPassword(string password)
-        {
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToHexString(bytes);
+            if (user.Role == "Teacher")
+                return RedirectToPage("/Teacher/Dashboard");
+
+            return RedirectToPage("/Student/Dashboard");
         }
     }
 }

@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using System.Reflection;
 
 namespace Vyuka.Models
 {
-    public class AppDbContext : IdentityDbContext<IdentityUser>
+    public class AppDbContext : IdentityDbContext<AppUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
@@ -14,10 +13,6 @@ namespace Vyuka.Models
 
         public DbSet<Student> Students { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
-
-        // ✔ Přejmenováno – žádný konflikt s AspNetUsers
-        public DbSet<AppUser> AppUsers { get; set; }
-        
         public DbSet<Reward> Rewards { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
         public DbSet<Subject> Subjects { get; set; }
@@ -28,10 +23,11 @@ namespace Vyuka.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasDefaultSchema("dbo");
-
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.HasDefaultSchema("dbo");
+
+            // Ignorujeme PageModel třídy
             var pageModelType = typeof(Microsoft.AspNetCore.Mvc.RazorPages.PageModel);
             var pageModels = Assembly.GetExecutingAssembly()
                 .GetTypes()

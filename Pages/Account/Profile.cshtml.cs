@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Vyuka.Models;
@@ -6,28 +7,26 @@ namespace Vyuka.Pages.Account
 {
     public class ProfileModel : PageModel
     {
-        private readonly AppDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public ProfileModel(AppDbContext context)
+        public ProfileModel(UserManager<AppUser> userManager)
         {
-            _context = context;
+            _userManager = userManager;
         }
 
-        // ⭐ Jediný správný typ
-        public AppUser UserData { get; set; }
+        public AppUser CurrentUser { get; set; }
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
-            var sessionUserId = HttpContext.Session.GetInt32("UserId");
-            if (sessionUserId == null)
+            var userId = HttpContext.Session.GetString("UserId");
+            if (userId == null)
                 return RedirectToPage("/Login");
 
-            // ⭐ Používáme Users (správná tabulka)
-            UserData = _context.AppUsers.FirstOrDefault(u => u.Id == sessionUserId.Value);
-
-            if (UserData == null)
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
                 return RedirectToPage("/Login");
 
+            CurrentUser = user;
             return Page();
         }
     }

@@ -1,126 +1,29 @@
 ﻿@page
 @model Vyuka.Pages.Account.ProfileModel
 @{
-    ViewData["Title"] = "Profil uživatele";
+    ViewData["Title"] = "Můj profil";
 }
 
-<div class="profile-wrapper">
+<div class="container mt-4" style="max-width: 600px;">
+    <h2 class="mb-4">Můj profil</h2>
 
-    <div class="profile-card">
+    <div class="card p-3">
 
-        <div class="profile-photo-section">
-
-            <!-- ⭐ PROFILOVÁ FOTKA – skutečná nebo placeholder -->
-            <img src="@(string.IsNullOrEmpty(Model.UserData.PhotoPath) 
-                ? "/images/profile-placeholder.png" 
-                : Model.UserData.PhotoPath)" 
-                class="profile-photo" alt="Profilová fotka" />
-
-            <div class="domain-box">
-                <span class="domain-label">Doména</span>
-                <span class="domain-value">ucitelzak.eu</span>
-            </div>
+        <div class="text-center mb-3">
+            <img src="@(Model.CurrentUser.PhotoPath ?? "/images/profile-placeholder.png")"
+                 style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:3px solid #ddd;" />
         </div>
 
-        <div class="profile-info-section">
-
-            <!-- ⭐ Jméno + příjmení -->
-            <h2 class="profile-name">@Model.UserData.FirstName @Model.UserData.LastName</h2>
-
-            <div class="profile-info">
-                <p><strong>Email:</strong> @Model.UserData.Email</p>
-                <p><strong>Telefon:</strong> @Model.UserData.Phone</p>
-                <p><strong>Role:</strong> @Model.UserData.Role</p>
-            </div>
-
-            <div class="profile-actions">
-                <a class="btn btn-primary" href="/Account/EditProfile">Upravit profil</a>
-                <a class="btn btn-secondary" href="/Account/ChangePassword">Změnit heslo</a>
-                <a class="btn btn-danger" href="/Logout">Odhlásit se</a>
-            </div>
-
-        </div>
+        <p><strong>Jméno:</strong> @Model.CurrentUser.FirstName @Model.CurrentUser.LastName</p>
+        <p><strong>Email:</strong> @Model.CurrentUser.Email</p>
+        <p><strong>Telefon:</strong> @Model.CurrentUser.PhoneNumber</p>
+        <p><strong>Role:</strong> @Model.CurrentUser.Role</p>
 
     </div>
 
+    <div class="mt-4 d-flex gap-2">
+        <a asp-page="/Account/EditProfile" class="btn btn-primary">Upravit profil</a>
+        <a asp-page="/Account/ChangePassword" class="btn btn-warning">Změnit heslo</a>
+        <a asp-page="/Index" class="btn btn-secondary">Zpět</a>
+    </div>
 </div>
-
-<style>
-    .profile-wrapper {
-        display: flex;
-        justify-content: center;
-        margin-top: 40px;
-    }
-
-    .profile-card {
-        display: flex;
-        background: #fff;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        width: 750px;
-        gap: 40px;
-    }
-
-    .profile-photo-section {
-        flex: 0 0 180px;
-        text-align: center;
-    }
-
-    .profile-photo {
-        width: 160px;
-        height: 160px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid #ddd;
-    }
-
-    .domain-box {
-        margin-top: 20px;
-        background: #f5f5f5;
-        padding: 10px;
-        border-radius: 8px;
-    }
-
-    .domain-label {
-        font-size: 12px;
-        color: #777;
-        display: block;
-    }
-
-    .domain-value {
-        font-size: 16px;
-        font-weight: bold;
-    }
-
-    .profile-info-section {
-        flex: 1;
-    }
-
-    .profile-name {
-        margin-bottom: 10px;
-    }
-
-    .profile-info p {
-        margin: 6px 0;
-        font-size: 16px;
-    }
-
-    .profile-actions {
-        margin-top: 25px;
-        display: flex;
-        gap: 12px;
-    }
-
-    .btn {
-        padding: 10px 18px;
-        border-radius: 6px;
-        text-decoration: none;
-        color: white;
-        font-weight: 600;
-    }
-
-    .btn-primary { background: #007bff; }
-    .btn-secondary { background: #6c757d; }
-    .btn-danger { background: #dc3545; }
-</style>

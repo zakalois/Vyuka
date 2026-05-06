@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Vyuka.Models;
@@ -6,93 +7,83 @@ namespace Vyuka.Pages.Account
 {
     public class EditProfileModel : PageModel
     {
-        private readonly AppDbContext _context;
-        private readonly IWebHostEnvironment _env;
+        private readonly UserManager<AppUser> _userManager;
 
-        public EditProfileModel(AppDbContext context, IWebHostEnvironment env)
+        public EditProfileModel(UserManager<AppUser> userManager)
         {
-            _context = context;
-            _env = env;
+            _userManager = userManager;
         }
 
-        public class EditProfileInput
+        // ⭐ Input model – aby fungovalo asp-for="Input.*"
+        public class InputModel
         {
-            public int Id { get; set; }
-
-            public string FirstName { get; set; }
-            public string LastName { get; set; }
-
-            public string Email { get; set; }
-
-            public string Phone { get; set; }
-
+            public string? FirstName { get; set; }
+            public string? LastName { get; set; }
+            public string? Email { get; set; }
+            public string? PhoneNumber { get; set; }
             public IFormFile? Photo { get; set; }
         }
 
         [BindProperty]
-        public EditProfileInput Input { get; set; }
+        public InputModel Input { get; set; }
 
-        public string? CurrentPhotoPath { get; set; }
+        public string CurrentPhotoPath { get; set; }
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
-            var sessionUserId = HttpContext.Session.GetInt32("UserId");
-            if (sessionUserId == null)
+            var userId = HttpContext.Session.GetString("UserId");
+            if (userId == null)
                 return RedirectToPage("/Login");
 
-            var user = _context.AppUsers.FirstOrDefault(u => u.Id == sessionUserId.Value);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return RedirectToPage("/Login");
 
-            Input = new EditProfileInput
+            CurrentPhotoPath = user.PhotoPath;
+
+            Input = new InputModel
             {
-                Id = user.Id,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                Phone = user.Phone
+                PhoneNumber = user.PhoneNumber
             };
-
-            CurrentPhotoPath = user.PhotoPath;
 
             return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
-            var sessionUserId = HttpContext.Session.GetInt32("UserId");
-            if (sessionUserId == null)
+            var userId = HttpContext.Session.GetString("UserId");
+            if (userId == null)
                 return RedirectToPage("/Login");
 
-            var user = _context.AppUsers.FirstOrDefault(u => u.Id == sessionUserId.Value);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return RedirectToPage("/Login");
 
-            // Uložení textových údajů
+            // ⭐ Uložení textových údajů
             user.FirstName = Input.FirstName;
             user.LastName = Input.LastName;
             user.Email = Input.Email;
-            user.Phone = Input.Phone;
+            user.UserName = Input.Email;
+            user.PhoneNumber = Input.PhoneNumber;
 
-            // Uložení fotky
+            // ⭐ Uložení fotky
             if (Input.Photo != null)
             {
-                var folder = Path.Combine(_env.WebRootPath, "images/users");
-                if (!Directory.Exists(folder))
-                    Directory.CreateDirectory(folder);
-
-                var fileName = $"user_{user.Id}{Path.GetExtension(Input.Photo.FileName)}";
-                var filePath = Path.Combine(folder, fileName);
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(Input.Photo.FileName)}";
+                var filePath = Path.Combine("wwwroot/images/users", fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    Input.Photo.CopyTo(stream);
+                    await Input.Photo.CopyToAsync(stream);
                 }
 
                 user.PhotoPath = $"/images/users/{fileName}";
             }
 
-            _context.SaveChanges();
+            await _userManager.UpdateAsync(user);
 
             return RedirectToPage("/Account/Profile");
         }

@@ -1,0 +1,51 @@
+﻿@page "{id:int}"
+@model Vyuka.Pages.Payments.EditModel
+
+<h1>Upravit platbu</h1>
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+    <input type="hidden" asp-for="Payment.Id" />
+
+    <div class="mb-3">
+        <label class="form-label">Student</label>
+        <select asp-for="Payment.StudentId" asp-items="Model.StudentList" class="form-select"></select>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Datum</label>
+            <input asp-for="Payment.Date" type="date" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Částka (Kč)</label>
+            <input asp-for="Payment.Amount" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Předplacené hodiny</label>
+            <input asp-for="Payment.HoursPurchased" type="number" step="0.1" class="form-control" />
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Cena za hodinu (Kč)</label>
+            <input asp-for="Payment.PricePerHour" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Způsob úhrady</label>
+            <input asp-for="Payment.Method" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Poznámka</label>
+            <input asp-for="Payment.Note" class="form-control" />
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Uložit změny</button>
+</form>

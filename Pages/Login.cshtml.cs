@@ -1,17 +1,20 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
+using Vyuka.Secrets;
 
 namespace Vyuka.Pages
 {
     public class LoginModel : PageModel
     {
-        private readonly AppDbContext _context;
+        private readonly SignInManager<AppUser> _signInManager;
+        private readonly UserManager<AppUser> _userManager;
 
-        public LoginModel(AppDbContext context)
+        public LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager)
         {
-            _context = context;
+            _signInManager = signInManager;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -34,9 +37,7 @@ namespace Vyuka.Pages
                 return Page();
             }
 
-            // ✔ Najdeme uživatele v AspNetUsers
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == Email);
+            var user = await _userManager.FindByEmailAsync(Email);
 
             if (user == null)
             {
@@ -44,27 +45,31 @@ namespace Vyuka.Pages
                 return Page();
             }
 
-            // ✔ Ověření hesla (Identity hash)
-            var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<AppUser>();
-            var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, Password);
+            var result = await _signInManager.PasswordSignInAsync(
+                user.UserName,
+                Password,
+                isPersistent: false,
+                lockoutOnFailure: false
+            );
 
-            if (result == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+            if (!result.Succeeded)
             {
                 ErrorMessage = "Nesprávný email nebo heslo.";
                 return Page();
             }
 
-            // ✔ Uložíme session
-            HttpContext.Session.SetString("UserId", user.Id);
-
-            // ✔ Redirect podle role
-            if (user.Role == "Admin")
+            // Redirect podle role
+            if (await _userManager.IsInRoleAsync(user, Roles.Admin))
                 return RedirectToPage("/Admin/Dashboard");
 
-            if (user.Role == "Teacher")
-                return RedirectToPage("/Teacher/Dashboard");
+            if (await _userManager.IsInRoleAsync(user, Roles.Teacher))
+                return RedirectToPage("/Teachers_only/Dashboard");
 
-            return RedirectToPage("/Student/Dashboard");
+            if (await _userManager.IsInRoleAsync(user, Roles.Student))
+                return RedirectToPage("/Student/Dashboard");
+
+
+            return RedirectToPage("/Index");
         }
     }
 }

@@ -40,10 +40,13 @@ namespace Vyuka.Pages.Admin.Students
                 LastName = Student.LastName
             };
 
-            string tempPassword = "Student123!";
+            // 🔐 Vygenerujeme bezpečné heslo
+            string tempPassword = GeneratePassword();
 
+            // vytvoření identity účtu
             var result = await _userManager.CreateAsync(user, tempPassword);
 
+            // kontrola výsledku
             if (!result.Succeeded)
             {
                 foreach (var error in result.Errors)
@@ -70,6 +73,31 @@ namespace Vyuka.Pages.Admin.Students
             */
 
             return RedirectToPage("Index");
+        }
+
+        // 🔽🔽🔽 GENERÁTOR HESLA – správné místo 🔽🔽🔽
+        private string GeneratePassword()
+        {
+            const string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string lower = "abcdefghijklmnopqrstuvwxyz";
+            const string digits = "0123456789";
+            const string special = "!@#$%^&*";
+
+            var rand = new Random();
+
+            // minimální požadavky Identity
+            string password =
+                upper[rand.Next(upper.Length)].ToString() +
+                lower[rand.Next(lower.Length)].ToString() +
+                digits[rand.Next(digits.Length)].ToString() +
+                special[rand.Next(special.Length)].ToString();
+
+            // doplnění do délky 10 znaků
+            string all = upper + lower + digits + special;
+            while (password.Length < 10)
+                password += all[rand.Next(all.Length)];
+
+            return password;
         }
     }
 }

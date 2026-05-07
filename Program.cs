@@ -61,6 +61,15 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // ---------------------------------------------------------
+// COOKIE – LoginPath + AccessDeniedPath
+// ---------------------------------------------------------
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Login";
+    options.AccessDeniedPath = "/AccessDenied";
+});
+
+// ---------------------------------------------------------
 // Authentication + Authorization
 // ---------------------------------------------------------
 builder.Services.AddAuthentication();
@@ -122,7 +131,12 @@ using (var scope = app.Services.CreateScope())
         var exists = roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult();
         if (!exists)
         {
-            roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
+            var roleResult = roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
+            if (!roleResult.Succeeded)
+            {
+                throw new Exception("Nepodařilo se vytvořit roli: " +
+                    string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+            }
         }
     }
 
@@ -139,10 +153,10 @@ using (var scope = app.Services.CreateScope())
         admin = new AppUser
         {
             UserName = adminEmail,
+            NormalizedUserName = adminEmail.ToUpper(),
             Email = adminEmail,
+            NormalizedEmail = adminEmail.ToUpper(),
             EmailConfirmed = true,
-
-            // ✔ doplněné údaje
             FirstName = "Alois",
             LastName = "Žák",
             PhoneNumber = "",
@@ -152,16 +166,23 @@ using (var scope = app.Services.CreateScope())
 
         var result = userManager.CreateAsync(admin, adminPassword).GetAwaiter().GetResult();
 
-        if (result.Succeeded)
+        if (!result.Succeeded)
         {
-            userManager.AddToRoleAsync(admin, Roles.Admin).GetAwaiter().GetResult();
+            throw new Exception("Admin se nevytvořil: " +
+                string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
+
+        var roleResult = userManager.AddToRoleAsync(admin, Roles.Admin).GetAwaiter().GetResult();
+        if (!roleResult.Succeeded)
+        {
+            throw new Exception("Adminovi se nepodařilo přiřadit roli Admin: " +
+                string.Join(", ", roleResult.Errors.Select(e => e.Description)));
         }
     }
-
 }
 
 // ---------------------------------------------------------
-// Pipeline
+// Middleware pipeline
 // ---------------------------------------------------------
 if (!app.Environment.IsDevelopment())
 {
@@ -183,32 +204,34 @@ app.UseAuthorization();
 // ---------------------------------------------------------
 app.Use(async (context, next) =>
 {
-    var path = context.Request.Path.Value?.ToLower();
+    var path = context.Request.Path.Value;
 
-    var allowed = new[]
+    // Stránky, které musí být přístupné bez přihlášení
+    if (path.Equals("/Login", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/ForgotPassword", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/Account/ResetPassword", StringComparison.OrdinalIgnoreCase) ||
+        path.Equals("/AccessDenied", StringComparison.OrdinalIgnoreCase))
     {
-        "/login",
-        "/forgotpassword",
-        "/account/resetpassword"
-    };
+        await next();
+        return;
+    }
 
-    if (!allowed.Contains(path))
+    // Pokud uživatel není přihlášený → redirect na Login
+    if (!context.User.Identity?.IsAuthenticated ?? true)
     {
-        var userId = context.Session.GetString("UserId");
-        if (userId == null)
-        {
-            context.Response.Redirect("/Login");
-            return;
-        }
+        context.Response.Redirect("/Login");
+        return;
     }
 
     await next();
 });
 
-// Defaultní redirect
+// ---------------------------------------------------------
+// Defaultní redirect – OPRAVENO
+// ---------------------------------------------------------
 app.MapGet("/", context =>
 {
-    context.Response.Redirect("/Admin/Dashboard");
+    context.Response.Redirect("/Login");
     return Task.CompletedTask;
 });
 

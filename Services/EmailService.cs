@@ -26,15 +26,15 @@ namespace Vyuka.Services
             string html,
             List<EmailAttachment>? attachments)
         {
+            Console.WriteLine("EMAIL: SendAsync spuštěno");
+
             var message = new MimeMessage();
 
-            // FROM
             message.From.Add(new MailboxAddress(
                 _config["Smtp:DisplayName"],
                 _config["Smtp:From"]
             ));
 
-            // TO
             message.To.Add(new MailboxAddress(to, to));
             message.Subject = subject;
 
@@ -43,15 +43,32 @@ namespace Vyuka.Services
                 HtmlBody = html
             };
 
-            // ⭐ Logo jako embedded obrázek
-            var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "logo.jpg");
-            if (File.Exists(logoPath))
+            // ⭐ Logo jako embedded obrázek – OPRAVENO
+            if (html.Contains("cid:logo"))
             {
-                var logo = builder.LinkedResources.Add(logoPath);
-                logo.ContentId = "logo";
-                logo.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
-                logo.ContentType.MediaType = "image";
-                logo.ContentType.MediaSubtype = "jpeg";
+                var logoPath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images",
+                    "users",
+                    "logo.jpg"
+                );
+
+                Console.WriteLine("EMAIL: Logo path = " + logoPath);
+
+                if (File.Exists(logoPath))
+                {
+                    Console.WriteLine("EMAIL: Logo existuje");
+                    var logo = builder.LinkedResources.Add(logoPath);
+                    logo.ContentId = "logo";
+                    logo.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
+                    logo.ContentType.MediaType = "image";
+                    logo.ContentType.MediaSubtype = "jpeg";
+                }
+                else
+                {
+                    Console.WriteLine("EMAIL: Logo NEEXISTUJE");
+                }
             }
 
             // ⭐ QR kódy / jiné obrázky jako embedded
@@ -83,40 +100,58 @@ namespace Vyuka.Services
 
             using var client = new SmtpClient();
 
-            // ⭐ Gmail STARTTLS (port 587)
-            await client.ConnectAsync(
-                _config["Smtp:Host"],
-                int.Parse(_config["Smtp:Port"]),
-                SecureSocketOptions.StartTls
-            );
+            try
+            {
+                Console.WriteLine("SMTP: Připojuji se...");
 
-            await client.AuthenticateAsync(
-                _config["Smtp:User"],
-                _config["Smtp:Password"]
-            );
+                await client.ConnectAsync(
+                    _config["Smtp:Host"],
+                    int.Parse(_config["Smtp:Port"]),
+                    SecureSocketOptions.StartTls
+                );
 
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+                Console.WriteLine("SMTP: Autentizace...");
+
+                await client.AuthenticateAsync(
+                    _config["Smtp:User"],
+                    _config["Smtp:Password"]
+                );
+
+                Console.WriteLine("SMTP: Odesílám...");
+
+                await client.SendAsync(message);
+
+                Console.WriteLine("SMTP: Hotovo.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("SMTP ERROR: " + ex.Message);
+                throw;
+            }
+            finally
+            {
+                await client.DisconnectAsync(true);
+            }
         }
 
         // ⭐ Nová metoda pro reset hesla
         public async Task SendPasswordResetEmail(string email, string name, string token)
         {
-            // URL aplikace z appsettings.json
-            var baseUrl = _config["App:BaseUrl"] ?? "https://localhost:5001";
+            Console.WriteLine("RESET EMAIL: metoda byla zavolána");
 
+            var baseUrl = _config["App:BaseUrl"] ?? "https://localhost:5001";
             var resetLink = $"{baseUrl}/Account/ResetPassword?token={token}";
 
             var subject = "Reset hesla";
 
             var html = $@"
-                <p>Ahoj <strong>{name}</strong>,</p>
-                <p>pro reset hesla klikni na následující odkaz:</p>
-                <p><a href=""{resetLink}"">Resetovat heslo</a></p>
-                <p>Odkaz je platný 1 hodinu.</p>
-                <br>
-                <img src=""cid:logo"" style=""width:150px;"" />
-            ";
+<p>Ahoj <strong>{name}</strong>,</p>
+<p>pro reset hesla klikni na následující odkaz:</p>
+<p><a href=""{resetLink}"">Resetovat heslo</a></p>
+<p>Odkaz je platný 1 hodinu.</p>
+<br>
+<img src=""cid:logo"" style=""width:150px;"" />
+";
 
             await SendAsync(email, subject, html, null);
         }

@@ -37,9 +37,11 @@ namespace Vyuka.Pages.Account
 
             // ✔ Najdeme uživatele přes Identity
             var user = await _userManager.FindByEmailAsync(Email);
+
+            // ✔ Bezpečnost: neprozrazujeme, zda existuje
             if (user == null)
             {
-                Message = "Uživatel s tímto emailem neexistuje.";
+                Message = "Pokud účet existuje, poslali jsme vám instrukce na email.";
                 return Page();
             }
 
@@ -48,7 +50,7 @@ namespace Vyuka.Pages.Account
 
             var resetToken = new PasswordResetToken
             {
-                UserId = user.Id,          // string
+                UserId = user.Id,
                 Token = token,
                 ExpiresAt = DateTime.UtcNow.AddHours(1)
             };
@@ -56,10 +58,14 @@ namespace Vyuka.Pages.Account
             _context.PasswordResetTokens.Add(resetToken);
             await _context.SaveChangesAsync();
 
-            // ✔ Odeslání emailu
-            var resetLink = $"{Request.Scheme}://{Request.Host}/Account/ResetPassword?token={token}";
-            await _emailService.SendAsync(Email, "Reset hesla", $"Klikněte zde: {resetLink}");
-            Message = "Pokyny pro reset hesla byly odeslány na váš email.";
+            // ⭐ ODESLÁNÍ E‑MAILU SPRÁVNOU METODOU
+            await _emailService.SendPasswordResetEmail(
+                user.Email,
+                user.FirstName,
+                token
+            );
+
+            Message = "Pokud účet existuje, poslali jsme vám instrukce na email.";
             return Page();
         }
     }

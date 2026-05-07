@@ -1,16 +1,25 @@
 ﻿@page "/Admin/Dashboard"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
 @model Vyuka.Pages.Admin.DashboardModel
-@using Microsoft.AspNetCore.Http
 
 @{
+    Layout = "_Layout";
+
     ViewData["Title"] = "Řídicí panel Administrátora";
 
-    var userName = !string.IsNullOrEmpty(User.Identity?.Name)
-        ? User.Identity.Name
-        : "Přihlášený uživatel";
+    var userName = User.Identity?.Name ?? "Přihlášený uživatel";
 
-    var userRole = HttpContext.Session.GetString("UserRole") ?? "Role neznámá";
+    string userRole = "Role neznámá";
+
+    if (User.IsInRole("Admin"))
+        userRole = "Admin";
+    else if (User.IsInRole("Teacher"))
+        userRole = "Teacher";
+    else if (User.IsInRole("Student"))
+        userRole = "Student";
 }
+
 
 <h1 class="mb-4">Řídicí panel Administrátora</h1>
 

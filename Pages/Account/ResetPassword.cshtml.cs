@@ -9,21 +9,21 @@ namespace Vyuka.Pages.Account
     {
         private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IPasswordHasher<AppUser> _passwordHasher;
 
-        public ResetPasswordModel(AppDbContext context, UserManager<AppUser> userManager)
+        public ResetPasswordModel(
+            AppDbContext context,
+            UserManager<AppUser> userManager,
+            IPasswordHasher<AppUser> passwordHasher)
         {
             _context = context;
             _userManager = userManager;
+            _passwordHasher = passwordHasher;
         }
 
-        [BindProperty]
-        public string Token { get; set; }
-
-        [BindProperty]
-        public string NewPassword { get; set; }
-
-        [BindProperty]
-        public string ConfirmPassword { get; set; }
+        [BindProperty] public string Token { get; set; }
+        [BindProperty] public string NewPassword { get; set; }
+        [BindProperty] public string ConfirmPassword { get; set; }
 
         public string ErrorMessage { get; set; }
         public string SuccessMessage { get; set; }
@@ -45,7 +45,7 @@ namespace Vyuka.Pages.Account
                 return Page();
             }
 
-            // ✔ Najdeme token
+            // ✔ Najdeme token v naší tabulce
             var resetToken = _context.PasswordResetTokens.FirstOrDefault(t => t.Token == Token);
             if (resetToken == null || resetToken.ExpiresAt < DateTime.UtcNow)
             {
@@ -53,7 +53,7 @@ namespace Vyuka.Pages.Account
                 return Page();
             }
 
-            // ✔ Najdeme uživatele podle string UserId
+            // ✔ Najdeme uživatele
             var user = await _userManager.FindByIdAsync(resetToken.UserId);
             if (user == null)
             {
@@ -61,19 +61,10 @@ namespace Vyuka.Pages.Account
                 return Page();
             }
 
-            // ✔ Identity potřebuje vlastní reset token
-            var identityToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            // ⭐ OPRAVA: Reset hesla ručně přes PasswordHasher
+            user.PasswordHash = _passwordHasher.HashPassword(user, NewPassword);
 
-            // ✔ Reset hesla přes Identity
-            var result = await _userManager.ResetPasswordAsync(user, identityToken, NewPassword);
-
-            if (!result.Succeeded)
-            {
-                ErrorMessage = "Nepodařilo se změnit heslo.";
-                return Page();
-            }
-
-            // ✔ Token smažeme
+            // ✔ Uložíme změnu
             _context.PasswordResetTokens.Remove(resetToken);
             await _context.SaveChangesAsync();
 

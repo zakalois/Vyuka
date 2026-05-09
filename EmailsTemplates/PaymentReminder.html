@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="cs">
+<body style="font-family: Arial, sans-serif; background:#f5f5f5; padding:20px;">
+
+    <div style="max-width:600px; margin:auto; background:white; padding:25px; border-radius:8px;">
+
+        <!-- Logo -->
+        <div style="text-align:center; margin-bottom:20px;">
+            <img src="cid:logo" alt="Logo" style="max-width:160px;">
+        </div>
+
+        <!-- Nadpis -->
+        <h2 style="text-align:center; color:#333; margin-bottom:25px;">
+            Připomínka k chybějící platbě
+        </h2>
+
+        <!-- Upozornění -->
+        <div style="background:#fff3cd; padding:15px; border-radius:6px; border:1px solid #ffeeba; margin-bottom:25px;">
+            <strong>Platba za výuku zatím nedorazila.</strong><br>
+            Abychom mohli pokračovat v plánovaných hodinách, prosím o její doplnění.
+        </div>
+
+        <!-- Text -->
+        <p>Dobrý den,</p>
+
+        <p>
+            eviduji, že platba za výuku ve výši
+            <strong>{{Amount}} Kč</strong>
+            s datem splatnosti <strong>{{DueDate}}</strong>
+            zatím nedorazila.
+        </p>
+
+        <p>
+            Pokud jste již platbu odeslali, považujte prosím tuto zprávu za bezpředmětnou.
+            V opačném případě prosím o její úhradu v nejbližším možném termínu.
+        </p>
+
+        <!-- QR nebo platební údaje -->
+        <div style="background:#e3f2fd; padding:15px; border-radius:6px; border:1px solid #bbdefb; margin:25px 0;">
+            <strong>Platební údaje:</strong><br>
+            Číslo účtu: <strong>2349690015 / 3030</strong><br>
+            Variabilní symbol: <strong>{{VS}}</strong><br>
+            Částka: <strong>{{Amount}} Kč</strong>
+        </div>
+
+        <p>
+            Pokud budete potřebovat vystavit daňový doklad nebo máte jakékoli dotazy,
+            neváhejte mě kontaktovat.
+        </p>
+
+        <p>
+            S pozdravem,<br>
+            <strong>Ing. Alois Žák</strong><br>
+            +420 601 172 322<br>
+            ucitelzak.eu
+        </p>
+
+    </div>
+
+</body>
+</html>

@@ -38,13 +38,17 @@
 
 <div class="user-kpi-row">
     <div class="profile-inline">
-        <img src="/images/profile-user.jpg" alt="Profil">
+        <img src="/images/logo.jpg" alt="Profil">
         <div class="profile-name">@userName</div>
         <div class="profile-role">@userRole</div>
 
         <div class="logout-link">
-            <a href="/Logout">Odhlásit se</a>
+            <form method="post" asp-page="/Logout">
+                <button type="submit" class="logout-btn">Odhlásit se</button>
+            </form>
         </div>
+
+
     </div>
 
     <div class="kpi-inline-grid">

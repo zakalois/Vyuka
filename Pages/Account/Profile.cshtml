@@ -24,6 +24,19 @@
     <div class="mt-4 d-flex gap-2">
         <a asp-page="/Account/EditProfile" class="btn btn-primary">Upravit profil</a>
         <a asp-page="/Account/ChangePassword" class="btn btn-warning">Změnit heslo</a>
-        <a asp-page="/Index" class="btn btn-secondary">Zpět</a>
+
+        @* TLAČÍTKO ZPĚT PODLE ROLE *@
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-page="/Admin/Dashboard" class="btn btn-secondary">Zpět</a>
+        }
+        else if (User.IsInRole("Teacher"))
+        {
+            <a asp-page="/Teacher_only/Dashboard" class="btn btn-secondary">Zpět</a>
+        }
+        else if (User.IsInRole("Student"))
+        {
+            <a asp-page="/Students_only/Dashboard" class="btn btn-secondary">Zpět</a>
+        }
     </div>
 </div>

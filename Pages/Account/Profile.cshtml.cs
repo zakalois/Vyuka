@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Vyuka.Models;
+using System.Threading.Tasks;
+using Vyuka.Models; // ← DŮLEŽITÉ
 
 namespace Vyuka.Pages.Account
 {
+    [Authorize]
     public class ProfileModel : PageModel
     {
         private readonly UserManager<AppUser> _userManager;
@@ -16,18 +18,9 @@ namespace Vyuka.Pages.Account
 
         public AppUser CurrentUser { get; set; }
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task OnGet()
         {
-            var userId = HttpContext.Session.GetString("UserId");
-            if (userId == null)
-                return RedirectToPage("/Login");
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                return RedirectToPage("/Login");
-
-            CurrentUser = user;
-            return Page();
+            CurrentUser = await _userManager.GetUserAsync(User);
         }
     }
 }

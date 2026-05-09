@@ -2,13 +2,13 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 
-namespace Vyuka.Pages.StudentPortal
+namespace Vyuka.Pages.Students_only
 {
-    public class IndexModel : PageModel
+    public class DashboardModel : PageModel
     {
         private readonly AppDbContext _db;
 
-        public IndexModel(AppDbContext db)
+        public DashboardModel(AppDbContext db)
         {
             _db = db;
         }
@@ -30,7 +30,7 @@ namespace Vyuka.Pages.StudentPortal
 
         public async Task OnGetAsync()
         {
-            int studentId = 1;
+            int studentId = 1; // TODO: nahradit přihlášeným studentem
 
             var student = await _db.Students.FindAsync(studentId);
             StudentName = student.FullName;

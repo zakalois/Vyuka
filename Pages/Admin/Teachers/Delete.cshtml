@@ -1,0 +1,13 @@
+﻿@page "{id:int}"
+@model Vyuka.Pages.Admin.Teachers.DeleteModel
+
+<h2>Smazat učitele</h2>
+
+<div class="alert alert-danger">
+    Opravdu chceš smazat učitele <strong>@Model.Teacher.FullName</strong>?
+</div>
+
+<form method="post">
+    <button type="submit" class="btn btn-danger">Ano, smazat</button>
+    <a asp-page="/Admin/Teachers/Teachers" class="btn btn-secondary">Zpět</a>
+</form>

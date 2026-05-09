@@ -66,7 +66,7 @@ namespace Vyuka.Pages
                 return RedirectToPage("/Teachers_only/Dashboard");
 
             if (await _userManager.IsInRoleAsync(user, Roles.Student))
-                return RedirectToPage("/Student/Dashboard");
+                return RedirectToPage("/Students_only/Dashboard");
 
 
             return RedirectToPage("/Index");

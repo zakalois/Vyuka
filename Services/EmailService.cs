@@ -1,40 +1,31 @@
 ﻿using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Options;
 using MimeKit;
+using Vyuka.Models;
 
 namespace Vyuka.Services
 {
     public class EmailService : IEmailService
     {
-        private readonly IConfiguration _config;
+        private readonly SmtpSettings _smtp;
 
-        public EmailService(IConfiguration config)
+        public EmailService(IOptions<SmtpSettings> smtp)
         {
-            _config = config;
+            _smtp = smtp.Value;
         }
 
-        // ⭐ Základní odeslání bez příloh
+        // ⭐ 1) Povinná metoda bez příloh
         public async Task SendAsync(string to, string subject, string html)
         {
             await SendAsync(to, subject, html, null);
         }
 
-        // ⭐ Odeslání s přílohami (QR kódy, obrázky)
-        public async Task SendAsync(
-            string to,
-            string subject,
-            string html,
-            List<EmailAttachment>? attachments)
+        // ⭐ 2) Povinná metoda s přílohami
+        public async Task SendAsync(string to, string subject, string html, List<EmailAttachment>? attachments)
         {
-            Console.WriteLine("EMAIL: SendAsync spuštěno");
-
             var message = new MimeMessage();
-
-            message.From.Add(new MailboxAddress(
-                _config["Smtp:DisplayName"],
-                _config["Smtp:From"]
-            ));
-
+            message.From.Add(new MailboxAddress("Výuka App", _smtp.From));
             message.To.Add(new MailboxAddress(to, to));
             message.Subject = subject;
 
@@ -43,56 +34,12 @@ namespace Vyuka.Services
                 HtmlBody = html
             };
 
-            // ⭐ Logo jako embedded obrázek – OPRAVENO
-            if (html.Contains("cid:logo"))
-            {
-                var logoPath = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "images",
-                    "users",
-                    "logo.jpg"
-                );
-
-                Console.WriteLine("EMAIL: Logo path = " + logoPath);
-
-                if (File.Exists(logoPath))
-                {
-                    Console.WriteLine("EMAIL: Logo existuje");
-                    var logo = builder.LinkedResources.Add(logoPath);
-                    logo.ContentId = "logo";
-                    logo.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
-                    logo.ContentType.MediaType = "image";
-                    logo.ContentType.MediaSubtype = "jpeg";
-                }
-                else
-                {
-                    Console.WriteLine("EMAIL: Logo NEEXISTUJE");
-                }
-            }
-
-            // ⭐ QR kódy / jiné obrázky jako embedded
             if (attachments != null)
             {
                 foreach (var att in attachments)
                 {
-                    var img = builder.LinkedResources.Add(att.FilePath);
-                    img.ContentId = att.ContentId;
-
-                    img.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
-                    img.ContentType.Name = Path.GetFileName(att.FilePath);
-
-                    if (att.FilePath.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                        att.FilePath.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
-                    {
-                        img.ContentType.MediaType = "image";
-                        img.ContentType.MediaSubtype = "jpeg";
-                    }
-                    else if (att.FilePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                    {
-                        img.ContentType.MediaType = "image";
-                        img.ContentType.MediaSubtype = "png";
-                    }
+                    if (File.Exists(att.FilePath))
+                        builder.Attachments.Add(att.FilePath);
                 }
             }
 
@@ -102,31 +49,9 @@ namespace Vyuka.Services
 
             try
             {
-                Console.WriteLine("SMTP: Připojuji se...");
-
-                await client.ConnectAsync(
-                    _config["Smtp:Host"],
-                    int.Parse(_config["Smtp:Port"]),
-                    SecureSocketOptions.StartTls
-                );
-
-                Console.WriteLine("SMTP: Autentizace...");
-
-                await client.AuthenticateAsync(
-                    _config["Smtp:User"],
-                    _config["Smtp:Password"]
-                );
-
-                Console.WriteLine("SMTP: Odesílám...");
-
+                await client.ConnectAsync(_smtp.Host, _smtp.Port, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(_smtp.User, _smtp.Password);
                 await client.SendAsync(message);
-
-                Console.WriteLine("SMTP: Hotovo.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("SMTP ERROR: " + ex.Message);
-                throw;
             }
             finally
             {
@@ -134,26 +59,19 @@ namespace Vyuka.Services
             }
         }
 
-        // ⭐ Nová metoda pro reset hesla
+        // ⭐ 3) Reset hesla
         public async Task SendPasswordResetEmail(string email, string name, string token)
         {
-            Console.WriteLine("RESET EMAIL: metoda byla zavolána");
+            var resetLink = $"https://{_smtp.AppDomain}/Account/ResetPassword?token={token}";
 
-            var baseUrl = _config["App:BaseUrl"] ?? "https://localhost:5001";
-            var resetLink = $"{baseUrl}/Account/ResetPassword?token={token}";
+            string html = $@"
+                <p>Ahoj {name},</p>
+                <p>Klikni na tento odkaz pro reset hesla:</p>
+                <p><a href=""{resetLink}"">{resetLink}</a></p>
+                <p>Odkaz je platný 1 hodinu.</p>
+                <p>Výuka App</p>";
 
-            var subject = "Reset hesla";
-
-            var html = $@"
-<p>Ahoj <strong>{name}</strong>,</p>
-<p>pro reset hesla klikni na následující odkaz:</p>
-<p><a href=""{resetLink}"">Resetovat heslo</a></p>
-<p>Odkaz je platný 1 hodinu.</p>
-<br>
-<img src=""cid:logo"" style=""width:150px;"" />
-";
-
-            await SendAsync(email, subject, html, null);
+            await SendAsync(email, "Reset hesla", html);
         }
     }
 }

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Vyuka.Models;
 
-namespace Vyuka.Pages.StudentPortal
+namespace Vyuka.Pages.Students_only
 {
     public class ProfileModel : PageModel
     {

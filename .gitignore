@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 Secrets/vyukameet-887de6c28b47.json
 appsettings.json
+appsettings.*.json

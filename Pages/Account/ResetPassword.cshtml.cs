@@ -45,7 +45,7 @@ namespace Vyuka.Pages.Account
                 return Page();
             }
 
-            // ✔ Najdeme token v naší tabulce
+            // 1) Najdeme náš GUID token
             var resetToken = _context.PasswordResetTokens.FirstOrDefault(t => t.Token == Token);
             if (resetToken == null || resetToken.ExpiresAt < DateTime.UtcNow)
             {
@@ -53,7 +53,7 @@ namespace Vyuka.Pages.Account
                 return Page();
             }
 
-            // ✔ Najdeme uživatele
+            // 2) Najdeme uživatele
             var user = await _userManager.FindByIdAsync(resetToken.UserId);
             if (user == null)
             {
@@ -61,15 +61,25 @@ namespace Vyuka.Pages.Account
                 return Page();
             }
 
-            // ⭐ OPRAVA: Reset hesla ručně přes PasswordHasher
-            user.PasswordHash = _passwordHasher.HashPassword(user, NewPassword);
+            // 3) Vygenerujeme skutečný Identity reset token
+            var identityToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // ✔ Uložíme změnu
+            // 4) Reset hesla přes Identity
+            var result = await _userManager.ResetPasswordAsync(user, identityToken, NewPassword);
+
+            if (!result.Succeeded)
+            {
+                ErrorMessage = string.Join("<br>", result.Errors.Select(e => e.Description));
+                return Page();
+            }
+
+            // 5) Smažeme náš GUID token
             _context.PasswordResetTokens.Remove(resetToken);
             await _context.SaveChangesAsync();
 
             SuccessMessage = "Heslo bylo úspěšně změněno.";
             return Page();
         }
+
     }
 }

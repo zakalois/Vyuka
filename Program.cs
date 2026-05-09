@@ -159,7 +159,7 @@ using (var scope = app.Services.CreateScope())
             EmailConfirmed = true,
             FirstName = "Alois",
             LastName = "Žák",
-            PhoneNumber = "",
+            PhoneNumber = "601172322",
             PhotoPath = "",
             Role = Roles.Admin
         };
@@ -208,13 +208,14 @@ app.Use(async (context, next) =>
 
     // Stránky, které musí být přístupné bez přihlášení
     if (path.Equals("/Login", StringComparison.OrdinalIgnoreCase) ||
-        path.StartsWith("/ForgotPassword", StringComparison.OrdinalIgnoreCase) ||
-        path.StartsWith("/Account/ResetPassword", StringComparison.OrdinalIgnoreCase) ||
-        path.Equals("/AccessDenied", StringComparison.OrdinalIgnoreCase))
+      path.StartsWith("/Account/ForgotPassword", StringComparison.OrdinalIgnoreCase) ||
+      path.StartsWith("/Account/ResetPassword", StringComparison.OrdinalIgnoreCase) ||
+      path.Equals("/AccessDenied", StringComparison.OrdinalIgnoreCase))
     {
         await next();
         return;
     }
+
 
     // Pokud uživatel není přihlášený → redirect na Login
     if (!context.User.Identity?.IsAuthenticated ?? true)

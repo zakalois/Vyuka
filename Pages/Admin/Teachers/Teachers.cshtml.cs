@@ -9,7 +9,6 @@ namespace Vyuka.Pages.Admin.Teachers
         private readonly AppDbContext _context;
 
         public TeachersModel(AppDbContext context)
-
         {
             _context = context;
         }
@@ -18,21 +17,22 @@ namespace Vyuka.Pages.Admin.Teachers
 
         public async Task OnGetAsync()
         {
-            Teachers = await _context.Users
-    .Where(u => u.Role == "Teacher")
-    .Select(u => new TeacherListViewModel
-    {
-        Id = u.Id,
-        FirstName = u.FirstName,
-        LastName = u.LastName,
-        Email = u.Email,
-        Phone = u.PhoneNumber,
-        Subjects = "",
-        StudentsCount = 0,
-        HoursThisMonth = 0
-    })
-    .ToListAsync();
-
+            Teachers = await _context.Teachers
+     .Include(t => t.User)
+     .Select(t => new TeacherListViewModel
+     {
+         Id = t.Id,
+         FirstName = t.User.FirstName,
+         LastName = t.User.LastName,
+         FullName = t.User.FirstName + " " + t.User.LastName,
+         Email = t.User.Email,
+         Phone = t.User.PhoneNumber,
+         Subjects = "",
+         StudentsCount = 0,
+         HoursThisMonth = 0,
+         IsActive = t.IsActive
+     })
+     .ToListAsync();
 
         }
     }

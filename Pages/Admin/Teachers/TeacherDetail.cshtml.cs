@@ -1,27 +1,26 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
-using Microsoft.AspNetCore.Identity;
 
 namespace Vyuka.Pages.Admin.Teachers
 {
     public class TeacherDetailModel : PageModel
     {
-        private readonly UserManager<AppUser> _userManager;
+        private readonly AppDbContext _db;
 
-        public TeacherDetailModel(UserManager<AppUser> userManager)
+        public TeacherDetailModel(AppDbContext db)
         {
-            _userManager = userManager;
+            _db = db;
         }
 
-        public AppUser Teacher { get; set; }
+        public Teacher Teacher { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(string id)
+        public async Task<IActionResult> OnGetAsync(int id)
         {
-            if (id == null)
-                return NotFound();
-
-            Teacher = await _userManager.FindByIdAsync(id);
+            Teacher = await _db.Teachers
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.Id == id);
 
             if (Teacher == null)
                 return NotFound();

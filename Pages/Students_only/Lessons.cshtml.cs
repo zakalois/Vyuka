@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 
-namespace Vyuka.Pages.StudentPortal
+namespace Vyuka.Pages.Students_only
 {
     public class LessonsModel : PageModel
     {

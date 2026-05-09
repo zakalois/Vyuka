@@ -20,6 +20,8 @@ namespace Vyuka.Models
         public DbSet<StudentSubject> StudentSubjects { get; set; }
         public DbSet<SubjectTopic> SubjectTopics { get; set; }
         public DbSet<LessonPlan> LessonPlans { get; set; }
+        public DbSet<Teacher> Teachers { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

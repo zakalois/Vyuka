@@ -29,23 +29,30 @@ namespace Vyuka.Pages.Account
 
         public async Task<IActionResult> OnPostAsync()
         {
+            // ⭐ 1) Validace – email musí být zadán
             if (string.IsNullOrWhiteSpace(Email))
             {
                 Message = "Zadejte email.";
                 return Page();
             }
 
-            // ✔ Najdeme uživatele přes Identity
+            // ⭐ 2) Najdeme uživatele
             var user = await _userManager.FindByEmailAsync(Email);
 
-            // ✔ Bezpečnost: neprozrazujeme, zda existuje
+            // ⭐ 3) Bezpečnost – NEprozrazujeme, zda existuje
             if (user == null)
             {
                 Message = "Pokud účet existuje, poslali jsme vám instrukce na email.";
                 return Page();
             }
 
-            // ✔ Vytvoříme vlastní token do tabulky PasswordResetTokens
+            // ⭐ 4) Smažeme staré tokeny
+            var oldTokens = _context.PasswordResetTokens
+                .Where(t => t.UserId == user.Id);
+
+            _context.PasswordResetTokens.RemoveRange(oldTokens);
+
+            // ⭐ 5) Vytvoříme nový token
             var token = Guid.NewGuid().ToString("N");
 
             var resetToken = new PasswordResetToken
@@ -58,13 +65,14 @@ namespace Vyuka.Pages.Account
             _context.PasswordResetTokens.Add(resetToken);
             await _context.SaveChangesAsync();
 
-            // ⭐ ODESLÁNÍ E‑MAILU SPRÁVNOU METODOU
+            // ⭐ 6) Odeslání emailu – pouze pokud user existuje
             await _emailService.SendPasswordResetEmail(
                 user.Email,
-                user.FirstName,
+                user.FirstName ?? "",
                 token
             );
 
+            // ⭐ 7) Stejná zpráva pro existující i neexistující email
             Message = "Pokud účet existuje, poslali jsme vám instrukce na email.";
             return Page();
         }

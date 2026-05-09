@@ -39,11 +39,7 @@ namespace Vyuka.Pages.Account
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var sessionUserId = HttpContext.Session.GetString("UserId");
-            if (sessionUserId == null)
-                return RedirectToPage("/Login");
-
-            var user = await _userManager.FindByIdAsync(sessionUserId);
+            var user = await _userManager.GetUserAsync(User);
             if (user == null)
                 return RedirectToPage("/Login");
 
@@ -69,5 +65,6 @@ namespace Vyuka.Pages.Account
             SuccessMessage = "Heslo bylo úspěšně změněno.";
             return Page();
         }
+
     }
 }

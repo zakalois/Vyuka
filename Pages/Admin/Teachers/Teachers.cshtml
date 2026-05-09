@@ -17,7 +17,6 @@
             <th>Předměty</th>
             <th>Studenti</th>
             <th>Hodiny tento měsíc</th>
-            <th>Stav</th>
             <th></th>
         </tr>
     </thead>
@@ -32,12 +31,26 @@
                 <td>@t.Subjects</td>
                 <td>@t.StudentsCount</td>
                 <td>@t.HoursThisMonth</td>
-                <td><span class="badge bg-success">Aktivní</span></td>
-                <td>
-                    <a asp-page="/Admin/Teachers/TeacherDetail" asp-route-id="@t.Id" class="btn btn-sm btn-primary">
+
+                <td class="d-flex gap-2">
+
+                    <a asp-page="/Admin/Teachers/TeacherDetail" asp-route-id="@t.Id"
+                           class="btn btn-sm btn-primary">
                         Detail
                     </a>
+
+                    <a asp-page="/Admin/Teachers/ToggleActive" asp-route-id="@t.Id"
+                           class="btn btn-sm @(t.IsActive ? "btn-success" : "btn-secondary")">
+                        @(t.IsActive ? "Aktivní" : "Neaktivní")
+                    </a>
+
+                    <a asp-page="/Admin/Teachers/Delete" asp-route-id="@t.Id"
+                           class="btn btn-sm btn-danger">
+                        Smazat
+                    </a>
+
                 </td>
+
             </tr>
         }
     </tbody>

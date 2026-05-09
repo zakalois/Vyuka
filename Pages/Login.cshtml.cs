@@ -45,12 +45,17 @@ namespace Vyuka.Pages
                 return Page();
             }
 
+            // Odhlásíme předchozího uživatele
+            await _signInManager.SignOutAsync();
+
+            // Přihlásíme správného uživatele
             var result = await _signInManager.PasswordSignInAsync(
-                user.UserName,
+                user,
                 Password,
                 isPersistent: false,
                 lockoutOnFailure: false
             );
+
 
             if (!result.Succeeded)
             {

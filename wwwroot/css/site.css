@@ -319,11 +319,15 @@ body.dark .admin-menu {
 }
 
 /* ============================================================
-   RESET IKON
+   7) IKONY – BOOTSTRAP + FONT AWESOME
    ============================================================ */
 
-.bi {
-    color: #333 !important;
+/* Ikony nebudou mít žádnou vynucenou barvu – berou ji z rodiče */
+.bi,
+.fa-solid,
+.fa-regular,
+.fa-brands {
+    color: inherit !important;
     background: none !important;
     border: none !important;
     padding: 0 !important;
@@ -332,6 +336,59 @@ body.dark .admin-menu {
     outline: none !important;
 }
 
+/* ŽÁDNÉ přebarvování .bi v dark režimu */
 .dark .bi {
-    color: var(--text) !important;
+    color: inherit !important;
 }
+
+/* Vzhled input-group ikon */
+.input-group-text {
+    background-color: #f8f9fa;
+}
+
+    .input-group-text .bi,
+    .input-group-text .fa-solid,
+    .input-group-text .fa-regular,
+    .input-group-text .fa-brands {
+        font-size: 1.2rem;
+    }
+
+/* Pastelové barvy ikon – použij jako třídu na <i> */
+.icon-pastel-blue {
+    color: #7daee6 !important;
+}
+
+.icon-pastel-purple {
+    color: #c7a4e0 !important;
+}
+
+.icon-pastel-orange {
+    color: #f7c59f !important;
+}
+
+.icon-pastel-green {
+    color: #a8d8b9 !important;
+}
+.top-menu {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 12px 0;
+}
+
+    .top-menu a {
+        color: var(--primary-light);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .top-menu a:hover {
+            color: var(--primary);
+        }
+
+    .top-menu .logout {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }

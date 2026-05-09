@@ -1,0 +1,60 @@
+﻿@page
+@model Vyuka.Pages.Students_only.EditProfileModel
+
+<div class="container mt-4">
+
+    <h2>Upravit profil</h2>
+
+    <form method="post" class="mt-4">
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Jméno</label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fa-solid fa-user icon-pastel-blue"></i>
+                    </span>
+                    <input asp-for="FirstName" class="form-control" />
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Příjmení</label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fa-solid fa-id-card icon-pastel-purple"></i>
+                    </span>
+                    <input asp-for="LastName" class="form-control" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fa-solid fa-envelope icon-pastel-orange"></i>
+                    </span>
+                    <input asp-for="Email" class="form-control" />
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Telefon</label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fa-solid fa-phone icon-pastel-green"></i>
+                    </span>
+                    <input asp-for="Phone" class="form-control" />
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-3">
+            <i class="fa-solid fa-check"></i> Uložit změny
+        </button>
+
+    </form>
+
+</div>

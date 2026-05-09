@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
@@ -7,10 +8,12 @@ namespace Vyuka.Pages.Students_only
     public class LessonsModel : PageModel
     {
         private readonly AppDbContext _db;
+        private readonly UserManager<AppUser> _userManager;
 
-        public LessonsModel(AppDbContext db)
+        public LessonsModel(AppDbContext db, UserManager<AppUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         public string StudentName { get; set; } = "";
@@ -33,11 +36,22 @@ namespace Vyuka.Pages.Students_only
 
         public async Task OnGetAsync()
         {
-            int studentId = 1;
+            // 1) Přihlášený Identity uživatel
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return;
 
-            var student = await _db.Students.FindAsync(studentId);
+            // 2) Najdeme studenta podle emailu (bez migrací)
+            var student = await _db.Students
+                .FirstOrDefaultAsync(s => s.Email == user.Email);
+
+            if (student == null)
+                return;
+
+            int studentId = student.Id;
             StudentName = student.FullName;
 
+            // 3) Výpočty
             PrepaidHours = Math.Round(
                 await _db.Payments
                     .Where(p => p.StudentId == studentId)
@@ -48,6 +62,7 @@ namespace Vyuka.Pages.Students_only
                     .Where(l => l.StudentId == studentId)
                     .SumAsync(l => (decimal?)l.Hours) ?? 0, 1);
 
+            // 4) Nejbližší plánovaná hodina
             var next = await _db.LessonPlans
                 .Include(l => l.Subject)
                 .Include(l => l.SubjectTopic)
@@ -67,6 +82,7 @@ namespace Vyuka.Pages.Students_only
                 };
             }
 
+            // 5) Plánované
             var planned = await _db.LessonPlans
                 .Include(l => l.Subject)
                 .Include(l => l.SubjectTopic)
@@ -82,6 +98,7 @@ namespace Vyuka.Pages.Students_only
                 Type = "Plánovaná"
             });
 
+            // 6) Odučené
             var taught = await _db.Lessons
                 .Include(l => l.Subject)
                 .Include(l => l.SubjectTopic)
@@ -97,6 +114,7 @@ namespace Vyuka.Pages.Students_only
                 Type = "Odučená"
             });
 
+            // 7) Spojení
             Lessons = plannedRows
                 .Concat(taughtRows)
                 .OrderByDescending(l => l.Date)

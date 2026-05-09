@@ -1,11 +1,21 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Vyuka.Models;
 
 public class LogoutModel : PageModel
 {
-    public IActionResult OnGet()
+    private readonly SignInManager<AppUser> _signInManager;
+
+    public LogoutModel(SignInManager<AppUser> signInManager)
     {
-        HttpContext.Session.Clear();
-        return RedirectToPage("/Login");
+        _signInManager = signInManager;
+    }
+
+    public async Task<IActionResult> OnPost()
+    {
+        await _signInManager.SignOutAsync();   // Odhlásí Identity uživatele
+        HttpContext.Session.Clear();           // Vymaže session
+        return RedirectToPage("/Login");       // Přesměruje na login
     }
 }

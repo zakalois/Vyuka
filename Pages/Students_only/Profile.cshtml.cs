@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 
 namespace Vyuka.Pages.Students_only
@@ -6,10 +8,12 @@ namespace Vyuka.Pages.Students_only
     public class ProfileModel : PageModel
     {
         private readonly AppDbContext _db;
+        private readonly UserManager<AppUser> _userManager;
 
-        public ProfileModel(AppDbContext db)
+        public ProfileModel(AppDbContext db, UserManager<AppUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         public string FullName { get; set; } = "";
@@ -20,10 +24,20 @@ namespace Vyuka.Pages.Students_only
 
         public async Task OnGetAsync()
         {
-            int studentId = 1;
+            // 1) Získáme ID přihlášeného uživatele
+            var userId = _userManager.GetUserId(User);
 
-            var student = await _db.Students.FindAsync(studentId);
+            // 2) Najdeme studenta podle UserId
+            var student = await _db.Students
+                .FirstOrDefaultAsync(s => s.UserId == userId);
 
+            if (student == null)
+            {
+                FullName = "Neznámý student";
+                return;
+            }
+
+            // 3) Vyplníme data
             FullName = student.FullName;
             Email = student.Email ?? "—";
             Phone = student.Phone ?? "—";

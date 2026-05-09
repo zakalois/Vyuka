@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
@@ -7,10 +8,12 @@ namespace Vyuka.Pages.Students_only
     public class PaymentsModel : PageModel
     {
         private readonly AppDbContext _db;
+        private readonly UserManager<AppUser> _userManager;
 
-        public PaymentsModel(AppDbContext db)
+        public PaymentsModel(AppDbContext db, UserManager<AppUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         public string StudentName { get; set; } = "";
@@ -30,11 +33,22 @@ namespace Vyuka.Pages.Students_only
 
         public async Task OnGetAsync()
         {
-            int studentId = 1;
+            // 1) Přihlášený Identity uživatel
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return;
 
-            var student = await _db.Students.FindAsync(studentId);
+            // 2) Najdeme studenta podle emailu (bez migrací)
+            var student = await _db.Students
+                .FirstOrDefaultAsync(s => s.Email == user.Email);
+
+            if (student == null)
+                return;
+
+            int studentId = student.Id;
             StudentName = student.FullName;
 
+            // 3) Zbytek kódu necháváš tak, jak je
             var payments = await _db.Payments
                 .Where(p => p.StudentId == studentId)
                 .OrderByDescending(p => p.Date)
@@ -50,7 +64,6 @@ namespace Vyuka.Pages.Students_only
                 HoursPurchased = p.HoursPurchased,
                 Method = p.Method ?? "—"
             }).ToList();
-
         }
     }
 }

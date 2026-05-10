@@ -38,6 +38,13 @@ namespace Vyuka.Models
             foreach (var pm in pageModels)
                 modelBuilder.Ignore(pm);
 
+            // ⭐ Student → Teacher
+            modelBuilder.Entity<Student>()
+                .HasOne<AppUser>(s => s.Teacher)
+                .WithMany()
+                .HasForeignKey(s => s.TeacherId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<StudentSubject>()
                 .HasKey(ss => new { ss.StudentId, ss.SubjectId });
 

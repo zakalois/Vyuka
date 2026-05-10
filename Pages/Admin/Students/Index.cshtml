@@ -9,7 +9,6 @@
 
 <h1>Seznam studentů</h1>
 
-<!-- Tlačítko přes celou šířku řádku -->
 <div class="d-grid mb-3">
     <a class="btn btn-primary btn-lg w-100" asp-page="Create">
         Přidat studenta
@@ -24,15 +23,13 @@
             <th>Věk</th>
             <th>Email</th>
             <th>Telefon</th>
-            <th>Škola</th>
-            <th>Adresa</th>
+
             <th>Jméno rodiče</th>
             <th>Příjmení rodiče</th>
             <th>Telefon rodiče</th>
             <th>Email rodiče</th>
 
-            <!-- ⭐ NOVÝ SLOUPEC -->
-            <th>Odučeno</th>
+            <th>Učitel</th>
 
             <th class="text-center" style="width:110px;">Akce</th>
         </tr>
@@ -48,15 +45,26 @@
                 <td>@item.Age</td>
                 <td>@item.Email</td>
                 <td>@item.Phone</td>
-                <td>@item.School</td>
-                <td>@item.Address</td>
+
                 <td>@item.ParentFirstName</td>
                 <td>@item.ParentLastName</td>
                 <td>@item.ParentPhone</td>
                 <td>@item.ParentEmail</td>
 
-                <!-- ⭐ ZDE SE ZOBRAZÍ ODUČENÉ HODINY -->
-                <td>@Model.TaughtHours[item.Id] h</td>
+                <td class="teacher-cell @(item.TeacherId == null ? "no-teacher" : "has-teacher")">
+                    @if (item.Teacher != null)
+                    {
+                        <span title="@item.Teacher.Email">
+                            @item.Teacher.LastName @item.Teacher.FirstName
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="text-dark">
+                            <i class="bi bi-exclamation-circle"></i> Nepřiřazen
+                        </span>
+                    }
+                </td>
 
                 <td class="text-center" style="white-space:nowrap;">
 
@@ -72,24 +80,17 @@
                         <i class="bi bi-trash"></i>
                     </a>
 
-                    <form method="post" asp-page="Toggle" asp-route-id="@item.Id" style="display:inline;">
-                        @if (item.IsActive)
-                        {
-                            <button class="btn btn-danger btn-sm" title="Deaktivovat">
-                                <i class="bi bi-person-dash"></i>
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-success btn-sm" title="Aktivovat">
-                                <i class="bi bi-person-check"></i>
-                            </button>
-                        }
-                    </form>
+                    <a asp-page="/Admin/Students/AssignTeacher"
+                           asp-route-id="@item.Id"
+                           class="btn btn-outline-dark btn-sm"
+                           title="Přiřadit učitele">
+                        <i class="bi bi-person-fill-gear"></i>
+                    </a>
 
                 </td>
 
             </tr>
         }
     </tbody>
+
 </table>

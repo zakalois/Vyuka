@@ -1,19 +1,32 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Vyuka.Models; // ← Tohle je důležité
 
 namespace Vyuka.Pages.Teachers_only
 {
     public class DashboardModel : PageModel
     {
+        private readonly UserManager<AppUser> _userManager;
+
+        public DashboardModel(UserManager<AppUser> userManager)
+        {
+            _userManager = userManager;
+        }
+
+        public AppUser CurrentTeacher { get; set; }
+
         public List<LessonInfo> TodayLessons { get; set; } = new();
         public int StudentCount { get; set; }
         public int LowCreditCount { get; set; }
         public List<DaySchedule> WeeklySchedule { get; set; } = new();
         public List<string> Notifications { get; set; } = new();
 
-        public void OnGet()
+        public async Task OnGet()
         {
-            // MOCK DATA – později nahradíme databází
+            // 🔹 Načteme přihlášeného učitele
+            CurrentTeacher = await _userManager.GetUserAsync(User);
 
+            // MOCK DATA
             TodayLessons = new List<LessonInfo>
             {
                 new LessonInfo("08:00", "Jan Novák", "Matematika"),

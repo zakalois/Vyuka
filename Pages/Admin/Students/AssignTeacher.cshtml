@@ -1,0 +1,32 @@
+﻿@page "{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@model Vyuka.Pages.Admin.Students.AssignTeacherModel
+
+<h2>Přiřadit učitele studentovi</h2>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-body">
+
+        <form method="post">
+
+            <input type="hidden" asp-for="StudentId" />
+
+            <div class="mb-3">
+                <label class="form-label">Student</label>
+                <input class="form-control" value="@Model.StudentName" disabled />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Učitel</label>
+                <select class="form-select" asp-for="SelectedTeacherId" asp-items="Model.Teachers"></select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Uložit přiřazení</button>
+            <a asp-page="Index" class="btn btn-secondary ms-2">Zpět</a>
+
+        </form>
+
+
+    </div>
+</div>

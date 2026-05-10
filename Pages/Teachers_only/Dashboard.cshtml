@@ -5,7 +5,16 @@
     Layout = "_TeacherLayout";
 }
 
-<h2 class="mb-4">Teacher Dashboard</h2>
+<h2 class="mb-2">
+    @Model.CurrentTeacher.LastName @Model.CurrentTeacher.FirstName
+</h2>
+
+<div class="mb-4">
+    <a asp-page="/Admin/Students/Index" class="btn btn-outline-primary">
+        Přehled studentů
+    </a>
+</div>
+
 
 <div class="row">
 

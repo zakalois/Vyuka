@@ -406,3 +406,40 @@ body.dark .admin-menu {
     font-weight: 600;
     cursor: pointer;
 }
+.teacher-cell.has-teacher {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    font-weight: 600;
+}
+
+.teacher-cell.no-teacher {
+    background-color: transparent;
+    color: #000000;
+    font-weight: 600;
+}
+
+.row-inactive {
+    background-color: #fff8e1 !important; /* jemná žlutá */
+}
+.section-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #0d6efd;
+    margin-bottom: 4px;
+}
+
+.section-box {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 6px 10px;
+}
+
+.section-student {
+    border-left: 4px solid #0d6efd;
+}
+
+.section-parent {
+    border-left: 4px solid #ffc107;
+}
+
+

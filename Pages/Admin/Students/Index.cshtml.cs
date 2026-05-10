@@ -20,24 +20,47 @@ namespace Vyuka.Pages.Admin.Students
 
         public async Task OnGetAsync()
         {
+            // Načteme studenty i s učiteli
             Students = await _context.Students
-                .OrderBy(s => s.LastName)
-                .ThenBy(s => s.FirstName)
-                .ToListAsync();
+    .Include(s => s.Teacher)
+    .OrderBy(s => s.LastName)
+    .ThenBy(s => s.FirstName)
+    .ToListAsync();
+
 
             // Načteme všechny odučené lekce
             var lessons = await _context.Lessons
                 .Where(l => l.IsTaught)
                 .ToListAsync();
 
+            // Načteme všechny payments
+            var payments = await _context.Payments.ToListAsync();
+
+            // Pro každý student spočítáme hodiny
             foreach (var s in Students)
             {
-                double hours = lessons
+                // ODUČENÉ HODINY
+                double taught = lessons
                     .Where(l => l.StudentId == s.Id)
                     .Sum(l => (l.End - l.Start).TotalHours);
 
-                TaughtHours[s.Id] = Math.Round(hours, 1);
+                s.TaughtHours = Math.Round(taught, 1);
+
+                // PŘEDPLACENÉ HODINY
+                double paid = (double)payments
+     .Where(p => p.StudentId == s.Id)
+     .Sum(p => p.HoursPurchased);
+
+
+                s.PaidHours = Math.Round(paid, 1);
+
+                // ZBÝVAJÍCÍ HODINY
+                s.RemainingHours = Math.Round(s.PaidHours - s.TaughtHours, 1);
             }
+
         }
     }
 }
+
+
+

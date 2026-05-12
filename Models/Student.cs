@@ -22,6 +22,9 @@ namespace Vyuka.Models
 
         public bool IsActive { get; set; } = true;
 
+        // ❌ Tohle musí pryč:
+        // public Parent? Parent { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? LastLogin { get; set; }
 
@@ -34,16 +37,9 @@ namespace Vyuka.Models
         [NotMapped] public double PaidHours { get; set; }
         [NotMapped] public double RemainingHours { get; set; }
 
-        // ❌ TOTO SMAZAT:
-        // public int? ParentId { get; set; }
-
         public string? Level { get; set; }
-
-        [MaxLength(50)]
-        public string? PreferredTime { get; set; }
-
-        [MaxLength(500)]
-        public string? Note { get; set; }
+        [MaxLength(50)] public string? PreferredTime { get; set; }
+        [MaxLength(500)] public string? Note { get; set; }
 
         public int SubjectId { get; set; }
         public Subject Subject { get; set; }

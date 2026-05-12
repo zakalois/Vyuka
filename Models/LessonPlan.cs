@@ -6,7 +6,7 @@ public class LessonPlan
     public int Id { get; set; }
 
     public int StudentId { get; set; }
-    public Student Student { get; set; }
+    public Student? Student { get; set; }   // ⭐ MUSÍ BÝT NULLABLE
 
     public TimeSpan Start { get; set; }
     public TimeSpan End { get; set; }

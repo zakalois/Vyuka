@@ -4,69 +4,84 @@
 <h1>Upravit studenta</h1>
 
 <form method="post">
-    <input type="hidden" asp-for="Student.Id" />
+
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
     <div class="row">
 
+        <!-- STUDENT -->
         <div class="col-md-6 mb-3">
             <label>Jméno</label>
             <input asp-for="Student.FirstName" class="form-control" />
+            <span asp-validation-for="Student.FirstName" class="text-danger"></span>
         </div>
 
         <div class="col-md-6 mb-3">
             <label>Příjmení</label>
             <input asp-for="Student.LastName" class="form-control" />
+            <span asp-validation-for="Student.LastName" class="text-danger"></span>
         </div>
 
         <div class="col-md-4 mb-3">
             <label>Věk</label>
             <input asp-for="Student.Age" class="form-control" />
+            <span asp-validation-for="Student.Age" class="text-danger"></span>
         </div>
 
         <div class="col-md-8 mb-3">
             <label>Email</label>
             <input asp-for="Student.Email" class="form-control" />
+            <span asp-validation-for="Student.Email" class="text-danger"></span>
         </div>
 
         <div class="col-md-6 mb-3">
             <label>Telefon</label>
             <input asp-for="Student.Phone" class="form-control" />
+            <span asp-validation-for="Student.Phone" class="text-danger"></span>
         </div>
 
         <div class="col-md-6 mb-3">
             <label>Škola</label>
             <input asp-for="Student.School" class="form-control" />
+            <span asp-validation-for="Student.School" class="text-danger"></span>
         </div>
 
         <div class="col-md-12 mb-3">
             <label>Adresa</label>
             <input asp-for="Student.Address" class="form-control" />
+            <span asp-validation-for="Student.Address" class="text-danger"></span>
         </div>
 
+        <!-- RODIČ -->
         <h4 class="mt-4">Rodič</h4>
 
         <div class="col-md-6 mb-3">
             <label>Jméno rodiče</label>
-            <input asp-for="Student.ParentFirstName" class="form-control" />
-        </div>
-
-        <div class="col-md-6 mb-3">
-            <label>Příjmení rodiče</label>
-            <input asp-for="Student.ParentLastName" class="form-control" />
-        </div>
-
-        <div class="col-md-6 mb-3">
-            <label>Telefon rodiče</label>
-            <input asp-for="Student.ParentPhone" class="form-control" />
+            <input asp-for="Parent.Name" class="form-control" />
+            <span asp-validation-for="Parent.Name" class="text-danger"></span>
         </div>
 
         <div class="col-md-6 mb-3">
             <label>Email rodiče</label>
-            <input asp-for="Student.ParentEmail" class="form-control" />
+            <input asp-for="Parent.Email" class="form-control" />
+            <span asp-validation-for="Parent.Email" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label>Telefon rodiče</label>
+            <input asp-for="Parent.Phone" class="form-control" />
+            <span asp-validation-for="Parent.Phone" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label>Poznámka rodiče</label>
+            <textarea asp-for="Parent.Note" class="form-control"></textarea>
+            <span asp-validation-for="Parent.Note" class="text-danger"></span>
         </div>
 
     </div>
 
-    <button type="submit" class="btn btn-success">Uložit změny</button>
+    <button type="submit" class="btn btn-primary">Uložit změny</button>
     <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+
 </form>

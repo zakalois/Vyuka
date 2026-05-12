@@ -15,6 +15,8 @@ namespace Vyuka.Models
         // Jednoduchý seznam témat oddělený řádky
         public string? Topics { get; set; }
         public List<StudentSubject> StudentSubjects { get; set; } = new();
+        public int TeacherId { get; set; }
+        public Teacher Teacher { get; set; }
 
     }
 }

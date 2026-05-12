@@ -1,11 +1,10 @@
-﻿@page "/Admin/Students/Create"
-@model Vyuka.Pages.Admin.Students.CreateModel
+﻿@page "/Teachers_only/Students/Edit/{id:int}"
+@model Vyuka.Pages.Teachers_only.Students.EditModel
 
-<h1>Přidat studenta</h1>
+<h2>Upravit studenta</h2>
 
 <form method="post">
 
-    <!-- VALIDACE -->
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
     <div class="row">
@@ -23,13 +22,7 @@
             <span asp-validation-for="Student.LastName" class="text-danger"></span>
         </div>
 
-        <div class="col-md-4 mb-3">
-            <label>Věk</label>
-            <input asp-for="Student.Age" class="form-control" />
-            <span asp-validation-for="Student.Age" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-8 mb-3">
+        <div class="col-md-6 mb-3">
             <label>Email</label>
             <input asp-for="Student.Email" class="form-control" />
             <span asp-validation-for="Student.Email" class="text-danger"></span>
@@ -42,15 +35,21 @@
         </div>
 
         <div class="col-md-6 mb-3">
-            <label>Škola</label>
-            <input asp-for="Student.School" class="form-control" />
-            <span asp-validation-for="Student.School" class="text-danger"></span>
+            <label>Předmět</label>
+            <select asp-for="Student.SubjectId" asp-items="@(new SelectList(Model.Subjects, "Id", "Name"))" class="form-select"></select>
+            <span asp-validation-for="Student.SubjectId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label>Úroveň</label>
+            <input asp-for="Student.Level" class="form-control" />
+            <span asp-validation-for="Student.Level" class="text-danger"></span>
         </div>
 
         <div class="col-md-12 mb-3">
-            <label>Adresa</label>
-            <input asp-for="Student.Address" class="form-control" />
-            <span asp-validation-for="Student.Address" class="text-danger"></span>
+            <label>Poznámka</label>
+            <textarea asp-for="Student.Note" class="form-control"></textarea>
+            <span asp-validation-for="Student.Note" class="text-danger"></span>
         </div>
 
         <!-- RODIČ -->
@@ -75,13 +74,14 @@
         </div>
 
         <div class="col-md-12 mb-3">
-            <label>Poznámka</label>
-            <input asp-for="Parent.Note" class="form-control" />
+            <label>Poznámka rodiče</label>
+            <textarea asp-for="Parent.Note" class="form-control"></textarea>
             <span asp-validation-for="Parent.Note" class="text-danger"></span>
         </div>
 
     </div>
 
-    <button type="submit" class="btn btn-success">Přidat studenta</button>
-    <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+    <button type="submit" class="btn btn-primary">Uložit změny</button>
+    <a asp-page="/Teachers_only/Students/Index" class="btn btn-secondary">Zpět</a>
+
 </form>

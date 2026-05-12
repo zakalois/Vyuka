@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 using Vyuka.Secrets;
 using Vyuka.Services;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -117,26 +119,22 @@ builder.Services.AddSession(options =>
 var app = builder.Build();
 
 // ---------------------------------------------------------
-// Inicializace rolí + ADMIN účtu při startu aplikace
+// Inicializace rolí + ADMIN účtu při startu aplikace (ASYNC, BEZ MIGRACÍ)
 // ---------------------------------------------------------
-using (var scope = app.Services.CreateScope())
+using (var scope = app.Services.CreateAsyncScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var services = scope.ServiceProvider;
+
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = services.GetRequiredService<UserManager<AppUser>>();
 
     string[] roleNames = { Roles.Admin, Roles.Teacher, Roles.Student };
 
     foreach (var roleName in roleNames)
     {
-        var exists = roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult();
-        if (!exists)
+        if (!await roleManager.RoleExistsAsync(roleName))
         {
-            var roleResult = roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
-            if (!roleResult.Succeeded)
-            {
-                throw new Exception("Nepodařilo se vytvořit roli: " +
-                    string.Join(", ", roleResult.Errors.Select(e => e.Description)));
-            }
+            await roleManager.CreateAsync(new IdentityRole(roleName));
         }
     }
 
@@ -146,16 +144,14 @@ using (var scope = app.Services.CreateScope())
     string adminEmail = "zakalois@ucitelzak.eu";
     string adminPassword = "zlastaLO";
 
-    var admin = userManager.FindByEmailAsync(adminEmail).GetAwaiter().GetResult();
+    var admin = await userManager.FindByEmailAsync(adminEmail);
 
     if (admin == null)
     {
         admin = new AppUser
         {
             UserName = adminEmail,
-            NormalizedUserName = adminEmail.ToUpper(),
             Email = adminEmail,
-            NormalizedEmail = adminEmail.ToUpper(),
             EmailConfirmed = true,
             FirstName = "Alois",
             LastName = "Žák",
@@ -164,19 +160,16 @@ using (var scope = app.Services.CreateScope())
             Role = Roles.Admin
         };
 
-        var result = userManager.CreateAsync(admin, adminPassword).GetAwaiter().GetResult();
+        var result = await userManager.CreateAsync(admin, adminPassword);
 
-        if (!result.Succeeded)
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(admin, Roles.Admin);
+        }
+        else
         {
             throw new Exception("Admin se nevytvořil: " +
                 string.Join(", ", result.Errors.Select(e => e.Description)));
-        }
-
-        var roleResult = userManager.AddToRoleAsync(admin, Roles.Admin).GetAwaiter().GetResult();
-        if (!roleResult.Succeeded)
-        {
-            throw new Exception("Adminovi se nepodařilo přiřadit roli Admin: " +
-                string.Join(", ", roleResult.Errors.Select(e => e.Description)));
         }
     }
 }
@@ -206,18 +199,15 @@ app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value;
 
-    // Stránky, které musí být přístupné bez přihlášení
     if (path.Equals("/Login", StringComparison.OrdinalIgnoreCase) ||
-      path.StartsWith("/Account/ForgotPassword", StringComparison.OrdinalIgnoreCase) ||
-      path.StartsWith("/Account/ResetPassword", StringComparison.OrdinalIgnoreCase) ||
-      path.Equals("/AccessDenied", StringComparison.OrdinalIgnoreCase))
+        path.StartsWith("/Account/ForgotPassword", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/Account/ResetPassword", StringComparison.OrdinalIgnoreCase) ||
+        path.Equals("/AccessDenied", StringComparison.OrdinalIgnoreCase))
     {
         await next();
         return;
     }
 
-
-    // Pokud uživatel není přihlášený → redirect na Login
     if (!context.User.Identity?.IsAuthenticated ?? true)
     {
         context.Response.Redirect("/Login");
@@ -228,7 +218,7 @@ app.Use(async (context, next) =>
 });
 
 // ---------------------------------------------------------
-// Defaultní redirect – OPRAVENO
+// Defaultní redirect
 // ---------------------------------------------------------
 app.MapGet("/", context =>
 {

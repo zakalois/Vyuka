@@ -15,8 +15,8 @@
     </a>
 </div>
 
-<table class="table table-striped">
-    <thead>
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-dark">
         <tr>
             <th>Příjmení</th>
             <th>Jméno</th>
@@ -24,10 +24,7 @@
             <th>Email</th>
             <th>Telefon</th>
 
-            <th>Jméno rodiče</th>
-            <th>Příjmení rodiče</th>
-            <th>Telefon rodiče</th>
-            <th>Email rodiče</th>
+            <th>Rodič</th>
 
             <th>Učitel</th>
 
@@ -38,6 +35,8 @@
     <tbody>
         @foreach (var item in Model.Students)
         {
+            var parent = Model.Parents.FirstOrDefault(p => p.StudentId == item.Id);
+
             <tr class="@(item.IsActive ? "" : "row-pink")">
 
                 <td>@item.LastName</td>
@@ -46,11 +45,35 @@
                 <td>@item.Email</td>
                 <td>@item.Phone</td>
 
-                <td>@item.ParentFirstName</td>
-                <td>@item.ParentLastName</td>
-                <td>@item.ParentPhone</td>
-                <td>@item.ParentEmail</td>
+                <!-- ⭐ NOVÝ BLOK PRO RODIČE -->
+                <td>
+                    @if (parent != null)
+                    {
+                        <div data-bs-toggle="tooltip" title="Jméno rodiče">
+                            <i class="bi bi-person"></i> @parent.Name
+                        </div>
 
+                        @if (!string.IsNullOrEmpty(parent.Phone))
+                        {
+                            <div data-bs-toggle="tooltip" title="Telefon rodiče">
+                                <i class="bi bi-telephone"></i> @parent.Phone
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(parent.Email))
+                        {
+                            <div data-bs-toggle="tooltip" title="Email rodiče">
+                                <i class="bi bi-envelope"></i> @parent.Email
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">Neuveden</span>
+                    }
+                </td>
+
+                <!-- UČITEL -->
                 <td class="teacher-cell @(item.TeacherId == null ? "no-teacher" : "has-teacher")">
                     @if (item.Teacher != null)
                     {
@@ -66,6 +89,7 @@
                     }
                 </td>
 
+                <!-- AKCE -->
                 <td class="text-center" style="white-space:nowrap;">
 
                     <a asp-page="Edit" asp-route-id="@item.Id" class="text-primary me-2" title="Upravit">
@@ -81,9 +105,9 @@
                     </a>
 
                     <a asp-page="/Admin/Students/AssignTeacher"
-                           asp-route-id="@item.Id"
-                           class="btn btn-outline-dark btn-sm"
-                           title="Přiřadit učitele">
+                       asp-route-id="@item.Id"
+                       class="btn btn-outline-dark btn-sm"
+                       title="Přiřadit učitele">
                         <i class="bi bi-person-fill-gear"></i>
                     </a>
 
@@ -94,3 +118,12 @@
     </tbody>
 
 </table>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>

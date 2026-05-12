@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Vyuka.Models
 {
@@ -6,7 +7,7 @@ namespace Vyuka.Models
     {
         public int Id { get; set; }
 
-        public string? UserId { get; set; }   // vazba na AppUser (login)
+        public string? UserId { get; set; }
 
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
@@ -19,11 +20,6 @@ namespace Vyuka.Models
         public string? School { get; set; }
         public string? Address { get; set; }
 
-        public string? ParentFirstName { get; set; }
-        public string? ParentLastName { get; set; }
-        public string? ParentPhone { get; set; }
-        public string? ParentEmail { get; set; }
-
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -31,18 +27,31 @@ namespace Vyuka.Models
 
         public List<StudentSubject> StudentSubjects { get; set; } = new();
 
-        // ⭐ SPRÁVNĚ – vazba na Teacher
         public int? TeacherId { get; set; }
         public Teacher? Teacher { get; set; }
 
-        // ⭐ Výpočtové vlastnosti
-        [NotMapped]
-        public double TaughtHours { get; set; }
+        [NotMapped] public double TaughtHours { get; set; }
+        [NotMapped] public double PaidHours { get; set; }
+        [NotMapped] public double RemainingHours { get; set; }
 
-        [NotMapped]
-        public double PaidHours { get; set; }
+        // ❌ TOTO SMAZAT:
+        // public int? ParentId { get; set; }
 
-        [NotMapped]
-        public double RemainingHours { get; set; }
+        public string? Level { get; set; }
+
+        [MaxLength(50)]
+        public string? PreferredTime { get; set; }
+
+        [MaxLength(500)]
+        public string? Note { get; set; }
+
+        public int SubjectId { get; set; }
+        public Subject Subject { get; set; }
+
+        public int Credit { get; set; }
+
+        public List<Lesson> Lessons { get; set; } = new();
+        public List<LessonPlan> LessonPlans { get; set; } = new();
     }
+
 }

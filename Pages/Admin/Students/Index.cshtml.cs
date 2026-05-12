@@ -14,6 +14,7 @@ namespace Vyuka.Pages.Admin.Students
         }
 
         public IList<Student> Students { get; set; } = new List<Student>();
+        public IList<Parent> Parents { get; set; } = new List<Parent>();
 
         public async Task OnGetAsync()
         {
@@ -24,6 +25,9 @@ namespace Vyuka.Pages.Admin.Students
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
+
+            // Načteme rodiče (FK: Parent.StudentId)
+            Parents = await _context.Parents.ToListAsync();
 
             // Načteme všechny odučené lekce
             var lessons = await _context.Lessons
@@ -45,8 +49,8 @@ namespace Vyuka.Pages.Admin.Students
 
                 // PŘEDPLACENÉ HODINY
                 double paid = (double)payments
-     .Where(p => p.StudentId == s.Id)
-     .Sum(p => p.HoursPurchased);
+    .Where(p => p.StudentId == s.Id)
+    .Sum(p => p.HoursPurchased);
 
 
                 s.PaidHours = Math.Round(paid, 1);

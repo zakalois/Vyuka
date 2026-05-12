@@ -22,26 +22,13 @@ namespace Vyuka.Pages.Payments
 
         public SelectList StudentList { get; set; } = default!;
 
-        [BindProperty]
-        public int SelectedStudentId { get; set; }
-
-        [BindProperty]
-        public DateTime Date { get; set; } = DateTime.Today;
-
-        [BindProperty]
-        public decimal Amount { get; set; }
-
-        [BindProperty]
-        public decimal HoursPurchased { get; set; }
-
-        [BindProperty]
-        public decimal? PricePerHour { get; set; }
-
-        [BindProperty]
-        public string? Method { get; set; }
-
-        [BindProperty]
-        public string? Note { get; set; }
+        [BindProperty] public int SelectedStudentId { get; set; }
+        [BindProperty] public DateTime Date { get; set; } = DateTime.Today;
+        [BindProperty] public decimal Amount { get; set; }
+        [BindProperty] public decimal HoursPurchased { get; set; }
+        [BindProperty] public decimal? PricePerHour { get; set; }
+        [BindProperty] public string? Method { get; set; }
+        [BindProperty] public string? Note { get; set; }
 
         public async Task OnGetAsync()
         {
@@ -78,10 +65,7 @@ namespace Vyuka.Pages.Payments
             );
 
             if (exists)
-            {
-                // už existuje → neukládat, neposílat e-mail
                 return RedirectToPage("/Payments/Index");
-            }
 
             // 1) Uložit platbu
             var payment = new Payment
@@ -99,7 +83,8 @@ namespace Vyuka.Pages.Payments
             await _context.SaveChangesAsync();
 
             // 2) Načíst studenta
-            var student = await _context.Students.FindAsync(SelectedStudentId);
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.Id == SelectedStudentId);
 
             if (student == null)
             {
@@ -107,11 +92,15 @@ namespace Vyuka.Pages.Payments
                 return Page();
             }
 
-            // 3) Načíst HTML šablonu
+            // 3) Načíst rodiče (správně přes Parent.StudentId)
+            var parent = await _context.Parents
+                .FirstOrDefaultAsync(p => p.StudentId == student.Id);
+
+            // 4) Načíst HTML šablonu
             var templatePath = Path.Combine(_env.ContentRootPath, "EmailsTemplates", "PaymentConfirmation.html");
             var html = await System.IO.File.ReadAllTextAsync(templatePath);
 
-            // 4) Nahradit placeholdery
+            // 5) Nahradit placeholdery
             html = html.Replace("{{StudentName}}", $"{student.FirstName} {student.LastName}")
                        .Replace("{{Amount}}", Amount.ToString("0.##"))
                        .Replace("{{PaymentDate}}", Date.ToString("dd.MM.yyyy"))
@@ -122,15 +111,22 @@ namespace Vyuka.Pages.Payments
                             ? ""
                             : $"<p><strong>Poznámka:</strong> {Note}</p>");
 
-            // 5) Odeslat e-mail
-            string emailToSend = student.ParentEmail ?? student.Email;
+            // 6) Odeslat e-mail
+            string? emailToSend = null;
+
+            // preferujeme rodiče
+            if (!string.IsNullOrWhiteSpace(parent?.Email))
+                emailToSend = parent.Email;
+
+            // pokud rodič nemá email, použijeme email studenta
+            else if (!string.IsNullOrWhiteSpace(student.Email))
+                emailToSend = student.Email;
 
             if (!string.IsNullOrWhiteSpace(emailToSend))
                 await _email.SendAsync(emailToSend, "Potvrzení platby", html);
 
-            // 6) Redirect (zabrání opakovanému POST)
+            // 7) Redirect
             return RedirectToPage("/Payments/Index");
         }
-
     }
 }

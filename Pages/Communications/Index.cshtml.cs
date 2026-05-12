@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 using Vyuka.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Vyuka.Pages.Communications
 {
@@ -26,21 +26,23 @@ namespace Vyuka.Pages.Communications
         }
 
         public List<Student> Students { get; set; } = new();
+        public List<Parent> Parents { get; set; } = new();
 
         // ⭐ Šablony dostupné v komunikaci
         public List<string> Templates { get; set; } = new()
-{
-    "LessonPlanned",
-    "PaymentConfirmation",
-    "OfferTemplate"
-};
+        {
+            "LessonPlanned",
+            "PaymentConfirmation",
+            "OfferTemplate"
+        };
 
-        // ⭐ DOPLNĚNO – řeší chybu v Index.cshtml
+        // ⭐ Email studenta
         public string? SelectedStudentEmail =>
             Students.FirstOrDefault(s => s.Id == SelectedStudentId)?.Email;
 
+        // ⭐ Email rodiče (opraveno)
         public string? SelectedParentEmail =>
-            Students.FirstOrDefault(s => s.Id == SelectedStudentId)?.ParentEmail;
+            Parents.FirstOrDefault(p => p.StudentId == SelectedStudentId)?.Email;
 
         public string PreviewHtml { get; set; } = "";
 
@@ -53,7 +55,10 @@ namespace Vyuka.Pages.Communications
             Students = await _context.Students
                 .Where(s => s.IsActive)
                 .OrderBy(s => s.LastName)
+                .ThenBy(s => s.FirstName)
                 .ToListAsync();
+
+            Parents = await _context.Parents.ToListAsync();
         }
 
         public async Task OnGetAsync()
@@ -79,8 +84,8 @@ namespace Vyuka.Pages.Communications
         {
             await LoadStudentsAsync();
 
-            var student = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == SelectedStudentId);
+            var student = Students.FirstOrDefault(s => s.Id == SelectedStudentId);
+            var parent = Parents.FirstOrDefault(p => p.StudentId == SelectedStudentId);
 
             if (student == null)
             {
@@ -106,7 +111,7 @@ namespace Vyuka.Pages.Communications
                             { "StudentName", $"{student.FirstName} {student.LastName}" },
                             { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
                             { "LessonDate", plan.Date.ToString("dd.MM.yyyy") },
-                            { "LessonTime", plan.Start.ToString(@"hh\:mm") },
+                            { "LessonTime", plan.Start.ToString(@"hh\\:mm") },
                             { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
                             { "TeacherName", "Alois Učitel" }
                         };
@@ -143,7 +148,7 @@ namespace Vyuka.Pages.Communications
                     {
                         model = new()
                         {
-                            { "ParentName", $"{student.ParentFirstName} {student.ParentLastName}".Trim() },
+                            { "ParentName", parent?.Name ?? "" },
                             { "StudentName", $"{student.FirstName} {student.LastName}" },
                             { "CustomText", "" }
                         };
@@ -162,8 +167,8 @@ namespace Vyuka.Pages.Communications
         {
             await LoadStudentsAsync();
 
-            var student = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == SelectedStudentId);
+            var student = Students.FirstOrDefault(s => s.Id == SelectedStudentId);
+            var parent = Parents.FirstOrDefault(p => p.StudentId == SelectedStudentId);
 
             if (student == null)
             {
@@ -179,8 +184,8 @@ namespace Vyuka.Pages.Communications
                     recipients.Add(student.Email);
 
             if (RecipientType == "parent" || RecipientType == "both")
-                if (!string.IsNullOrWhiteSpace(student.ParentEmail))
-                    recipients.Add(student.ParentEmail);
+                if (!string.IsNullOrWhiteSpace(parent?.Email))
+                    recipients.Add(parent.Email);
 
             if (recipients.Count == 0)
             {
@@ -208,7 +213,7 @@ namespace Vyuka.Pages.Communications
                             { "StudentName", $"{student.FirstName} {student.LastName}" },
                             { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
                             { "LessonDate", plan.Date.ToString("dd.MM.yyyy") },
-                            { "LessonTime", plan.Start.ToString(@"hh\:mm") },
+                            { "LessonTime", plan.Start.ToString(@"hh\\:mm") },
                             { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
                             { "TeacherName", "Alois Učitel" }
                         };
@@ -248,22 +253,19 @@ namespace Vyuka.Pages.Communications
                 case "OfferTemplate":
                     {
                         model = new()
-    {
-        { "ParentName", $"{student.ParentFirstName} {student.ParentLastName}".Trim() },
-        { "StudentName", $"{student.FirstName} {student.LastName}" },
-        { "CustomText", "" }
-    };
-
+                        {
+                            { "ParentName", parent?.Name ?? "" },
+                            { "StudentName", $"{student.FirstName} {student.LastName}" },
+                            { "CustomText", "" }
+                        };
 
                         subject = "Nabídka online výuky";
 
-                        // ⭐ QR kódy
                         attachments = new()
-{
-    new EmailAttachment("qr1", Path.Combine(_env.WebRootPath, "images/QR/1_hod_400.jpg")),
-    new EmailAttachment("qr2", Path.Combine(_env.WebRootPath, "images/QR/10_hod_3500.jpg"))
-};
-
+                        {
+                            new EmailAttachment("qr1", Path.Combine(_env.WebRootPath, "images/QR/1_hod_400.jpg")),
+                            new EmailAttachment("qr2", Path.Combine(_env.WebRootPath, "images/QR/10_hod_3500.jpg"))
+                        };
 
                         break;
                     }

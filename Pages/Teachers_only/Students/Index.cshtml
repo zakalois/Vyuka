@@ -1,0 +1,105 @@
+﻿@page
+@model Vyuka.Pages.Teachers_only.Students.IndexModel
+@{
+    ViewData["Title"] = "Přehled studentů";
+}
+
+<h2 class="mb-4">Přehled studentů</h2>
+
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>Student</th>
+            <th>Předmět</th>
+            <th>Kredit</th>
+            <th>Poslední hodina</th>
+            <th>Další hodina</th>
+            <th>Rodič</th>
+            <th>Akce</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Students)
+        {
+            <tr>
+
+                <!-- STUDENT -->
+                <td>@item.FullName</td>
+
+                <!-- PŘEDMĚT -->
+                <td>@item.Subject</td>
+
+                <!-- KREDIT – barevné zvýraznění + tooltip -->
+                <td>
+                    <span class="
+                        @(item.Credit <= 2 ? "badge bg-danger" :
+                                                    item.Credit <= 5 ? "badge bg-warning text-dark" :
+                                                    "badge bg-success")
+                        "
+                          data-bs-toggle="tooltip"
+                          title="Zbývající kredit">
+                        @item.Credit
+                    </span>
+                </td>
+
+                <!-- POSLEDNÍ HODINA -->
+                <td data-bs-toggle="tooltip" title="Poslední odučená hodina">
+                    @item.LastLesson
+                </td>
+
+                <!-- DALŠÍ HODINA – zvýraznění podle blízkosti -->
+                <td class="
+                    @(item.NextLessonDate == DateTime.Today ? "table-success" :
+                                          item.NextLessonDate == DateTime.Today.AddDays(1) ? "table-primary" :
+                                          item.NextLessonDate <= DateTime.Today.AddDays(7) ? "table-warning" :
+                                          "")
+                    "
+                    data-bs-toggle="tooltip"
+                    title="Nejbližší plánovaná hodina">
+                    @item.NextLesson
+                </td>
+
+                <!-- KONTAKT NA RODIČE -->
+                <td>
+                    @if (!string.IsNullOrEmpty(item.ParentName))
+                    {
+                        <div data-bs-toggle="tooltip" title="Jméno rodiče">
+                            <i class="bi bi-person"></i> @item.ParentName
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(item.ParentPhone))
+                    {
+                        <div data-bs-toggle="tooltip" title="Telefon rodiče">
+                            <i class="bi bi-telephone"></i> @item.ParentPhone
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(item.ParentEmail))
+                    {
+                        <div data-bs-toggle="tooltip" title="Email rodiče">
+                            <i class="bi bi-envelope"></i> @item.ParentEmail
+                        </div>
+                    }
+                </td>
+
+                <!-- TLAČÍTKO UPRAVIT -->
+                <td>
+                    <a asp-page="/Teachers_only/Students/Edit" asp-route-id="@item.Id"
+                           class="btn btn-primary btn-sm">
+                        Upravit
+                    </a>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Aktivace tooltipů -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>

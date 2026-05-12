@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace Vyuka.Models
 {
-    public class AppDbContext : IdentityDbContext<AppUser>
+    public class AppDbContext
+        : IdentityDbContext<AppUser, IdentityRole, string>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
@@ -21,6 +23,7 @@ namespace Vyuka.Models
         public DbSet<SubjectTopic> SubjectTopics { get; set; }
         public DbSet<LessonPlan> LessonPlans { get; set; }
         public DbSet<Teacher> Teachers { get; set; }
+        public DbSet<Parent> Parents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,47 +40,48 @@ namespace Vyuka.Models
             foreach (var pm in pageModels)
                 modelBuilder.Ignore(pm);
 
-            // ⭐ Explicitní mapování MeetLink – TOTO JE TEN CHYBĚJÍCÍ KUS
+            // Lesson.MeetLink
             modelBuilder.Entity<Lesson>()
                 .Property(l => l.MeetLink)
                 .HasColumnName("MeetLink")
                 .HasColumnType("nvarchar(max)")
                 .IsRequired(false);
 
+            // LessonPlan.MeetLink
             modelBuilder.Entity<LessonPlan>()
                 .Property(lp => lp.MeetLink)
                 .HasColumnName("MeetLink")
                 .HasColumnType("nvarchar(max)")
                 .IsRequired(false);
 
-            // ⭐ Student → Teacher
+            // Student → Teacher (1:N)
             modelBuilder.Entity<Student>()
                 .HasOne(s => s.Teacher)
                 .WithMany(t => t.Students)
                 .HasForeignKey(s => s.TeacherId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // ⭐ Lesson → Teacher
+            // Lesson → Teacher (1:N)
             modelBuilder.Entity<Lesson>()
                 .HasOne(l => l.Teacher)
                 .WithMany(t => t.Lessons)
                 .HasForeignKey(l => l.TeacherId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ⭐ Lesson → Student
+            // Lesson → Student (1:N) – OPRAVENO, žádný StudentId1
             modelBuilder.Entity<Lesson>()
                 .HasOne(l => l.Student)
-                .WithMany()
+                .WithMany(s => s.Lessons)
                 .HasForeignKey(l => l.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // ⭐ Lesson → Subject
+            // Lesson → Subject
             modelBuilder.Entity<Lesson>()
                 .HasOne(l => l.Subject)
                 .WithMany()
                 .HasForeignKey(l => l.SubjectId);
 
-            // ⭐ Lesson → SubjectTopic
+            // Lesson → SubjectTopic
             modelBuilder.Entity<Lesson>()
                 .HasOne(l => l.SubjectTopic)
                 .WithMany()

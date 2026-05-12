@@ -35,7 +35,6 @@ public class GoogleCalendarService
         });
     }
 
-    // ⭐ NOVÁ 8-parametrová verze s barvou + jménem studenta
     public async Task<(string MeetLink, string EventId)> CreateMeetEventAsync(
         DateTime start,
         DateTime end,
@@ -47,8 +46,8 @@ public class GoogleCalendarService
         string hexColor)
     {
         var service = CreateCalendarService();
+        var calendarOwner = _config["GoogleCalendar:CalendarOwner"];
 
-        // převod HEX → Google ColorId
         string colorId = MapHexToGoogleColorId(hexColor);
 
         var ev = new Event
@@ -56,16 +55,8 @@ public class GoogleCalendarService
             Summary = $"{title} – {studentLastName} {studentFirstName[0]}.",
             Description = "Online lekce přes Google Meet",
             ColorId = colorId,
-            Start = new EventDateTime
-            {
-                DateTime = start,
-                TimeZone = "Europe/Prague"
-            },
-            End = new EventDateTime
-            {
-                DateTime = end,
-                TimeZone = "Europe/Prague"
-            },
+            Start = new EventDateTime { DateTime = start, TimeZone = "Europe/Prague" },
+            End = new EventDateTime { DateTime = end, TimeZone = "Europe/Prague" },
             Attendees = new List<EventAttendee>
             {
                 new EventAttendee { Email = studentEmail },
@@ -80,19 +71,22 @@ public class GoogleCalendarService
             }
         };
 
-        var request = service.Events.Insert(ev, "zakalois@ucitelzak.eu");
+        var request = service.Events.Insert(ev, calendarOwner);
         request.ConferenceDataVersion = 1;
 
-        var created = await request.ExecuteAsync();
+        // ⭐ Vypnout Google pozvánky
+        request.SendUpdates = EventsResource.InsertRequest.SendUpdatesEnum.None;
 
+        var created = await request.ExecuteAsync();
         return (created.HangoutLink, created.Id);
     }
 
-    // ⭐ Mazání události – opraveno
     public async Task DeleteEventAsync(string eventId)
     {
         var service = CreateCalendarService();
-        var request = service.Events.Delete("zakalois@ucitelzak.eu", eventId);
+        var calendarOwner = _config["GoogleCalendar:CalendarOwner"];
+
+        var request = service.Events.Delete(calendarOwner, eventId);
 
         try
         {
@@ -100,37 +94,22 @@ public class GoogleCalendarService
         }
         catch (GoogleApiException ex)
         {
-            // Událost už neexistuje → ignorujeme
             if (ex.HttpStatusCode == System.Net.HttpStatusCode.Gone)
                 return;
-
-            // Pokud je jiná chyba, propustíme dál
             throw;
         }
     }
 
-
-    // ⭐ Mapování HEX → Google ColorId
     private string MapHexToGoogleColorId(string hex)
     {
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "#F44336", "11" }, // red
-            { "#E91E63", "3" },  // pink
-            { "#9C27B0", "6" },  // purple
-            { "#673AB7", "9" },  // deep purple
-            { "#3F51B5", "1" },  // indigo
-            { "#2196F3", "2" },  // blue
-            { "#03A9F4", "10" }, // light blue
-            { "#00BCD4", "4" },  // cyan
-            { "#009688", "5" },  // teal
-            { "#4CAF50", "7" },  // green
-            { "#8BC34A", "8" }   // light green
+            { "#F44336", "11" }, { "#E91E63", "3" }, { "#9C27B0", "6" },
+            { "#673AB7", "9" }, { "#3F51B5", "1" }, { "#2196F3", "2" },
+            { "#03A9F4", "10" }, { "#00BCD4", "4" }, { "#009688", "5" },
+            { "#4CAF50", "7" }, { "#8BC34A", "8" }
         };
 
-        if (map.TryGetValue(hex, out var id))
-            return id;
-
-        return "2"; // default: modrá
+        return map.TryGetValue(hex, out var id) ? id : "2";
     }
 }

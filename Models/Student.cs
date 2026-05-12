@@ -5,7 +5,8 @@ namespace Vyuka.Models
     public class Student
     {
         public int Id { get; set; }
-        public string? UserId { get; set; }   // cizí klíč na AppUser
+
+        public string? UserId { get; set; }   // vazba na AppUser (login)
 
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
@@ -30,10 +31,11 @@ namespace Vyuka.Models
 
         public List<StudentSubject> StudentSubjects { get; set; } = new();
 
-        public string? TeacherId { get; set; }
-        public AppUser? Teacher { get; set; }
+        // ⭐ SPRÁVNĚ – vazba na Teacher
+        public int? TeacherId { get; set; }
+        public Teacher? Teacher { get; set; }
 
-        // ⭐ NOVÉ – výpočtové vlastnosti (bez migrace)
+        // ⭐ Výpočtové vlastnosti
         [NotMapped]
         public double TaughtHours { get; set; }
 
@@ -42,6 +44,5 @@ namespace Vyuka.Models
 
         [NotMapped]
         public double RemainingHours { get; set; }
-
     }
 }

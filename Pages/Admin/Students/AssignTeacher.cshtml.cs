@@ -1,12 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 
 namespace Vyuka.Pages.Admin.Students
 {
-    [Authorize(Roles = "Admin")]
     public class AssignTeacherModel : PageModel
     {
         private readonly AppDbContext _context;
@@ -16,48 +15,64 @@ namespace Vyuka.Pages.Admin.Students
             _context = context;
         }
 
+        // ID studenta z URL
         [BindProperty]
         public int StudentId { get; set; }
 
+        // Jméno studenta pro zobrazení
+        public string StudentName { get; set; } = "";
+
+        // Vybraný učitel (int?)
         [BindProperty]
-        public string SelectedTeacherId { get; set; }
+        public int? SelectedTeacherId { get; set; }
 
-        public string StudentName { get; set; }
+        // Seznam učitelů pro dropdown
+        public List<SelectListItem> Teachers { get; set; } = new();
 
-        public List<SelectListItem> Teachers { get; set; }
-
-        public IActionResult OnGet(int id)
+        public async Task<IActionResult> OnGetAsync(int id)
         {
-            var student = _context.Students.FirstOrDefault(s => s.Id == id);
-            if (student == null)
-                return NotFound();
-
             StudentId = id;
-            StudentName = $"{student.LastName} {student.FirstName}";
 
-            Teachers = _context.Users
-    .Where(u => u.Role == "Teacher")
-    .OrderBy(u => u.LastName)
-    .ThenBy(u => u.FirstName)
-    .Select(u => new SelectListItem
-    {
-        Value = u.Id,
-        Text = $"{u.LastName} {u.FirstName} ({u.Email})"
-    })
-    .ToList();
+            var student = await _context.Students
+                .Include(s => s.Teacher)
+                .FirstOrDefaultAsync(s => s.Id == id);
 
+            if (student == null)
+                return RedirectToPage("Index");
+
+            StudentName = student.FullName;
+
+            // načteme učitele
+            Teachers = await _context.Teachers
+                .Include(t => t.User)
+                .OrderBy(t => t.User.LastName)
+                .ThenBy(t => t.User.FirstName)
+                .Select(t => new SelectListItem
+                {
+                    Value = t.Id.ToString(),
+                    Text = $"{t.User.LastName} {t.User.FirstName}"
+                })
+                .ToListAsync();
+
+
+            // předvyplníme aktuálního učitele
+            SelectedTeacherId = student.TeacherId;
 
             return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync()
         {
-            var student = _context.Students.FirstOrDefault(s => s.Id == StudentId);
-            if (student == null)
-                return NotFound();
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.Id == StudentId);
 
+            if (student == null)
+                return RedirectToPage("Index");
+
+            // přiřazení učitele
             student.TeacherId = SelectedTeacherId;
-            _context.SaveChanges();
+
+            await _context.SaveChangesAsync();
 
             return RedirectToPage("Index");
         }

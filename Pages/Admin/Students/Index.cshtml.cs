@@ -15,18 +15,15 @@ namespace Vyuka.Pages.Admin.Students
 
         public IList<Student> Students { get; set; } = new List<Student>();
 
-        // StudentId → Odučené hodiny
-        public Dictionary<int, double> TaughtHours { get; set; } = new();
-
         public async Task OnGetAsync()
         {
-            // Načteme studenty i s učiteli
+            // Načteme studenty + učitele + AppUser (kvůli Email)
             Students = await _context.Students
-    .Include(s => s.Teacher)
-    .OrderBy(s => s.LastName)
-    .ThenBy(s => s.FirstName)
-    .ToListAsync();
-
+                .Include(s => s.Teacher)
+                    .ThenInclude(t => t.User)
+                .OrderBy(s => s.LastName)
+                .ThenBy(s => s.FirstName)
+                .ToListAsync();
 
             // Načteme všechny odučené lekce
             var lessons = await _context.Lessons
@@ -36,7 +33,7 @@ namespace Vyuka.Pages.Admin.Students
             // Načteme všechny payments
             var payments = await _context.Payments.ToListAsync();
 
-            // Pro každý student spočítáme hodiny
+            // Výpočty pro každého studenta
             foreach (var s in Students)
             {
                 // ODUČENÉ HODINY
@@ -57,10 +54,6 @@ namespace Vyuka.Pages.Admin.Students
                 // ZBÝVAJÍCÍ HODINY
                 s.RemainingHours = Math.Round(s.PaidHours - s.TaughtHours, 1);
             }
-
         }
     }
 }
-
-
-

@@ -441,5 +441,60 @@ body.dark .admin-menu {
 .section-parent {
     border-left: 4px solid #ffc107;
 }
+/* GRID – 7 STEJNĚ ŠIROKÝCH SLOUPCŮ */
+/* HLAVNÍ KONTEJNER – STEJNĚ JAKO ADMIN */
+.schedule-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+}
 
+.day-column {
+    flex: 1;
+    min-width: 0;
+    background: #f8f9fa;
+    border: 1px solid #ccc;
+    padding: 6px;
+    border-radius: 4px;
+}
 
+.lesson-block {
+    background: white;
+    padding: 6px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    font-size: 0.8rem;
+}
+
+.lesson-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meet-link {
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.lesson-icons {
+    display: flex;
+    gap: 4px;
+}
+
+.icon-btn {
+    font-size: 1.2rem; /* ⭐ větší ikony */
+    text-decoration: none;
+}
+
+.day-sat {
+    background-color: #fff7c2 !important;
+}
+
+.day-sun {
+    background-color: #ffd6e0 !important;
+}
+.card-header {
+    text-align: center;
+}

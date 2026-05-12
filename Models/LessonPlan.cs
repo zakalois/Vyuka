@@ -8,9 +8,8 @@ public class LessonPlan
     public int StudentId { get; set; }
     public Student Student { get; set; }
 
-    public DayOfWeek Day { get; set; }   // Po, Út, St, Čt, Pá, So, Ne
-    public TimeSpan Start { get; set; }  // 14:00
-    public TimeSpan End { get; set; }    // 15:00
+    public TimeSpan Start { get; set; }
+    public TimeSpan End { get; set; }
 
     [Required(ErrorMessage = "Musíte vybrat předmět.")]
     public int SubjectId { get; set; }
@@ -24,9 +23,6 @@ public class LessonPlan
 
     public string? MeetLink { get; set; }
 
-    // 🔵 NOVÉ: ID události v Google Calendar
     public string? GoogleEventId { get; set; }
-
-    // 🔵 NOVÉ: zda při mazání poslat studentovi zrušení
     public bool NotifyOnDelete { get; set; }
 }

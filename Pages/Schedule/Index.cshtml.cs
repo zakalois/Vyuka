@@ -324,7 +324,7 @@ namespace Vyuka.Pages.Schedule
                 SubjectId = plan.SubjectId,
                 SubjectTopicId = plan.SubjectTopicId,
                 Date = plan.Date,
-                Day = (int)plan.Day,
+                Day = (int)plan.Date.DayOfWeek,
                 Start = plan.Start,
                 End = plan.End,
                 Hours = hours,

@@ -5,116 +5,99 @@
     Layout = "_TeacherLayout";
 }
 
-<h2 class="mb-2">
-    @Model.CurrentTeacher.LastName @Model.CurrentTeacher.FirstName
-</h2>
+<div class="container mt-4">
 
-<div class="mb-4">
-    <a asp-page="/Admin/Students/Index" class="btn btn-outline-primary">
-        Přehled studentů
-    </a>
-</div>
+    <!-- Horní tři boxy -->
+    <div class="row">
 
-
-<div class="row">
-
-    <!-- Dnešní hodiny -->
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <strong>Dnešní hodiny</strong>
-            </div>
-            <div class="card-body">
-                @if (Model.TodayLessons.Any())
-                {
-                    <ul class="list-group">
-                        @foreach (var lesson in Model.TodayLessons)
-                        {
-                            <li class="list-group-item">
-                                <strong>@lesson.Time</strong> – @lesson.Student (@lesson.Subject)
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p>Nemáte dnes žádné hodiny.</p>
-                }
-            </div>
-        </div>
-    </div>
-
-    <!-- Moji studenti -->
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
-                <strong>Moji studenti</strong>
-            </div>
-            <div class="card-body">
-                <p><strong>Celkem:</strong> @Model.StudentCount</p>
-                <p><strong>Nízký kredit:</strong> @Model.LowCreditCount</p>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<div class="row">
-
-    <!-- Rychlé akce -->
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-info text-white">
-                <strong>Rychlé akce</strong>
-            </div>
-            <div class="card-body">
-                <a class="btn btn-primary w-100 mb-2" href="/Teacher/Lessons/Create">+ Přidat hodinu</a>
-                <a class="btn btn-secondary w-100 mb-2" href="/Teacher/Students">Moji studenti</a>
-                <a class="btn btn-secondary w-100" href="/Teacher/Schedule">Rozvrh</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Týdenní rozvrh -->
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-warning">
-                <strong>Týdenní rozvrh</strong>
-            </div>
-            <div class="card-body">
-                <ul class="list-group">
-                    @foreach (var day in Model.WeeklySchedule)
+        <!-- Dnešní hodiny -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <strong>Dnešní hodiny</strong>
+                </div>
+                <div class="card-body">
+                    @if (Model.TodayLessons.Any())
                     {
-                        <li class="list-group-item">
-                            <strong>@day.Day:</strong> @day.LessonCount hodin
-                        </li>
+                        <ul class="list-group">
+                            @foreach (var lesson in Model.TodayLessons)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@lesson.Time</strong> – @lesson.Student (@lesson.Subject)
+                                </li>
+                            }
+                        </ul>
                     }
-                </ul>
+                    else
+                    {
+                        <p>Nemáte dnes žádné hodiny.</p>
+                    }
+                </div>
             </div>
         </div>
+
+        <!-- Moji studenti -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <strong>Moji studenti</strong>
+                </div>
+                <div class="card-body">
+                    <p><strong>Celkem:</strong> @Model.StudentCount</p>
+                    <p><strong>Nízký kredit:</strong> @Model.LowCreditCount</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upozornění -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-danger text-white">
+                    <strong>Upozornění</strong>
+                </div>
+                <div class="card-body">
+                    @if (Model.Notifications.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var note in Model.Notifications)
+                            {
+                                <li class="list-group-item">@note</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p>Žádná upozornění.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Upozornění -->
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-danger text-white">
-                <strong>Upozornění</strong>
-            </div>
-            <div class="card-body">
-                @if (Model.Notifications.Any())
+    <!-- Týdenní rozvrh přes celou šířku -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning">
+            <strong>Týdenní rozvrh</strong>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row text-center">
+
+                @foreach (var day in Model.WeeklySchedule)
                 {
-                    <ul class="list-group">
-                        @foreach (var note in Model.Notifications)
-                        {
-                            <li class="list-group-item">@note</li>
-                        }
-                    </ul>
+                    var isWeekend = day.Day == "Sobota" || day.Day == "Neděle";
+                    var bg = isWeekend ? "bg-light border-danger" : "bg-light";
+
+                    <div class="col border p-3 @bg">
+                        <strong>@day.Day</strong><br />
+                        @day.LessonCount hodin
+                    </div>
                 }
-                else
-                {
-                    <p>Žádná upozornění.</p>
-                }
+
             </div>
+
         </div>
     </div>
 

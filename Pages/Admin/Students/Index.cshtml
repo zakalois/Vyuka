@@ -54,8 +54,8 @@
                 <td class="teacher-cell @(item.TeacherId == null ? "no-teacher" : "has-teacher")">
                     @if (item.Teacher != null)
                     {
-                        <span title="@item.Teacher.Email">
-                            @item.Teacher.LastName @item.Teacher.FirstName
+                        <span title="@item.Teacher.User?.Email">
+                            @item.Teacher.FullName
                         </span>
                     }
                     else

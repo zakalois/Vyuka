@@ -1,84 +1,119 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject UserManager<Vyuka.Models.AppUser> UserManager
-@inject SignInManager<Vyuka.Models.AppUser> SignInManager
+@{
+    var teacher = await UserManager.GetUserAsync(User);
+}
 
-
+@inherits Microsoft.AspNetCore.Mvc.Razor.RazorPage<dynamic>
 <!DOCTYPE html>
 <html lang="cs">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Teacher Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@teacher.LastName @teacher.FirstName – Výuka</title>
 
-    <!-- BOOTSTRAP + IKONY + TVÉ CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="~/css/site.css" />
 </head>
 
 <body>
+    <!-- HORNÍ NAVIGACE -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container-fluid">
 
-    <!-- HLAVIČKA -->
-    <header class="admin-header d-flex justify-content-between align-items-center px-4 py-3">
-        <div class="fw-bold admin-title">
-            Teacher – Výuka
-        </div>
+            <!-- Jméno učitele jako odkaz na dashboard -->
+            <a class="navbar-brand" asp-page="/Teachers_only/Dashboard">
+                @teacher.LastName @teacher.FirstName
+            </a>
 
-        <div>
-            <button id="darkToggle" class="btn btn-sm admin-dark-btn">
-                Tmavý režim
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#teacherNav">
+                <span class="navbar-toggler-icon"></span>
             </button>
-        </div>
-    </header>
 
-    <!-- MENU -->
-    <nav class="admin-menu px-4 py-2">
-        <div class="d-flex align-items-center gap-3">
+            <div class="collapse navbar-collapse" id="teacherNav">
 
-            <a asp-page="/Teachers_only/Dashboard" class="nav-link">Dashboard</a>
-            <a asp-page="/Teachers_only/Students" class="nav-link">Moji studenti</a>
-            <a asp-page="/Teachers_only/Lessons" class="nav-link">Moje hodiny</a>
-            <a asp-page="/Teachers_only/Schedule" class="nav-link">Rozvrh</a>
+                <!-- Levé menu -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-            <!-- LOGOUT VPRAVO -->
-            <form method="post" asp-page="/Logout" class="ms-auto">
-                <button type="submit" class="btn btn-link nav-link p-0">
-                    <i class="bi bi-box-arrow-right"></i> Odhlásit se
-                </button>
-            </form>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Teachers_only/Students">Přehled studentů</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Teachers_only/Lessons">Přehled hodin</a>
+                    </li>
+
+                    <!-- NOVÉ POLOŽKY -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Teachers_only/Lessons/Create">Přidat hodinu</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Teachers_only/Today">Dnešní hodiny</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Teachers_only/Schedule">Týdenní rozvrh</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Teachers_only/Notifications">Upozornění</a>
+                    </li>
+
+                </ul>
+
+                <!-- Pravá část -->
+                <div class="d-flex">
+
+                    <button id="themeToggle" class="btn btn-outline-light me-2">Tmavý/Světlý</button>
+
+                    <form method="post" asp-page="/Account/Logout">
+                        <button class="btn btn-danger">Odhlásit</button>
+                    </form>
+
+                </div>
+
+            </div>
 
         </div>
     </nav>
 
-    <!-- OBSAH STRÁNKY -->
-    <main class="container mt-4">
-        @RenderBody()
-    </main>
 
-    <!-- DARK MODE SCRIPT -->
+
+    <!-- OBSAH STRÁNKY -->
+    <div class="container">
+        @RenderBody()
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Přepínání režimu -->
     <script>
             (function () {
                 const body = document.body;
-                const toggle = document.getElementById('darkToggle');
+                const toggle = document.getElementById('themeToggle');
 
                 const saved = localStorage.getItem('theme');
-                if (saved === 'dark') {
+
+                if (saved === 'light') {
+                    body.classList.add('light');
+                } else {
                     body.classList.add('dark');
-                    toggle.textContent = 'Světlý režim';
                 }
 
                 toggle.addEventListener('click', function () {
-                    body.classList.toggle('dark');
-                    const isDark = body.classList.contains('dark');
-                    toggle.textContent = isDark ? 'Světlý režim' : 'Tmavý režim';
-                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    if (body.classList.contains('dark')) {
+                        body.classList.remove('dark');
+                        body.classList.add('light');
+                        localStorage.setItem('theme', 'light');
+                    } else {
+                        body.classList.remove('light');
+                        body.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                    }
                 });
             })();
     </script>
 
-    @RenderSection("Scripts", required: false)
 </body>
 </html>

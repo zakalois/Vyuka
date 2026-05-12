@@ -42,6 +42,7 @@ namespace Vyuka.Pages.Admin.Teachers
             if (!ModelState.IsValid)
                 return Page();
 
+            // 1) Vytvoříme Identity uživatele
             var user = new AppUser
             {
                 UserName = Input.Email,
@@ -52,10 +53,8 @@ namespace Vyuka.Pages.Admin.Teachers
                 Role = "Teacher"
             };
 
-            // 🔐 Vygenerujeme dočasné heslo (nebude použito)
             string tempPassword = GeneratePassword();
 
-            // vytvoření identity účtu
             var result = await _userManager.CreateAsync(user, tempPassword);
 
             if (!result.Succeeded)
@@ -66,7 +65,17 @@ namespace Vyuka.Pages.Admin.Teachers
                 return Page();
             }
 
-            // ⭐ 1) Vytvoříme token pro nastavení hesla
+            // 2) Vytvoříme záznam v tabulce Teachers
+            var teacher = new Teacher
+            {
+                UserId = user.Id,
+                IsActive = true
+            };
+
+            _context.Teachers.Add(teacher);
+            await _context.SaveChangesAsync();
+
+            // 3) Vytvoříme token pro nastavení hesla
             var token = Guid.NewGuid().ToString("N");
 
             _context.PasswordResetTokens.Add(new PasswordResetToken
@@ -78,7 +87,7 @@ namespace Vyuka.Pages.Admin.Teachers
 
             await _context.SaveChangesAsync();
 
-            // ⭐ 2) Odešleme e‑mail s odkazem
+            // 4) Odešleme e‑mail
             await _emailService.SendPasswordResetEmail(
                 user.Email,
                 user.FirstName,
@@ -87,6 +96,8 @@ namespace Vyuka.Pages.Admin.Teachers
 
             return RedirectToPage("/Admin/Teachers/Teachers");
         }
+
+
 
         // 🔽 GENERÁTOR HESLA
         private string GeneratePassword()

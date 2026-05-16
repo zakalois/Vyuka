@@ -6,7 +6,11 @@ public class LessonPlan
     public int Id { get; set; }
 
     public int StudentId { get; set; }
-    public Student? Student { get; set; }   // ⭐ MUSÍ BÝT NULLABLE
+    public Student? Student { get; set; }
+
+    // ⭐ UČITEL – DOPLNĚNO
+    public string? TeacherId { get; set; }
+    public AppUser? Teacher { get; set; }
 
     public TimeSpan Start { get; set; }
     public TimeSpan End { get; set; }
@@ -26,3 +30,4 @@ public class LessonPlan
     public string? GoogleEventId { get; set; }
     public bool NotifyOnDelete { get; set; }
 }
+

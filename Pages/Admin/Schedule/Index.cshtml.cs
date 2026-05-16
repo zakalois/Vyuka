@@ -1,30 +1,42 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 using Vyuka.Services;
 
-namespace Vyuka.Pages.Schedule
+namespace Vyuka.Pages.Admin.Schedule
 {
-    public class ScheduleIndexModel : PageModel
+    [Authorize(Roles = "Admin")]
+    public class IndexModel : PageModel
     {
         private readonly AppDbContext _context;
         private readonly GoogleCalendarService _calendar;
         private readonly IEmailService _email;
         private readonly LessonEmailBuilder _emailBuilder;
+        private readonly UserManager<AppUser> _userManager;
+        public List<SelectListItem> Teachers { get; set; }
 
-        public ScheduleIndexModel(
+
+        public IndexModel(
             AppDbContext context,
             GoogleCalendarService calendar,
             IEmailService email,
-            LessonEmailBuilder emailBuilder)
+            LessonEmailBuilder emailBuilder,
+            UserManager<AppUser> userManager)
         {
             _context = context;
             _calendar = calendar;
             _email = email;
             _emailBuilder = emailBuilder;
+            _userManager = userManager;
         }
 
+        // -----------------------------
+        // BARVY STUDENTŮ
+        // -----------------------------
         private static readonly string[] StudentColors = new[]
         {
             "#FFCDD2","#F8BBD0","#E1BEE7","#D1C4E9","#C5CAE9",
@@ -36,40 +48,48 @@ namespace Vyuka.Pages.Schedule
 
         public string GetColorForStudent(int studentId)
         {
-            if (StudentColors == null || StudentColors.Length == 0)
-                return "#cccccc";
-
             if (studentId <= 0)
                 return "#cccccc";
 
-            int index = studentId % StudentColors.Length;
-            return StudentColors[index];
+            return StudentColors[studentId % StudentColors.Length];
         }
 
+        // -----------------------------
+        // DATA PRO STRÁNKU
+        // -----------------------------
         public IList<LessonPlan> Plans { get; set; } = new List<LessonPlan>();
         public List<Student> Students { get; set; } = new();
         public List<Subject> Subjects { get; set; } = new();
         public List<SubjectTopic> Topics { get; set; } = new();
+        public List<AppUser> AllTeachers { get; set; } = new();
 
+        // FILTRY
         [BindProperty(SupportsGet = true)]
+
         public DateTime Week { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public string TeacherId { get; set; }
+
+        // VÝPOČET TÝDNE
         [BindProperty] public DateTime StartOfWeek { get; set; }
         [BindProperty] public DateTime EndOfWeek { get; set; }
 
-        [BindProperty] public int NewStudentId { get; set; }
-        [BindProperty] public int NewSubjectId { get; set; }
+        // PŘIDÁVÁNÍ LEKCÍ
+        [BindProperty] public int? NewStudentId { get; set; }
+        [BindProperty] public int? NewSubjectId { get; set; }
         [BindProperty] public int? NewTopicId { get; set; }
-        [BindProperty] public DayOfWeek NewDay { get; set; }
-        [BindProperty] public TimeSpan NewStart { get; set; }
-        [BindProperty] public TimeSpan NewEnd { get; set; }
+        [BindProperty] public TimeSpan? NewStart { get; set; }
+        [BindProperty] public TimeSpan? NewEnd { get; set; }
         [BindProperty] public bool NotifyStudentOnDelete { get; set; }
-        [BindProperty] public DateTime NewDate { get; set; }
-
+        [BindProperty] public DateTime? NewDate { get; set; }
 
         [BindProperty]
         public LessonPlan EditPlan { get; set; }
 
+        // -----------------------------
+        // METODY
+        // -----------------------------
         private void ComputeWeek()
         {
             if (Week == default)
@@ -96,25 +116,52 @@ namespace Vyuka.Pages.Schedule
                 .ToListAsync();
         }
 
+        // -----------------------------
+        // GET – NAČTENÍ STRÁNKY
+        // -----------------------------
         public async Task OnGetAsync()
         {
             ComputeWeek();
             await LoadDropdownsAsync();
 
-            Plans = new List<LessonPlan>();
+            // Učitelé
+            AllTeachers = (await _userManager.GetUsersInRoleAsync("Teacher"))
+                .OrderBy(t => t.LastName)
+                .ThenBy(t => t.FirstName)
+                .ToList();
 
-            var result = await _context.LessonPlans
+            // Filtrování rozvrhu
+            var query = _context.LessonPlans
                 .Include(p => p.Student)
                 .Include(p => p.Subject)
                 .Include(p => p.SubjectTopic)
-                .Where(p => p.Date != default && p.Date >= StartOfWeek && p.Date <= EndOfWeek)
+                .Include(p => p.Teacher)
+                .Where(p => p.Date >= StartOfWeek && p.Date <= EndOfWeek);
+
+            // Získání ID aktuálně přihlášeného uživatele
+            var currentUserId = User.FindFirst("sub")?.Value;
+
+            // UČITEL → vidí jen svůj vlastní rozvrh
+            if (User.IsInRole("Teacher"))
+            {
+                query = query.Where(p => p.TeacherId == currentUserId);
+            }
+            // ADMIN → pokud vybere učitele, filtruje podle něj
+            else if (!string.IsNullOrEmpty(TeacherId))
+            {
+                query = query.Where(p => p.TeacherId == TeacherId);
+            }
+            // ADMIN bez výběru → vidí vše (bez filtru)
+
+            Plans = await query
                 .OrderBy(p => p.Date)
                 .ThenBy(p => p.Start)
                 .ToListAsync();
-
-            Plans = result ?? new List<LessonPlan>();
         }
 
+        // -----------------------------
+        // AJAX – TÉMATA PODLE PŘEDMĚTU
+        // -----------------------------
         public async Task<JsonResult> OnGetTopicsAsync(int subjectId)
         {
             var topics = await _context.SubjectTopics
@@ -126,29 +173,57 @@ namespace Vyuka.Pages.Schedule
             return new JsonResult(topics);
         }
 
-        // ADD
+        // -----------------------------
+        // PŘIDÁNÍ LEKCE
+        // -----------------------------
         public async Task<IActionResult> OnPostAddAsync(DateTime Week)
         {
             this.Week = Week;
             ComputeWeek();
             await LoadDropdownsAsync();
 
-            var student = await _context.Students.FindAsync(NewStudentId);
-            var subject = await _context.Subjects.FindAsync(NewSubjectId);
+            // VALIDACE
+            if (NewStudentId == null)
+                throw new Exception("❌ Student není vybrán");
+
+            if (NewSubjectId == null)
+                throw new Exception("❌ Předmět není vybrán");
+
+            if (NewDate == null)
+                throw new Exception("❌ Datum lekce není vybráno");
+
+            if (NewStart == null)
+                throw new Exception("❌ Začátek lekce není vybrán");
+
+            if (NewEnd == null)
+                throw new Exception("❌ Konec lekce není vybrán");
+
+            if (NewEnd <= NewStart)
+                NewEnd = NewStart.Value + TimeSpan.FromHours(1);
+            if (NewEnd <= NewStart)
+                throw new Exception("❌ Konec hodiny musí být později než začátek (nelze přes půlnoc).");
+
+
+            // ENTITY
+            var student = await _context.Students.FindAsync(NewStudentId.Value);
+            if (student == null)
+                throw new Exception($"❌ Student {NewStudentId} neexistuje");
+
+            var subject = await _context.Subjects.FindAsync(NewSubjectId.Value);
+            if (subject == null)
+                throw new Exception($"❌ Subject not found in DB: {NewSubjectId}");
+
             var topic = NewTopicId.HasValue
                 ? await _context.SubjectTopics.FindAsync(NewTopicId.Value)
                 : null;
 
-            // ⭐ OPRAVA – použít datum z formuláře
-            var date = NewDate;
+            var date = NewDate.Value;
 
-            if (NewEnd <= NewStart)
-                NewEnd = NewStart + TimeSpan.FromHours(1);
-
+            // GOOGLE MEET
             var meet = await _calendar.CreateMeetEventAsync(
-                date + NewStart,
-                date + NewEnd,
-                $"{subject?.Name} – {topic?.Name}",
+                date + NewStart.Value,
+                date + NewEnd.Value,
+                $"{subject.Name} – {topic?.Name}",
                 student.Email,
                 "zakalois@ucitelzak.eu",
                 student.FirstName,
@@ -156,38 +231,53 @@ namespace Vyuka.Pages.Schedule
                 "#90CAF9"
             );
 
+            // EMAIL
             var html = await _emailBuilder.BuildPlannedAsync(
                 $"{student.FirstName} {student.LastName}",
-                subject?.Name ?? "",
+                subject.Name,
                 topic?.Name ?? "",
                 date,
-                NewStart,
+                NewStart.Value,
                 meet.MeetLink
             );
 
             await _email.SendAsync(student.Email, "Plánovaná lekce", html);
 
+            // 🔥 URČENÍ SPRÁVNÉHO TEACHER ID
+            var currentUserId = User.FindFirst("sub")?.Value;
+
+            string teacherIdToAssign = User.IsInRole("Teacher")
+                ? currentUserId
+                : this.TeacherId;
+
+            if (string.IsNullOrEmpty(teacherIdToAssign))
+                throw new Exception("❌ TeacherId není vyplněn – admin musí vybrat učitele.");
+
+            // ULOŽENÍ LEKCE
             var plan = new LessonPlan
             {
-                StudentId = NewStudentId,
-                SubjectId = NewSubjectId,
+                StudentId = NewStudentId.Value,
+                SubjectId = NewSubjectId.Value,
                 SubjectTopicId = NewTopicId,
-                Start = NewStart,
-                End = NewEnd,
-                Date = date, // ⭐ OPRAVENO
+                Start = NewStart.Value,
+                End = NewEnd.Value,
+                Date = date,
                 MeetLink = meet.MeetLink,
                 GoogleEventId = meet.EventId,
-                NotifyOnDelete = NotifyStudentOnDelete
+                NotifyOnDelete = NotifyStudentOnDelete,
+                TeacherId = teacherIdToAssign
             };
 
             _context.LessonPlans.Add(plan);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
+            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd"), TeacherId });
         }
 
 
-        // EDIT START
+        // -----------------------------
+        // EDITACE – ZAČÁTEK
+        // -----------------------------
         public async Task<IActionResult> OnPostEditStartAsync(int id, DateTime Week)
         {
             this.Week = Week;
@@ -204,7 +294,7 @@ namespace Vyuka.Pages.Schedule
                 .Include(p => p.Student)
                 .Include(p => p.Subject)
                 .Include(p => p.SubjectTopic)
-                .Where(p => p.Date != default && p.Date >= StartOfWeek && p.Date <= EndOfWeek)
+                .Where(p => p.Date >= StartOfWeek && p.Date <= EndOfWeek)
                 .OrderBy(p => p.Date)
                 .ThenBy(p => p.Start)
                 .ToListAsync();
@@ -212,7 +302,9 @@ namespace Vyuka.Pages.Schedule
             return Page();
         }
 
-        // UPDATE
+        // -----------------------------
+        // UPDATE LEKCE
+        // -----------------------------
         public async Task<IActionResult> OnPostUpdateAsync(
             int id,
             int StudentId,
@@ -241,18 +333,22 @@ namespace Vyuka.Pages.Schedule
 
             var newWeekStart = Date.AddDays(-(int)Date.DayOfWeek + 1);
 
-            return RedirectToPage(new { week = newWeekStart.ToString("yyyy-MM-dd") });
+            return RedirectToPage(new { week = newWeekStart.ToString("yyyy-MM-dd"), TeacherId });
         }
 
-        // CANCEL EDIT
+        // -----------------------------
+        // ZRUŠENÍ EDITACE
+        // -----------------------------
         public IActionResult OnPostEditCancel(DateTime Week)
         {
             this.Week = Week;
             ComputeWeek();
-            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
+            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd"), TeacherId });
         }
 
-        // DELETE
+        // -----------------------------
+        // SMAZÁNÍ LEKCE
+        // -----------------------------
         public async Task<IActionResult> OnPostDeleteAsync(int id, DateTime Week)
         {
             this.Week = Week;
@@ -298,10 +394,12 @@ namespace Vyuka.Pages.Schedule
                 await _context.SaveChangesAsync();
             }
 
-            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
+            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd"), TeacherId });
         }
 
-        // TEACH
+        // -----------------------------
+        // OZNAČENÍ LEKCE JAKO ODUČENÉ
+        // -----------------------------
         public async Task<IActionResult> OnPostTeachAsync(int id, DateTime Week)
         {
             this.Week = Week;
@@ -335,7 +433,7 @@ namespace Vyuka.Pages.Schedule
             plan.IsTaught = true;
             await _context.SaveChangesAsync();
 
-            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd") });
+            return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd"), TeacherId });
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿@page "/Teachers_only/Schedule"
+﻿@page "/Teachers_Only/TeacherSchedule"
 @model Vyuka.Pages.Teachers_only.ScheduleModel
 
 @{
@@ -8,19 +8,21 @@
 <div class="container mt-4">
 
     <!-- Navigace týdnů -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <a asp-page="/Teachers_only/Schedule" asp-route-week="@Model.PreviousWeek"
-           class="btn btn-outline-primary">← Předchozí týden</a>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <a class="btn btn-secondary" asp-page="./TeacherSchedule" asp-route-week="@Model.PreviousWeek">
+            ← Předchozí týden
+        </a>
 
-        <div class="text-center">
-            <span class="fw-bold fs-5">@Model.WeekLabel</span><br />
-            <a asp-page="/Teachers_only/Schedule" asp-route-week="0"
-               class="btn btn-info mt-2"
-               style="font-size: 1.2rem; padding: 10px 25px;">Aktuální týden</a>
+        <div class="text-center mx-2">
+            <h5 class="mb-1">@Model.StartOfWeek.ToString("dd.MM.yyyy") – @Model.EndOfWeek.ToString("dd.MM.yyyy")</h5>
+            <a class="btn btn-info btn-sm" asp-page="./TeacherSchedule" asp-route-week="0">
+                Aktuální týden
+            </a>
         </div>
 
-        <a asp-page="/Teachers_only/Schedule" asp-route-week="@Model.NextWeek"
-           class="btn btn-outline-primary">Následující týden →</a>
+        <a class="btn btn-secondary" asp-page="./TeacherSchedule" asp-route-week="@Model.NextWeek">
+            Další týden →
+        </a>
     </div>
 
 
@@ -33,12 +35,17 @@
             </div>
 
             <div class="card-body">
+
                 <form method="post" asp-page-handler="EditSave">
 
-                    <input type="hidden" name="id" value="@Model.EditingLesson.Id" />
-                    <input type="hidden" name="isPlan" value="@Model.EditingIsPlan" />
+                    <!-- ID musí být buď LessonPlanId nebo LessonId -->
+                    <input type="hidden" name="id" value="@(Model.EditingLesson.LessonPlanId ?? Model.EditingLesson.LessonId)" />
+
+                    <!-- Informace, zda jde o plán nebo odučenou hodinu -->
+                    <input type="hidden" name="isPlan" value="true" />
 
                     <div class="row g-2">
+
                         <div class="col-md-3">
                             <label class="form-label">Datum</label>
                             <input name="date" type="date"
@@ -91,11 +98,14 @@
 
                     </div>
 
-                    <button class="btn btn-success w-100 mt-3">Uložit změny</button>
+                    <button type="submit" class="btn btn-success w-100 mt-3">Uložit změny</button>
+
                 </form>
+
             </div>
         </div>
     }
+
 
 
     <!-- 🟨 PŘIDAT HODINU -->
@@ -109,9 +119,10 @@
             <div class="card-body">
                 <form method="post" asp-page-handler="AddLesson">
 
+                    <input type="hidden" name="week" value="@Model.Week" />
+
                     <div class="row g-2">
 
-                        <!-- STUDENT -->
                         <div class="col-md-3">
                             <label class="form-label">Student</label>
                             <select asp-for="NewLesson.StudentId" class="form-select">
@@ -122,7 +133,6 @@
                             </select>
                         </div>
 
-                        <!-- PŘEDMĚT -->
                         <div class="col-md-3">
                             <label class="form-label">Předmět</label>
                             <select asp-for="NewLesson.SubjectId" class="form-select">
@@ -133,19 +143,16 @@
                             </select>
                         </div>
 
-                        <!-- DATUM -->
                         <div class="col-md-2">
                             <label class="form-label">Datum</label>
                             <input asp-for="NewLesson.Date" type="date" class="form-control" />
                         </div>
 
-                        <!-- ZAČÁTEK -->
                         <div class="col-md-2">
                             <label class="form-label">Začátek</label>
                             <input asp-for="NewLesson.Start" type="time" class="form-control" />
                         </div>
 
-                        <!-- KONEC -->
                         <div class="col-md-2">
                             <label class="form-label">Konec</label>
                             <input asp-for="NewLesson.End" type="time" class="form-control" />
@@ -208,29 +215,42 @@
 
                                         <div class="lesson-icons mt-1">
 
-                                            @if (l.LessonId != null || l.LessonPlanId != null)
+                                            <!-- EDITACE -->
+                                            @if (l.LessonPlanId != null)
                                             {
-                                                <form method="post" asp-page-handler="EditStart" class="m-0 p-0 d-inline">
-                                                    <input type="hidden" name="id" value="@(l.LessonId ?? l.LessonPlanId)" />
-                                                    <input type="hidden" name="Week" value="@Model.WeekStart.ToString("yyyy-MM-dd")" />
+                                                <form method="get" class="d-inline">
+                                                    <input type="hidden" name="editId" value="@l.LessonPlanId" />
+                                                    <input type="hidden" name="isPlan" value="true" />
+                                                    <input type="hidden" name="week" value="@Model.Week" />
                                                     <button class="icon-btn">✏️</button>
                                                 </form>
                                             }
 
-                                            @if (l.LessonId != null || l.LessonPlanId != null)
+
+                                            <!-- MAZÁNÍ -->
+                                            @if (l.LessonId != null)
                                             {
-                                                <form method="post" asp-page-handler="DeleteLesson" class="m-0 p-0 d-inline">
-                                                    <input type="hidden" name="id" value="@(l.LessonId ?? l.LessonPlanId)" />
-                                                    <input type="hidden" name="Week" value="@Model.WeekStart.ToString("yyyy-MM-dd")" />
+                                                <form method="post" asp-page-handler="DeleteLesson" class="d-inline">
+                                                    <input type="hidden" name="id" value="@l.LessonId" />
+                                                    <input type="hidden" name="week" value="@Model.Week" />
+                                                    <button class="icon-btn">🗑️</button>
+                                                </form>
+                                            }
+                                            @if (l.LessonPlanId != null)
+                                            {
+                                                <form method="post" asp-page-handler="DeletePlan" class="d-inline">
+                                                    <input type="hidden" name="id" value="@l.LessonPlanId" />
+                                                    <input type="hidden" name="week" value="@Model.Week" />
                                                     <button class="icon-btn">🗑️</button>
                                                 </form>
                                             }
 
-                                            @if ((l.LessonId != null || l.LessonPlanId != null) && !l.IsTaught)
+                                            <!-- ODUČENO -->
+                                            @if (!l.IsTaught)
                                             {
-                                                <form method="post" asp-page-handler="TeachLesson" class="m-0 p-0 d-inline">
+                                                <form method="post" asp-page-handler="TeachLesson" class="d-inline">
                                                     <input type="hidden" name="id" value="@(l.LessonId ?? l.LessonPlanId)" />
-                                                    <input type="hidden" name="Week" value="@Model.WeekStart.ToString("yyyy-MM-dd")" />
+                                                    <input type="hidden" name="week" value="@Model.Week" />
                                                     <button class="icon-btn">✔️</button>
                                                 </form>
                                             }

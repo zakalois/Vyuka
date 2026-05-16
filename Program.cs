@@ -8,7 +8,6 @@ using Vyuka.Secrets;
 using Vyuka.Services;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // ---------------------------------------------------------

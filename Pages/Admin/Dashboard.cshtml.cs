@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
-using System.Linq;
 
 namespace Vyuka.Pages.Admin
 {
@@ -13,26 +13,27 @@ namespace Vyuka.Pages.Admin
             _context = context;
         }
 
-        // PRODUKCE / VÝVOJ
         public bool IsProduction { get; set; }
-
-        // NEJBLIŽŠÍ LEKCE
         public DateTime? NextLessonDate { get; set; }
 
         public void OnGet()
         {
-            // ⭐ ROZLIŠENÍ PRODUKCE / VÝVOJE
 #if DEBUG
-            IsProduction = false;   // vývojová verze
+            IsProduction = false;
 #else
-            IsProduction = true;    // produkční verze
+            IsProduction = true;
 #endif
 
-            // ⭐ NAČTENÍ NEJBLIŽŠÍ LEKCE
+            // ⭐ Načítáme bezpečně – včetně navigačních vlastností
             var lessons = _context.LessonPlans
+                .Include(x => x.Student)
+                .Include(x => x.Subject)
+                .Include(x => x.SubjectTopic)
+                .Include(x => x.Teacher)   // ⭐ nově přidané
                 .Where(x => x.Date >= DateTime.Today)
                 .ToList();
 
+            // ⭐ Výpočet nejbližší lekce – bezpečný
             NextLessonDate = lessons
                 .Select(x => new DateTime(
                     x.Date.Year,

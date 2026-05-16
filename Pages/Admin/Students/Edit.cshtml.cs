@@ -82,8 +82,7 @@ namespace Vyuka.Pages.Admin.Students
             studentDb.Note = Student.Note;
             studentDb.TeacherId = Student.TeacherId;
             studentDb.SubjectId = Student.SubjectId;
-            studentDb.Credit = Student.Credit;
-
+            
             _context.Students.Update(studentDb);
 
             // 4) Aktualizace nebo vytvoření rodiče

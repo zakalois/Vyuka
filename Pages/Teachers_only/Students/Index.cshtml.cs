@@ -22,13 +22,20 @@ namespace Vyuka.Pages.Teachers_only.Students
             public int Id { get; set; }
             public string FullName { get; set; }
             public string Subject { get; set; }
-            public int Credit { get; set; }
+
+            public double Credit { get; set; }
+
             public string? ParentName { get; set; }
             public string? ParentPhone { get; set; }
             public string? ParentEmail { get; set; }
+
             public string? LastLesson { get; set; }
             public string? NextLesson { get; set; }
             public DateTime? NextLessonDate { get; set; }
+
+            public double PaidHours { get; set; }
+            public double TaughtHours { get; set; }
+            public double RemainingHours { get; set; }
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -39,41 +46,58 @@ namespace Vyuka.Pages.Teachers_only.Students
             if (teacher == null)
                 return RedirectToPage("/Index");
 
-            // ⭐ Načteme studenty BEZ Parent
+            // ⭐ Načteme studenty + předměty (NIC VÍC!)
             var students = await _context.Students
                 .Where(s => s.TeacherId == teacher.Id)
                 .Include(s => s.Subject)
-                .Include(s => s.Lessons)
-                .Include(s => s.LessonPlans)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            // ⭐ Načteme rodiče zvlášť (FK: Parent.StudentId)
             var parents = await _context.Parents.ToListAsync();
 
             foreach (var s in students)
             {
                 var parent = parents.FirstOrDefault(p => p.StudentId == s.Id);
 
-                var lastLesson = s.Lessons
+                // ⭐ Zaplacené hodiny
+                double paidHours = await _context.Payments
+                    .Where(p => p.StudentId == s.Id)
+                    .SumAsync(p => (double)p.HoursPurchased);
+
+                // ⭐ Odučené hodiny – načíst a spočítat v C#
+                var taughtLessons = await _context.Lessons
+                    .Where(l => l.StudentId == s.Id && l.IsTaught)
+                    .ToListAsync();
+
+                double taughtHours = taughtLessons
+                    .Sum(l => (l.End - l.Start).TotalHours);
+
+                // ⭐ Zbývající hodiny
+                double remaining = paidHours - taughtHours;
+                if (remaining < 0) remaining = 0;
+
+                // ⭐ Poslední odučená lekce
+                var lastLesson = taughtLessons
                     .OrderByDescending(l => l.Date)
                     .FirstOrDefault();
 
-                var nextLesson = s.LessonPlans
-                    .Where(lp => lp.Date >= DateTime.Today)
+                // ⭐ Příští plánovaná lekce
+                var nextLesson = await _context.LessonPlans
+                    .Where(lp => lp.StudentId == s.Id && lp.Date >= DateTime.Today)
                     .OrderBy(lp => lp.Date)
-                    .FirstOrDefault();
-
-                int taughtHours = s.Lessons.Count(l => l.IsTaught);
-                int remainingCredit = s.Credit - taughtHours;
+                    .FirstOrDefaultAsync();
 
                 Students.Add(new StudentRow
                 {
                     Id = s.Id,
                     FullName = $"{s.LastName} {s.FirstName}",
                     Subject = s.Subject?.Name ?? "",
-                    Credit = remainingCredit,
+
+                    Credit = Math.Round(remaining, 1),
+                    PaidHours = Math.Round(paidHours, 1),
+                    TaughtHours = Math.Round(taughtHours, 1),
+                    RemainingHours = Math.Round(remaining, 1),
 
                     ParentName = parent?.Name,
                     ParentPhone = parent?.Phone,

@@ -498,3 +498,6 @@ body.dark .admin-menu {
 .card-header {
     text-align: center;
 }
+.form-label {
+    font-weight: 700;
+}

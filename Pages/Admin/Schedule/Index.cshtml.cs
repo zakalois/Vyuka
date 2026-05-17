@@ -198,11 +198,9 @@ namespace Vyuka.Pages.Admin.Schedule
             if (NewEnd == null)
                 throw new Exception("❌ Konec lekce není vybrán");
 
-            if (NewEnd <= NewStart)
-                NewEnd = NewStart.Value + TimeSpan.FromHours(1);
+            // ❗ OPRAVA: zakázat přes půlnoc
             if (NewEnd <= NewStart)
                 throw new Exception("❌ Konec hodiny musí být později než začátek (nelze přes půlnoc).");
-
 
             // ENTITY
             var student = await _context.Students.FindAsync(NewStudentId.Value);
@@ -243,15 +241,30 @@ namespace Vyuka.Pages.Admin.Schedule
 
             await _email.SendAsync(student.Email, "Plánovaná lekce", html);
 
-            // 🔥 URČENÍ SPRÁVNÉHO TEACHER ID
+            // ⭐ OPRAVA TEACHER ID – funguje pro admina i učitele
             var currentUserId = User.FindFirst("sub")?.Value;
 
-            string teacherIdToAssign = User.IsInRole("Teacher")
-                ? currentUserId
-                : this.TeacherId;
+            string teacherIdToAssign;
+
+            if (User.IsInRole("Teacher"))
+            {
+                // učitel plánuje → použij jeho vlastní ID
+                teacherIdToAssign = currentUserId;
+            }
+            else
+            {
+                // admin plánuje
+                teacherIdToAssign = this.TeacherId;
+
+                // admin vybral "-- Administrator --"
+                if (string.IsNullOrEmpty(teacherIdToAssign))
+                {
+                    teacherIdToAssign = currentUserId;
+                }
+            }
 
             if (string.IsNullOrEmpty(teacherIdToAssign))
-                throw new Exception("❌ TeacherId není vyplněn – admin musí vybrat učitele.");
+                throw new Exception("❌ TeacherId nelze určit.");
 
             // ULOŽENÍ LEKCE
             var plan = new LessonPlan
@@ -273,6 +286,7 @@ namespace Vyuka.Pages.Admin.Schedule
 
             return RedirectToPage(new { week = StartOfWeek.ToString("yyyy-MM-dd"), TeacherId });
         }
+
 
 
         // -----------------------------

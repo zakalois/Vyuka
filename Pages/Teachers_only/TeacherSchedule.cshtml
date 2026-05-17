@@ -1,5 +1,5 @@
-﻿@page "/Teachers_Only/TeacherSchedule"
-@model Vyuka.Pages.Teachers_only.ScheduleModel
+﻿@page
+@model Vyuka.Pages.Teachers_only.TeacherScheduleModel
 
 @{
     Layout = "_TeacherLayout";
@@ -38,10 +38,7 @@
 
                 <form method="post" asp-page-handler="EditSave">
 
-                    <!-- ID musí být buď LessonPlanId nebo LessonId -->
                     <input type="hidden" name="id" value="@(Model.EditingLesson.LessonPlanId ?? Model.EditingLesson.LessonId)" />
-
-                    <!-- Informace, zda jde o plán nebo odučenou hodinu -->
                     <input type="hidden" name="isPlan" value="true" />
 
                     <div class="row g-2">
@@ -117,11 +114,11 @@
             </div>
 
             <div class="card-body">
-                <form method="post" asp-page-handler="AddLesson">
+                <form method="post" asp-page="/Teachers_only/TeacherSchedule" asp-page-handler="AddLesson">
 
                     <input type="hidden" name="week" value="@Model.Week" />
 
-                    <div class="row g-2">
+                    <div class="row">
 
                         <div class="col-md-3">
                             <label class="form-label">Student</label>
@@ -136,9 +133,9 @@
                         <div class="col-md-3">
                             <label class="form-label">Předmět</label>
                             <select asp-for="NewLesson.SubjectId" class="form-select">
-                                @foreach (var subj in Model.Subjects)
+                                @foreach (var s in Model.Subjects)
                                 {
-                                    <option value="@subj.Id">@subj.Name</option>
+                                    <option value="@s.Id">@s.Name</option>
                                 }
                             </select>
                         </div>
@@ -158,6 +155,11 @@
                             <input asp-for="NewLesson.End" type="time" class="form-control" />
                         </div>
 
+                        <div class="col-md-12 mt-2">
+                            <label class="form-label">Meet link</label>
+                            <input asp-for="NewLesson.MeetLink" class="form-control" />
+                        </div>
+
                     </div>
 
                     <button type="submit" class="btn btn-success w-100 mt-3">
@@ -165,6 +167,9 @@
                     </button>
 
                 </form>
+
+
+
             </div>
         </div>
     }
@@ -215,7 +220,6 @@
 
                                         <div class="lesson-icons mt-1">
 
-                                            <!-- EDITACE -->
                                             @if (l.LessonPlanId != null)
                                             {
                                                 <form method="get" class="d-inline">
@@ -226,8 +230,6 @@
                                                 </form>
                                             }
 
-
-                                            <!-- MAZÁNÍ -->
                                             @if (l.LessonId != null)
                                             {
                                                 <form method="post" asp-page-handler="DeleteLesson" class="d-inline">
@@ -236,6 +238,7 @@
                                                     <button class="icon-btn">🗑️</button>
                                                 </form>
                                             }
+
                                             @if (l.LessonPlanId != null)
                                             {
                                                 <form method="post" asp-page-handler="DeletePlan" class="d-inline">
@@ -245,7 +248,6 @@
                                                 </form>
                                             }
 
-                                            <!-- ODUČENO -->
                                             @if (!l.IsTaught)
                                             {
                                                 <form method="post" asp-page-handler="TeachLesson" class="d-inline">

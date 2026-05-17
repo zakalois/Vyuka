@@ -58,63 +58,60 @@
 
             <input type="hidden" asp-for="Week" />
 
-          <!-- ŘÁDEK 1: UČITEL – STUDENT – PŘEDMĚT – TÉMA -->
-<div class="row mb-3">
+            <!-- ŘÁDEK 1: UČITEL – STUDENT – PŘEDMĚT – TÉMA -->
+            <div class="row mb-3">
 
-    <!-- UČITEL -->
-    <div class="col-md-3">
-        <label class="form-label fw-bold">Učitel</label>
+                <!-- UČITEL -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Učitel</label>
 
-        <select asp-for="TeacherId" class="form-select"
-                onchange="window.location.href='?TeacherId=' 
-                    + encodeURIComponent(this.value) 
-                    + '&week=@Model.Week.ToString("yyyy-MM-dd")'">
-
+                    <select asp-for="TeacherId" class="form-select">
                         <option value="">-- Administrator --</option>
 
-            @foreach (var t in Model.AllTeachers)
-            {
+                        @foreach (var t in Model.AllTeachers)
+                        {
                             <option value="@t.Id" selected="@(t.Id == Model.TeacherId)">
                                 @t.Name (@t.Email)
                             </option>
+                        }
+                    </select>
 
-            }
-        </select>
-    </div>
+                    <!-- Hidden input musí být mimo select -->
+                    <input type="hidden" asp-for="TeacherId" />
+                </div>
 
-    <!-- STUDENT -->
-    <div class="col-md-3">
-        <label class="form-label fw-bold">Student</label>
-        <select asp-for="NewStudentId" class="form-select">
-            @foreach (var s in Model.Students)
-            {
-                <option value="@s.Id">@s.LastName @s.FirstName</option>
-            }
-        </select>
-    </div>
+                <!-- STUDENT -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Student</label>
+                    <select asp-for="NewStudentId" class="form-select">
+                        @foreach (var s in Model.Students)
+                        {
+                            <option value="@s.Id">@s.LastName @s.FirstName</option>
+                        }
+                    </select>
+                </div>
 
-    <!-- PŘEDMĚT -->
-    <div class="col-md-3">
-        <label class="form-label fw-bold">Předmět</label>
-        <select asp-for="NewSubjectId" class="form-select" id="subjectSelect">
-            <option value="">-- Vyber předmět --</option>
-            @foreach (var s in Model.Subjects)
-            {
-                <option value="@s.Id">@s.Name</option>
-            }
-        </select>
-    </div>
+                <!-- PŘEDMĚT -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Předmět</label>
+                    <select asp-for="NewSubjectId" class="form-select" id="subjectSelect">
+                        <option value="">-- Vyber předmět --</option>
+                        @foreach (var s in Model.Subjects)
+                        {
+                            <option value="@s.Id">@s.Name</option>
+                        }
+                    </select>
+                </div>
 
-    <!-- TÉMA -->
-    <div class="col-md-3">
-        <label class="form-label fw-bold">Téma</label>
-        <select asp-for="NewTopicId" class="form-select" id="topicSelect">
-            <option value="">-- Vyber téma --</option>
-        </select>
-    </div>
+                <!-- TÉMA -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Téma</label>
+                    <select asp-for="NewTopicId" class="form-select" id="topicSelect">
+                        <option value="">-- Vyber téma --</option>
+                    </select>
+                </div>
 
-</div>
-
+            </div>
 
             <!-- ŘÁDEK 2: DATUM – ZAČÁTEK – KONEC -->
             <div class="row mb-3">

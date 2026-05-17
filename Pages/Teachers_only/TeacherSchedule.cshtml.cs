@@ -142,7 +142,7 @@ namespace Vyuka.Pages.Teachers_only
                 SubjectId = lp.SubjectId,
                 MeetLink = lp.MeetLink,
                 Color = GetStudentColor(lp.Student),
-                IsTaught = false
+                IsTaught = lp.IsTaught
             })
             .OrderBy(x => x.Start)
             .ToList()
@@ -194,25 +194,25 @@ namespace Vyuka.Pages.Teachers_only
 
             await LoadSchedule();
 
-            if (!HttpContext.Request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
+            // Datum musí být nastavené vždy, i při POST
+            if (NewLesson.Date == default)
+                NewLesson.Date = StartOfWeek;
+
+            // MeetLink doplníme jen pokud není vyplněný
+            if (string.IsNullOrEmpty(NewLesson.MeetLink))
             {
-                if (NewLesson.Date == default)
-                    NewLesson.Date = StartOfWeek;
+                var existingPlan = await _context.LessonPlans
+                    .FirstOrDefaultAsync(lp =>
+                        lp.StudentId == NewLesson.StudentId &&
+                        lp.SubjectId == NewLesson.SubjectId);
 
-                if (string.IsNullOrEmpty(NewLesson.MeetLink))
-                {
-                    var existingPlan = await _context.LessonPlans
-                        .FirstOrDefaultAsync(lp =>
-                            lp.StudentId == NewLesson.StudentId &&
-                            lp.SubjectId == NewLesson.SubjectId);
-
-                    if (existingPlan != null)
-                        NewLesson.MeetLink = existingPlan.MeetLink;
-                }
+                if (existingPlan != null)
+                    NewLesson.MeetLink = existingPlan.MeetLink;
             }
 
             return Page();
         }
+
 
         // ⭐⭐⭐ FINÁLNÍ OPRAVA – AddLesson handler ⭐⭐⭐
         public async Task<IActionResult> OnPostAddLessonAsync(int week)
@@ -247,20 +247,20 @@ namespace Vyuka.Pages.Teachers_only
 );
 
             // ⭐ ULOŽENÍ LEKCE
-            var lesson = new Lesson
+            var plan = new LessonPlan
             {
                 Date = NewLesson.Date,
                 Start = NewLesson.Start,
                 End = NewLesson.End,
                 StudentId = NewLesson.StudentId,
                 SubjectId = NewLesson.SubjectId,
-                TeacherId = teacher.Id,
                 MeetLink = meet.MeetLink,
                 IsTaught = false
             };
 
-            _context.Lessons.Add(lesson);
+            _context.LessonPlans.Add(plan);
             await _context.SaveChangesAsync();
+
 
             // ⭐ EMAIL STUDENTOVI
             var html = await _emailBuilder.BuildPlannedAsync(

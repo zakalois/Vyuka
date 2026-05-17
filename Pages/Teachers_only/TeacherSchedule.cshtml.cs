@@ -128,40 +128,24 @@ namespace Vyuka.Pages.Teachers_only
                     Day = order[i],
                     Date = date,
                     Lessons =
-                        plans
-                            .Where(p => p.Date.Date == date.Date)
-                            .Select(lp => new UnifiedLesson
-                            {
-                                LessonPlanId = lp.Id,
-                                Date = lp.Date,
-                                Start = lp.Start,
-                                End = lp.End,
-                                Student = $"{lp.Student.LastName} {lp.Student.FirstName}",
-                                StudentId = lp.StudentId,
-                                Subject = lp.Subject.Name,
-                                SubjectId = lp.SubjectId,
-                                MeetLink = lp.MeetLink,
-                                Color = GetStudentColor(lp.Student)
-                            })
-                        .Concat(
-                            lessons
-                                .Where(l => l.Date.Date == date.Date)
-                                .Select(l => new UnifiedLesson
-                                {
-                                    LessonId = l.Id,
-                                    Date = l.Date,
-                                    Start = l.Start,
-                                    End = l.End,
-                                    Student = $"{l.Student.LastName} {l.Student.FirstName}",
-                                    StudentId = l.StudentId,
-                                    Subject = l.Subject.Name,
-                                    SubjectId = l.SubjectId,
-                                    MeetLink = l.MeetLink,
-                                    Color = GetStudentColor(l.Student)
-                                })
-                        )
-                        .OrderBy(x => x.Start)
-                        .ToList()
+        plans
+            .Where(p => p.Date.Date == date.Date)
+            .Select(lp => new UnifiedLesson
+            {
+                LessonPlanId = lp.Id,
+                Date = lp.Date,
+                Start = lp.Start,
+                End = lp.End,
+                Student = $"{lp.Student.LastName} {lp.Student.FirstName}",
+                StudentId = lp.StudentId,
+                Subject = lp.Subject.Name,
+                SubjectId = lp.SubjectId,
+                MeetLink = lp.MeetLink,
+                Color = GetStudentColor(lp.Student),
+                IsTaught = false
+            })
+            .OrderBy(x => x.Start)
+            .ToList()
                 });
             }
         }
@@ -291,6 +275,57 @@ namespace Vyuka.Pages.Teachers_only
             await _email.SendAsync(student.Email, "Plánovaná lekce", html);
 
             return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
+        }
+        public async Task<IActionResult> OnPostEditSaveAsync(
+    int id,
+    bool isPlan,
+    DateTime date,
+    TimeSpan start,
+    TimeSpan end,
+    int studentId,
+    int subjectId,
+    string? meetLink,
+    int week)
+        {
+            if (isPlan)
+            {
+                // ⭐ EDITACE PLÁNOVANÉ HODINY
+                var plan = await _context.LessonPlans.FirstOrDefaultAsync(p => p.Id == id);
+                if (plan == null)
+                    return RedirectToPage(new { week });
+
+                plan.Date = date;
+                plan.Start = start;
+                plan.End = end;
+                plan.StudentId = studentId;
+                plan.SubjectId = subjectId;
+
+                // Meet link se nemění, pokud je prázdný
+                if (!string.IsNullOrWhiteSpace(meetLink))
+                    plan.MeetLink = meetLink;
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // ⭐ EDITACE HOTOVÉ LEKCE
+                var lesson = await _context.Lessons.FirstOrDefaultAsync(l => l.Id == id);
+                if (lesson == null)
+                    return RedirectToPage(new { week });
+
+                lesson.Date = date;
+                lesson.Start = start;
+                lesson.End = end;
+                lesson.StudentId = studentId;
+                lesson.SubjectId = subjectId;
+
+                if (!string.IsNullOrWhiteSpace(meetLink))
+                    lesson.MeetLink = meetLink;
+
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToPage(new { week });
         }
 
         public async Task<IActionResult> OnPostDeleteLessonAsync(int id, int week)

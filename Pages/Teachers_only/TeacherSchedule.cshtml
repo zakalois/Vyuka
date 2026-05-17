@@ -39,7 +39,9 @@
                 <form method="post" asp-page-handler="EditSave">
 
                     <input type="hidden" name="id" value="@(Model.EditingLesson.LessonPlanId ?? Model.EditingLesson.LessonId)" />
-                    <input type="hidden" name="isPlan" value="true" />
+                    <input type="hidden" name="isPlan" value="@(Model.EditingLesson.LessonPlanId != null ? "true" : "false")" />
+                    <input type="hidden" name="week" value="@Model.Week" />
+
 
                     <div class="row g-2">
 
@@ -103,8 +105,6 @@
         </div>
     }
 
-
-
     <!-- 🟨 PŘIDAT HODINU -->
     @if (Model.EditingLesson == null)
     {
@@ -154,12 +154,7 @@
                             <label class="form-label">Konec</label>
                             <input asp-for="NewLesson.End" type="time" class="form-control" />
                         </div>
-
-                        <div class="col-md-12 mt-2">
-                            <label class="form-label">Meet link</label>
-                            <input asp-for="NewLesson.MeetLink" class="form-control" />
-                        </div>
-
+                                                
                     </div>
 
                     <button type="submit" class="btn btn-success w-100 mt-3">
@@ -225,6 +220,15 @@
                                                 <form method="get" class="d-inline">
                                                     <input type="hidden" name="editId" value="@l.LessonPlanId" />
                                                     <input type="hidden" name="isPlan" value="true" />
+                                                    <input type="hidden" name="week" value="@Model.Week" />
+                                                    <button class="icon-btn">✏️</button>
+                                                </form>
+                                            }
+                                            @if (l.LessonId != null)
+                                            {
+                                                <form method="get" class="d-inline">
+                                                    <input type="hidden" name="editId" value="@l.LessonId" />
+                                                    <input type="hidden" name="isPlan" value="false" />
                                                     <input type="hidden" name="week" value="@Model.Week" />
                                                     <button class="icon-btn">✏️</button>
                                                 </form>

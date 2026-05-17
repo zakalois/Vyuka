@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Vyuka.Models;
+using Vyuka.Services;
 
 namespace Vyuka.Pages.Teachers_only
 {
@@ -19,10 +20,20 @@ namespace Vyuka.Pages.Teachers_only
     public class TeacherScheduleModel : PageModel
     {
         private readonly AppDbContext _context;
+        private readonly GoogleCalendarService _calendar;   // ⭐ DOPLNĚNO
+        private readonly IEmailService _email;              // ⭐ DOPLNĚNO
+        private readonly LessonEmailBuilder _emailBuilder;  // ⭐ DOPLNĚNO
 
-        public TeacherScheduleModel(AppDbContext context)
+        public TeacherScheduleModel(
+            AppDbContext context,
+            GoogleCalendarService calendar,
+            IEmailService email,
+            LessonEmailBuilder emailBuilder)
         {
             _context = context;
+            _calendar = calendar;
+            _email = email;
+            _emailBuilder = emailBuilder;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -159,7 +170,6 @@ namespace Vyuka.Pages.Teachers_only
         {
             ModelState.Clear();
 
-            // Výpočet týdne
             if (Week <= 0)
             {
                 var todayMonday = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
@@ -171,7 +181,6 @@ namespace Vyuka.Pages.Teachers_only
             PreviousWeek = Week - 1;
             NextWeek = Week + 1;
 
-            // EDITACE PLÁNU
             if (editId != null && isPlan == true)
             {
                 var plan = await _context.LessonPlans
@@ -194,7 +203,6 @@ namespace Vyuka.Pages.Teachers_only
                         MeetLink = plan.MeetLink
                     };
 
-                    // ⭐ Předvyplnění MeetLinku pro nový formulář
                     if (string.IsNullOrEmpty(NewLesson.MeetLink))
                         NewLesson.MeetLink = plan.MeetLink;
                 }
@@ -202,13 +210,11 @@ namespace Vyuka.Pages.Teachers_only
 
             await LoadSchedule();
 
-            // ⭐ DŮLEŽITÉ: nastavovat defaultní hodnoty POUZE při GETU
             if (!HttpContext.Request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
             {
                 if (NewLesson.Date == default)
                     NewLesson.Date = StartOfWeek;
 
-                // ⭐ Pokud učitel plánuje novou hodinu, zkus načíst MeetLink z existujícího plánu
                 if (string.IsNullOrEmpty(NewLesson.MeetLink))
                 {
                     var existingPlan = await _context.LessonPlans
@@ -224,29 +230,39 @@ namespace Vyuka.Pages.Teachers_only
             return Page();
         }
 
-
-
         // ⭐⭐⭐ FINÁLNÍ OPRAVA – AddLesson handler ⭐⭐⭐
-        //[IgnoreAntiforgeryToken]//⭐ PRO TESTOVÁNÍ//
         public async Task<IActionResult> OnPostAddLessonAsync(int week)
         {
-            // Debug – uvidíš v Output → Debug
-            System.Diagnostics.Debug.WriteLine(">>> OnPostAddLessonAsync HIT, week = " + week);
-            System.Diagnostics.Debug.WriteLine(">>> FORM MEET = " + Request.Form["NewLesson.MeetLink"]);
-            System.Diagnostics.Debug.WriteLine(">>> BOUND MEET = " + NewLesson.MeetLink);
-
-            // Binder může mít chyby, ale hodnoty už jsou nabindované → čistíme až teď
             ModelState.Clear();
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
 
             if (teacher == null)
-            {
-                System.Diagnostics.Debug.WriteLine(">>> ERROR: teacher == null");
                 return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
-            }
 
+            var student = await _context.Students
+    .FirstOrDefaultAsync(s => s.Id == NewLesson.StudentId);
+
+            if (student == null)
+                return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
+
+
+            var subject = await _context.Subjects.FindAsync(NewLesson.SubjectId);
+
+            // ⭐ VYTVOŘENÍ GOOGLE MEET
+            var meet = await _calendar.CreateMeetEventAsync(
+    NewLesson.Date + NewLesson.Start,
+    NewLesson.Date + NewLesson.End,
+    $"{subject.Name} – {student.LastName} {student.FirstName}",
+    student.Email,                 // ⭐ OPRAVA
+    "zakalois@gmail.com",          // ⭐ centrální účet
+    student.FirstName,
+    student.LastName,
+    "#90CAF9"
+);
+
+            // ⭐ ULOŽENÍ LEKCE
             var lesson = new Lesson
             {
                 Date = NewLesson.Date,
@@ -255,19 +271,27 @@ namespace Vyuka.Pages.Teachers_only
                 StudentId = NewLesson.StudentId,
                 SubjectId = NewLesson.SubjectId,
                 TeacherId = teacher.Id,
-                MeetLink = NewLesson.MeetLink,   // ⭐ ULOŽÍ SE
+                MeetLink = meet.MeetLink,
                 IsTaught = false
             };
 
             _context.Lessons.Add(lesson);
             await _context.SaveChangesAsync();
 
-            System.Diagnostics.Debug.WriteLine(">>> LESSON SAVED, ID = " + lesson.Id);
+            // ⭐ EMAIL STUDENTOVI
+            var html = await _emailBuilder.BuildPlannedAsync(
+                $"{student.FirstName} {student.LastName}",
+                subject.Name,
+                "",
+                NewLesson.Date,
+                NewLesson.Start,
+                meet.MeetLink
+            );
+
+            await _email.SendAsync(student.Email, "Plánovaná lekce", html);
 
             return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
         }
-
-
 
         public async Task<IActionResult> OnPostDeleteLessonAsync(int id, int week)
         {

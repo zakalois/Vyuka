@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Vyuka.Models;
 using Vyuka.Services;
 
@@ -242,29 +243,29 @@ namespace Vyuka.Pages.Admin.Schedule
             await _email.SendAsync(student.Email, "Plánovaná lekce", html);
 
             // ⭐ OPRAVA TEACHER ID – funguje pro admina i učitele
-            var currentUserId = User.FindFirst("sub")?.Value;
+            // URČENÍ SPRÁVNÉHO TEACHER ID
+            var currentUserId =
+                User.FindFirst("sub")?.Value ??
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                User.FindFirst("nameidentifier")?.Value;
 
             string teacherIdToAssign;
 
             if (User.IsInRole("Teacher"))
             {
-                // učitel plánuje → použij jeho vlastní ID
                 teacherIdToAssign = currentUserId;
             }
             else
             {
-                // admin plánuje
                 teacherIdToAssign = this.TeacherId;
 
-                // admin vybral "-- Administrator --"
                 if (string.IsNullOrEmpty(teacherIdToAssign))
                 {
-                    teacherIdToAssign = currentUserId;
+                    // Admin plánuje pro sebe → TeacherId = null
+                    teacherIdToAssign = null;
                 }
-            }
 
-            if (string.IsNullOrEmpty(teacherIdToAssign))
-                throw new Exception("❌ TeacherId nelze určit.");
+            }
 
             // ULOŽENÍ LEKCE
             var plan = new LessonPlan
@@ -292,29 +293,64 @@ namespace Vyuka.Pages.Admin.Schedule
         // -----------------------------
         // EDITACE – ZAČÁTEK
         // -----------------------------
-        public async Task<IActionResult> OnPostEditStartAsync(int id, DateTime Week)
+        public async Task<IActionResult> OnPostEditStartAsync(int id, DateTime Week, string? TeacherId)
         {
+            // 1) Ulož týden a dopočítej začátek/konec
+            Week = Week == default ? DateTime.Today : Week;
             this.Week = Week;
             ComputeWeek();
+
+            // 2) Ulož TeacherId, aby se vrátilo do stránky (navigace, filtr, select)
+            this.TeacherId = TeacherId;
+
+            // 3) Načti dropdowny (Students, Subjects, Topics, AllTeachers…)
             await LoadDropdownsAsync();
 
-            EditPlan = await _context.LessonPlans
+            // 4) Najdi plánovanou hodinu
+            var query = _context.LessonPlans
                 .Include(p => p.Student)
                 .Include(p => p.Subject)
                 .Include(p => p.SubjectTopic)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .AsQueryable();
 
-            Plans = await _context.LessonPlans
+            // Učitel smí jen svoje hodiny
+            if (User.IsInRole("Teacher") && !string.IsNullOrEmpty(TeacherId))
+            {
+                query = query.Where(p => p.TeacherId == TeacherId);
+            }
+
+            EditPlan = await query.FirstOrDefaultAsync(p => p.Id == id);
+
+            // Když se nic nenašlo, radši se vrať na přehled než viset v divném stavu
+            if (EditPlan == null)
+            {
+                return RedirectToPage(new
+                {
+                    week = Week.ToString("yyyy-MM-dd"),
+                    TeacherId = this.TeacherId
+                });
+            }
+
+            // 5) Znovu načti seznam hodin pro daný týden (a případně učitele)
+            var plansQuery = _context.LessonPlans
                 .Include(p => p.Student)
                 .Include(p => p.Subject)
                 .Include(p => p.SubjectTopic)
-                .Where(p => p.Date >= StartOfWeek && p.Date <= EndOfWeek)
+                .Where(p => p.Date >= StartOfWeek && p.Date <= EndOfWeek);
+
+            if (!string.IsNullOrEmpty(TeacherId))
+            {
+                plansQuery = plansQuery.Where(p => p.TeacherId == TeacherId);
+            }
+
+            Plans = await plansQuery
                 .OrderBy(p => p.Date)
                 .ThenBy(p => p.Start)
                 .ToListAsync();
 
             return Page();
         }
+
 
         // -----------------------------
         // UPDATE LEKCE

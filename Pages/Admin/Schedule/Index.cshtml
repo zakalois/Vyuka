@@ -298,15 +298,21 @@ else
                                 </form>
                             }
 
-                            <form method="post" asp-page="/Schedule/Index" asp-page-handler="EditStart" class="m-0 p-0">
+                            <form method="post"
+                                  asp-page="/Admin/Schedule"
+                                  asp-page-handler="EditStart"
+                                  class="m-0 p-0">
+
                                 <input type="hidden" name="id" value="@p.Id" />
                                 <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
+                                <input type="hidden" name="TeacherId" value="@p.TeacherId" />
 
                                 <button class="btn btn-warning btn-sm px-1 py-0"
                                         title="Upravit lekci">
                                     ✏
                                 </button>
                             </form>
+
 
 
                             <form method="post" asp-page-handler="Delete" class="m-0 p-0">

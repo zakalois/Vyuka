@@ -29,12 +29,12 @@
                 <!-- PŘEDMĚT -->
                 <td>@item.Subject</td>
 
-                <!-- KREDIT – barevné zvýraznění + tooltip -->
+                <!-- KREDIT – barevné zvýraznění -->
                 <td>
                     <span class="
                         @(item.Credit <= 2 ? "badge bg-danger" :
-                                                    item.Credit <= 5 ? "badge bg-warning text-dark" :
-                                                    "badge bg-success")
+                            item.Credit <= 5 ? "badge bg-warning text-dark" :
+                                               "badge bg-success")
                         "
                           data-bs-toggle="tooltip"
                           title="Zbývající kredit">
@@ -47,19 +47,18 @@
                     @item.LastLesson
                 </td>
 
-                <!-- DALŠÍ HODINA – zvýraznění podle blízkosti -->
+                <!-- DALŠÍ HODINA -->
                 <td class="
                     @(item.NextLessonDate == DateTime.Today ? "table-success" :
-                                          item.NextLessonDate == DateTime.Today.AddDays(1) ? "table-primary" :
-                                          item.NextLessonDate <= DateTime.Today.AddDays(7) ? "table-warning" :
-                                          "")
+                      item.NextLessonDate == DateTime.Today.AddDays(1) ? "table-primary" :
+                      item.NextLessonDate <= DateTime.Today.AddDays(7) ? "table-warning" : "")
                     "
                     data-bs-toggle="tooltip"
                     title="Nejbližší plánovaná hodina">
                     @item.NextLesson
                 </td>
 
-                <!-- KONTAKT NA RODIČE -->
+                <!-- RODIČ -->
                 <td>
                     @if (!string.IsNullOrEmpty(item.ParentName))
                     {
@@ -83,8 +82,9 @@
 
                 <!-- TLAČÍTKO UPRAVIT -->
                 <td>
-                    <a asp-page="/Teachers_only/Students/Edit" asp-route-id="@item.Id"
-                           class="btn btn-primary btn-sm">
+                    <a asp-page="/Teachers_only/Students/Edit"
+                       asp-route-id="@item.Id"
+                       class="btn btn-primary btn-sm">
                         Upravit
                     </a>
                 </td>
@@ -94,7 +94,6 @@
     </tbody>
 </table>
 
-<!-- Aktivace tooltipů -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))

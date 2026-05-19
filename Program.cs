@@ -82,9 +82,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
+    var env = provider.GetRequiredService<IHostEnvironment>();
+
+    // Název souboru z appsettings.json
     var keyPath = config["Google:ServiceAccountKeyPath"];
 
-    keyPath = Path.GetFullPath(keyPath);
+    // Správná cesta – hledá JSON vedle EXE (publish)
+    keyPath = Path.Combine(env.ContentRootPath, keyPath);
 
     if (!File.Exists(keyPath))
         throw new FileNotFoundException($"Service account JSON nenalezen: {keyPath}");
@@ -101,6 +105,7 @@ builder.Services.AddSingleton(provider =>
             ApplicationName = "VyukaApp"
         });
 });
+
 
 // Služba pro práci s Google Calendar
 builder.Services.AddScoped<GoogleCalendarService>();

@@ -215,43 +215,23 @@
 
                                         <div class="lesson-icons mt-1">
 
-                                            @if (l.LessonPlanId != null)
-                                            {
-                                                <form method="get" class="d-inline">
-                                                    <input type="hidden" name="editId" value="@l.LessonPlanId" />
-                                                    <input type="hidden" name="isPlan" value="true" />
-                                                    <input type="hidden" name="week" value="@Model.Week" />
-                                                    <button class="icon-btn">✏️</button>
-                                                </form>
-                                            }
-                                            @if (l.LessonId != null)
-                                            {
-                                                <form method="get" class="d-inline">
-                                                    <input type="hidden" name="editId" value="@l.LessonId" />
-                                                    <input type="hidden" name="isPlan" value="false" />
-                                                    <input type="hidden" name="week" value="@Model.Week" />
-                                                    <button class="icon-btn">✏️</button>
-                                                </form>
-                                            }
+                                            <!-- ✏️ EDITACE -->
+                                            <form method="get" class="d-inline">
+                                                <input type="hidden" name="editId" value="@(l.LessonId ?? l.LessonPlanId)" />
+                                                <input type="hidden" name="isPlan" value="@(l.LessonPlanId != null ? "true" : "false")" />
+                                                <input type="hidden" name="week" value="@Model.Week" />
+                                                <button class="icon-btn">✏️</button>
+                                            </form>
 
-                                            @if (l.LessonId != null)
-                                            {
-                                                <form method="post" asp-page-handler="DeleteLesson" class="d-inline">
-                                                    <input type="hidden" name="id" value="@l.LessonId" />
-                                                    <input type="hidden" name="week" value="@Model.Week" />
-                                                    <button class="icon-btn">🗑️</button>
-                                                </form>
-                                            }
 
-                                            @if (l.LessonPlanId != null)
-                                            {
-                                                <form method="post" asp-page-handler="DeletePlan" class="d-inline">
-                                                    <input type="hidden" name="id" value="@l.LessonPlanId" />
-                                                    <input type="hidden" name="week" value="@Model.Week" />
-                                                    <button class="icon-btn">🗑️</button>
-                                                </form>
-                                            }
+                                            <!-- 🗑️ SMAZAT -->
+                                            <form method="post" asp-page-handler="@(l.LessonId != null ? "DeleteLesson" : "DeletePlan")" class="d-inline">
+                                                <input type="hidden" name="id" value="@(l.LessonId ?? l.LessonPlanId)" />
+                                                <input type="hidden" name="week" value="@Model.Week" />
+                                                <button class="icon-btn">🗑️</button>
+                                            </form>
 
+                                            <!-- ✔️ ODUČENO -->
                                             @if (!l.IsTaught)
                                             {
                                                 <form method="post" asp-page-handler="TeachLesson" class="d-inline">
@@ -262,6 +242,7 @@
                                             }
 
                                         </div>
+
 
                                     </div>
                                 </div>

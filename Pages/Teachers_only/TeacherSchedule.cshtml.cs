@@ -128,24 +128,43 @@ namespace Vyuka.Pages.Teachers_only
                     Day = order[i],
                     Date = date,
                     Lessons =
-        plans
-            .Where(p => p.Date.Date == date.Date)
-            .Select(lp => new UnifiedLesson
+    plans
+        .Where(p => p.Date.Date == date.Date)
+        .Select(lp => new UnifiedLesson
+        {
+            LessonPlanId = lp.Id,
+            Date = lp.Date,
+            Start = lp.Start,
+            End = lp.End,
+            Student = $"{lp.Student.LastName} {lp.Student.FirstName}",
+            StudentId = lp.StudentId,
+            Subject = lp.Subject.Name,
+            SubjectId = lp.SubjectId,
+            MeetLink = lp.MeetLink,
+            Color = GetStudentColor(lp.Student),
+            IsTaught = lp.IsTaught
+        })
+    .Concat(
+        lessons
+            .Where(l => l.Date.Date == date.Date)
+            .Select(l => new UnifiedLesson
             {
-                LessonPlanId = lp.Id,
-                Date = lp.Date,
-                Start = lp.Start,
-                End = lp.End,
-                Student = $"{lp.Student.LastName} {lp.Student.FirstName}",
-                StudentId = lp.StudentId,
-                Subject = lp.Subject.Name,
-                SubjectId = lp.SubjectId,
-                MeetLink = lp.MeetLink,
-                Color = GetStudentColor(lp.Student),
-                IsTaught = lp.IsTaught
+                LessonId = l.Id,
+                Date = l.Date,
+                Start = l.Start,
+                End = l.End,
+                Student = $"{l.Student.LastName} {l.Student.FirstName}",
+                StudentId = l.StudentId,
+                Subject = l.Subject.Name,
+                SubjectId = l.SubjectId,
+                MeetLink = l.MeetLink,
+                Color = GetStudentColor(l.Student),
+                IsTaught = l.IsTaught
             })
-            .OrderBy(x => x.Start)
-            .ToList()
+    )
+    .OrderBy(x => x.Start)
+    .ToList()
+
                 });
             }
         }
@@ -365,7 +384,19 @@ namespace Vyuka.Pages.Teachers_only
 
             if (plan != null)
             {
-                var teacherId = plan.Student?.TeacherId ?? 0;
+                // 1) Najdeme učitele podle LessonPlan.TeacherId (string UserId)
+                var teacher = await _context.Teachers
+                    .FirstOrDefaultAsync(t => t.UserId == plan.TeacherId);
+
+                // 2) Pokud to selže (např. admin plánoval hodinu)
+                if (teacher == null)
+                {
+                    teacher = await _context.Teachers
+                        .FirstOrDefaultAsync(t => t.Id == plan.Student.TeacherId);
+                }
+
+                if (teacher == null)
+                    throw new Exception("Teacher not found.");
 
                 var lesson = new Lesson
                 {
@@ -374,7 +405,7 @@ namespace Vyuka.Pages.Teachers_only
                     End = plan.End,
                     StudentId = plan.StudentId,
                     SubjectId = plan.SubjectId,
-                    TeacherId = teacherId,
+                    TeacherId = teacher.Id,   // ⭐ SPRÁVNÉ ID UČITELE
                     MeetLink = plan.MeetLink,
                     IsTaught = true
                 };
@@ -387,6 +418,8 @@ namespace Vyuka.Pages.Teachers_only
 
             return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
         }
+
+
     }
 
     public class NewLessonInput

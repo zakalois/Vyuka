@@ -46,7 +46,7 @@ namespace Vyuka.Pages.Teachers_only.Students
             if (teacher == null)
                 return RedirectToPage("/Index");
 
-            // ⭐ Načteme studenty + předměty (NIC VÍC!)
+            // ⭐ Načteme studenty učitele
             var students = await _context.Students
                 .Where(s => s.TeacherId == teacher.Id)
                 .Include(s => s.Subject)
@@ -54,10 +54,12 @@ namespace Vyuka.Pages.Teachers_only.Students
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
+            // ⭐ Načteme všechny rodiče jedním dotazem
             var parents = await _context.Parents.ToListAsync();
 
             foreach (var s in students)
             {
+                // ⭐ Najdeme rodiče pro daného studenta
                 var parent = parents.FirstOrDefault(p => p.StudentId == s.Id);
 
                 // ⭐ Zaplacené hodiny
@@ -65,15 +67,17 @@ namespace Vyuka.Pages.Teachers_only.Students
                     .Where(p => p.StudentId == s.Id)
                     .SumAsync(p => (double)p.HoursPurchased);
 
-                // ⭐ Odučené hodiny – načíst a spočítat v C#
+                // ⭐ Odučené hodiny – fallback pro staré lekce s 00:00–00:00
                 var taughtLessons = await _context.Lessons
-                    .Where(l => l.StudentId == s.Id && l.IsTaught)
+                    .Where(l => l.StudentId == s.Id)
                     .ToListAsync();
 
-                double taughtHours = taughtLessons
-                    .Sum(l => (l.End - l.Start).TotalHours);
+                double taughtHours = taughtLessons.Sum(l =>
+                {
+                    var duration = (l.End - l.Start).TotalHours;
+                    return duration > 0 ? duration : 1.0; // ⭐ staré lekce bereme jako 1h
+                });
 
-                // ⭐ Zbývající hodiny
                 double remaining = paidHours - taughtHours;
                 if (remaining < 0) remaining = 0;
 
@@ -82,7 +86,7 @@ namespace Vyuka.Pages.Teachers_only.Students
                     .OrderByDescending(l => l.Date)
                     .FirstOrDefault();
 
-                // ⭐ Příští plánovaná lekce
+                // ⭐ Nejbližší plánovaná lekce
                 var nextLesson = await _context.LessonPlans
                     .Where(lp => lp.StudentId == s.Id && lp.Date >= DateTime.Today)
                     .OrderBy(lp => lp.Date)

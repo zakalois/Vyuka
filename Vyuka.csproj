@@ -51,5 +51,15 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+<ItemGroup>
+  <!-- appsettings.json MUSÍ být v publish výstupu -->
+  <None Update="appsettings.json" CopyToOutputDirectory="Always" />
+
+  <!-- Development verzi NEkopírovat -->
+  <None Update="appsettings.Development.json" CopyToOutputDirectory="Never" />
+
+  <!-- Google JSON soubor přibalit do publish -->
+  <None Include="Secrets\vyukameet-887de6c28b47.json" CopyToOutputDirectory="Always" />
+</ItemGroup>
 
 </Project>

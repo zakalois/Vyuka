@@ -23,18 +23,24 @@
     <!-- ========================================= -->
     <!-- ADMIN HEADER -->
     <!-- ========================================= -->
-    <header class="admin-header d-flex justify-content-between align-items-center px-4 py-3">
-
-        <div class="fw-bold admin-title">
+@*     <header class="admin-header">
+        <div class="admin-left">
             Administrace
         </div>
 
-        <div>
-            <button id="darkToggle" class="btn btn-sm admin-dark-btn">
+        <div class="admin-right">
+            <button id="darkToggle" class="btn btn-sm btn-primary">
                 Tmavý režim
             </button>
+
+            <form method="post" asp-page="/Logout">
+                <button type="submit" class="btn btn-sm btn-danger">
+                    Odhlásit se
+                </button>
+            </form>
         </div>
     </header>
+ *@
 
     <!-- ========================================= -->
     <!-- ADMIN MENU -->
@@ -56,7 +62,7 @@
         <a class="nav-link" href="/Account/Profile">
             <i class="bi bi-person-circle"></i> Profil
         </a>
-
+               
     </nav>
 
 

@@ -55,9 +55,10 @@
                 <select asp-for="SelectedTemplate" class="form-select">
                     @foreach (var t in Model.Templates)
                     {
-                        <option value="@t">@t</option>
+                        <option value="@t.Name">@t.Name</option>
                     }
                 </select>
+
             </div>
 
             <!-- TLAČÍTKA -->

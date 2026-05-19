@@ -1,0 +1,11 @@
+﻿@page "{id:int}"
+@model DeleteModel
+
+<h2>Smazat šablonu</h2>
+
+<p>Opravdu chcete smazat šablonu <strong>@Model.Template.Name</strong>?</p>
+
+<form method="post">
+    <button type="submit" class="btn btn-danger">Ano, smazat</button>
+    <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+</form>

@@ -1,0 +1,24 @@
+﻿@page "{id:int}"
+@model EditModel
+
+<h2>Upravit šablonu</h2>
+
+<form method="post">
+    <div class="mb-3">
+        <label>Název</label>
+        <input asp-for="Template.Name" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Předmět</label>
+        <input asp-for="Template.Subject" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>HTML obsah</label>
+        <textarea asp-for="Template.Body" class="form-control" rows="20"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-success">Uložit změny</button>
+    <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+</form>

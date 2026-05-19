@@ -1,0 +1,10 @@
+﻿@page "{id:int}"
+@model PreviewModel
+
+<h2>Náhled šablony: @Model.Template.Name</h2>
+
+<div style="border:1px solid #ccc; padding:20px; background:white;">
+    @Html.Raw(Model.Template.Body)
+</div>
+
+<a asp-page="Index" class="btn btn-secondary mt-3">Zpět</a>

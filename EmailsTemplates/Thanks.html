@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Poděkování za spolupráci</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .email-wrapper {
+            width: 100%;
+            padding: 20px 0;
+        }
+
+        .email-container {
+            max-width: 640px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        /* HLAVIČKA */
+        .email-header {
+            background-color: #0d6efd;
+            color: #ffffff;
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .email-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #0d6efd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+        }
+
+        .email-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* OBSAH */
+        .email-body {
+            padding: 24px 28px 10px 28px;
+            color: #111827;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+            .email-body p {
+                margin: 0 0 12px 0;
+            }
+
+        /* PATIČKA */
+        .email-footer {
+            padding: 16px 28px 22px 28px;
+            font-size: 12px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .signature-name {
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        a {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-container">
+
+            <!-- HLAVIČKA S LOGEM -->
+            <div class="email-header">
+                <div class="email-logo">
+                    AŽ
+                </div>
+                <div class="email-title">
+                    Poděkování za spolupráci
+                </div>
+            </div>
+
+            <!-- TĚLO E-MAILU -->
+            <div class="email-body">
+                <p>Dobrý den,</p>
+
+                <p>
+                    rád bych Vám poděkoval za čas, který jste věnoval/a doučování.
+                    Vážím si toho, že jste si mě vybrali jako učitele, a věřím, že společně
+                    strávené hodiny byly prospěšné a přinesly pokrok.
+                </p>
+
+                <p>
+                    Pokud byste se v budoucnu rozhodli ve výuce pokračovat, rád Vás kdykoli znovu přivítám.
+                    V případě potřeby materiálů, doporučení nebo krátkého shrnutí probírané látky
+                    mě můžete kdykoli kontaktovat.
+                </p>
+
+                <p>
+                    Přeji Vám mnoho úspěchů ve studiu i osobním životě.
+                </p>
+
+                <p class="signature-name">
+                    Ing. Alois Žák
+                </p>
+                <p>
+                    Tel.: +420 601 172 322<br />
+                    Web: <a href="https://ucitelzak.eu">ucitelzak.eu</a>
+                </p>
+            </div>
+
+            <!-- PATIČKA -->
+            <div class="email-footer">
+                Tento e‑mail byl odeslán automaticky v rámci ukončení doučování.
+                Pokud jste zprávu obdrželi omylem, prosím, ignorujte ji.
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

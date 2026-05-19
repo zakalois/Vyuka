@@ -29,12 +29,7 @@ namespace Vyuka.Pages.Communications
         public List<Parent> Parents { get; set; } = new();
 
         // ⭐ Šablony dostupné v komunikaci
-        public List<string> Templates { get; set; } = new()
-        {
-            "LessonPlanned",
-            "PaymentConfirmation",
-            "OfferTemplate"
-        };
+        public List<EmailTemplate> Templates { get; set; } = new();
 
         // ⭐ Email studenta
         public string? SelectedStudentEmail =>
@@ -64,6 +59,10 @@ namespace Vyuka.Pages.Communications
         public async Task OnGetAsync()
         {
             await LoadStudentsAsync();
+
+            Templates = await _context.EmailTemplates
+                .OrderBy(t => t.Name)
+                .ToListAsync();
         }
 
         private async Task<LessonPlan?> GetNextLessonAsync(int studentId)
@@ -83,6 +82,10 @@ namespace Vyuka.Pages.Communications
         public async Task<IActionResult> OnPostPreviewAsync()
         {
             await LoadStudentsAsync();
+            Templates = await _context.EmailTemplates
+    .OrderBy(t => t.Name)
+    .ToListAsync();
+
 
             var student = Students.FirstOrDefault(s => s.Id == SelectedStudentId);
             var parent = Parents.FirstOrDefault(p => p.StudentId == SelectedStudentId);
@@ -166,6 +169,10 @@ namespace Vyuka.Pages.Communications
         public async Task<IActionResult> OnPostSendAsync()
         {
             await LoadStudentsAsync();
+            Templates = await _context.EmailTemplates
+    .OrderBy(t => t.Name)
+    .ToListAsync();
+
 
             var student = Students.FirstOrDefault(s => s.Id == SelectedStudentId);
             var parent = Parents.FirstOrDefault(p => p.StudentId == SelectedStudentId);

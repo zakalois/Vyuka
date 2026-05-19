@@ -1,0 +1,32 @@
+﻿@page
+@model IndexModel
+
+<h2>Šablony e‑mailů</h2>
+
+<a class="btn btn-primary mb-3" asp-page="Create">Přidat novou šablonu</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Název</th>
+            <th>Předmět</th>
+            <th>Akce</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in Model.Templates)
+        {
+            <tr>
+                <td>@t.Name</td>
+                <td>@t.Subject</td>
+                <td>
+                    <a class="btn btn-sm btn-warning" asp-page="Edit" asp-route-id="@t.Id">Upravit</a>
+                    <a class="btn btn-sm btn-info" asp-page="Preview" asp-route-id="@t.Id">Náhled</a>
+                    <a class="btn btn-sm btn-danger" asp-page="Delete" asp-route-id="@t.Id">Smazat</a>
+                    <a class="btn btn-sm btn-secondary" asp-page="Duplicate" asp-route-id="@t.Id">Duplikovat</a>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>

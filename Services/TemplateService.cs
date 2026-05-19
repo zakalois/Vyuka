@@ -1,47 +1,55 @@
 ﻿using System.Text;
+using Vyuka.Models;
 
 namespace Vyuka.Services
 {
     public interface ITemplateService
     {
         string RenderTemplate(string templateName, Dictionary<string, string> values);
-
-        // 🔵 Nově přidáno – pohodlné načtení nabídky
-        string RenderOfferTemplate(Dictionary<string, string> values);
     }
 
     public class TemplateService : ITemplateService
     {
         private readonly IWebHostEnvironment _env;
+        private readonly AppDbContext _context;
 
-        public TemplateService(IWebHostEnvironment env)
+        public TemplateService(IWebHostEnvironment env, AppDbContext context)
         {
             _env = env;
+            _context = context;
         }
 
         public string RenderTemplate(string templateName, Dictionary<string, string> values)
         {
-            string fileName = templateName + ".html";
+            // 1️⃣ Pokus o načtení z databáze
+            var dbTemplate = _context.EmailTemplates
+                .FirstOrDefault(t => t.Name == templateName);
 
-            var path = Path.Combine(_env.ContentRootPath, "EmailsTemplates", fileName);
+            string html;
 
-            if (!File.Exists(path))
-                throw new FileNotFoundException($"Template not found: {path}");
+            if (dbTemplate != null)
+            {
+                html = dbTemplate.Body;
+            }
+            else
+            {
+                // 2️⃣ Fallback – načtení HTML souboru
+                string fileName = templateName + ".html";
+                var path = Path.Combine(_env.ContentRootPath, "EmailsTemplates", fileName);
 
-            var html = File.ReadAllText(path, Encoding.UTF8);
+                if (!File.Exists(path))
+                    throw new FileNotFoundException($"Template not found: {path}");
 
+                html = File.ReadAllText(path, Encoding.UTF8);
+            }
+
+            // 3️⃣ Nahrazení placeholderů
             foreach (var kv in values)
             {
                 html = html.Replace($"{{{{{kv.Key}}}}}", kv.Value);
             }
 
             return html;
-        }
-
-        // 🔵 Nová metoda – šablona nabídky
-        public string RenderOfferTemplate(Dictionary<string, string> values)
-        {
-            return RenderTemplate("OfferTemplate", values);
         }
     }
 }

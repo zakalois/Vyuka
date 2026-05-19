@@ -24,6 +24,8 @@ namespace Vyuka.Models
         public DbSet<LessonPlan> LessonPlans { get; set; }
         public DbSet<Teacher> Teachers { get; set; }
         public DbSet<Parent> Parents { get; set; }
+        public DbSet<EmailTemplate> EmailTemplates { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

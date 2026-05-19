@@ -14,7 +14,7 @@ namespace Vyuka.Services
         // ⭐ Nová verze – přijímá Dictionary (nutné pro náhled s QR)
         public string BuildOffer(Dictionary<string, string> values)
         {
-            return _templateService.RenderOfferTemplate(values);
+            return _templateService.RenderTemplate("OfferTemplate", values);
         }
 
         // ⭐ Původní verze – stále funkční, ale už ji nepoužíváme
@@ -31,7 +31,8 @@ namespace Vyuka.Services
                 { "CustomText", customText }
             };
 
-            return _templateService.RenderOfferTemplate(values);
+            return _templateService.RenderTemplate("OfferTemplate", values);
+
         }
     }
 }

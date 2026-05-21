@@ -15,18 +15,14 @@ namespace Vyuka.Pages.Admin.Students
             _context = context;
         }
 
-        // ID studenta z URL
         [BindProperty]
         public int StudentId { get; set; }
 
-        // Jméno studenta pro zobrazení
         public string StudentName { get; set; } = "";
 
-        // Vybraný učitel (int?)
         [BindProperty]
-        public int? SelectedTeacherId { get; set; }
+        public string? SelectedTeacherId { get; set; }
 
-        // Seznam učitelů pro dropdown
         public List<SelectListItem> Teachers { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -40,23 +36,22 @@ namespace Vyuka.Pages.Admin.Students
             if (student == null)
                 return RedirectToPage("Index");
 
-            StudentName = student.FullName;
+            // ⭐ OPRAVA – Student nemá FullName
+            StudentName = $"{student.LastName} {student.FirstName}";
 
-            // načteme učitele
             Teachers = await _context.Teachers
-                .Include(t => t.User)
-                .OrderBy(t => t.User.LastName)
-                .ThenBy(t => t.User.FirstName)
-                .Select(t => new SelectListItem
-                {
-                    Value = t.Id.ToString(),
-                    Text = $"{t.User.LastName} {t.User.FirstName}"
-                })
-                .ToListAsync();
+    .Include(t => t.User)
+    .OrderBy(t => t.User.LastName)
+    .ThenBy(t => t.User.FirstName)
+    .Select(t => new SelectListItem
+    {
+        Value = t.Id.ToString(), // ← TADY
+        Text = $"{t.User.LastName} {t.User.FirstName}"
+    })
+    .ToListAsync();
 
 
-            // předvyplníme aktuálního učitele
-            SelectedTeacherId = student.TeacherId;
+            SelectedTeacherId = student.UserId;
 
             return Page();
         }
@@ -69,12 +64,12 @@ namespace Vyuka.Pages.Admin.Students
             if (student == null)
                 return RedirectToPage("Index");
 
-            // přiřazení učitele
-            student.TeacherId = SelectedTeacherId;
+            student.UserId = SelectedTeacherId;
 
+            _context.Students.Update(student);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage("Index");
+            return RedirectToPage("/Admin/Students/Overview", new { id = StudentId });
         }
     }
 }

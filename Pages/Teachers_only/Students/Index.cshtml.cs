@@ -48,7 +48,7 @@ namespace Vyuka.Pages.Teachers_only.Students
 
             // ⭐ Načteme studenty učitele
             var students = await _context.Students
-                .Where(s => s.TeacherId == teacher.Id)
+                .Where(s => s.UserId == teacher.UserId)
                 .Include(s => s.Subject)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)

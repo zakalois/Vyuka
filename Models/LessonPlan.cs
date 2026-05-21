@@ -8,14 +8,12 @@ public class LessonPlan
     public int StudentId { get; set; }
     public Student? Student { get; set; }
 
-    // ⭐ UČITEL – DOPLNĚNO
-    public string? TeacherId { get; set; }
-    public AppUser? Teacher { get; set; }
+    public int? TeacherId { get; set; }
+    public Teacher? Teacher { get; set; }
 
     public TimeSpan Start { get; set; }
     public TimeSpan End { get; set; }
 
-    [Required(ErrorMessage = "Musíte vybrat předmět.")]
     public int SubjectId { get; set; }
     public Subject Subject { get; set; }
 
@@ -26,8 +24,6 @@ public class LessonPlan
     public bool IsTaught { get; set; }
 
     public string? MeetLink { get; set; }
-
     public string? GoogleEventId { get; set; }
     public bool NotifyOnDelete { get; set; }
 }
-

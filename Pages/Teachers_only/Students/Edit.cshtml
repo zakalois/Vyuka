@@ -55,29 +55,31 @@
         <!-- RODIČ -->
         <h4 class="mt-4">Rodič</h4>
 
-        <div class="col-md-6 mb-3">
+        <!-- SPRÁVNĚ -->
+        <div class="mb-3">
             <label>Jméno rodiče</label>
-            <input asp-for="Parent.Name" class="form-control" />
-            <span asp-validation-for="Parent.Name" class="text-danger"></span>
+            <input asp-for="Student.ParentFirstName" class="form-control" />
+            <span asp-validation-for="Student.ParentFirstName" class="text-danger"></span>
         </div>
 
-        <div class="col-md-6 mb-3">
+        <div class="mb-3">
+            <label>Příjmení rodiče</label>
+            <input asp-for="Student.ParentLastName" class="form-control" />
+            <span asp-validation-for="Student.ParentLastName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
             <label>Email rodiče</label>
-            <input asp-for="Parent.Email" class="form-control" />
-            <span asp-validation-for="Parent.Email" class="text-danger"></span>
+            <input asp-for="Student.ParentEmail" class="form-control" />
+            <span asp-validation-for="Student.ParentEmail" class="text-danger"></span>
         </div>
 
-        <div class="col-md-6 mb-3">
+        <div class="mb-3">
             <label>Telefon rodiče</label>
-            <input asp-for="Parent.Phone" class="form-control" />
-            <span asp-validation-for="Parent.Phone" class="text-danger"></span>
+            <input asp-for="Student.ParentPhone" class="form-control" />
+            <span asp-validation-for="Student.ParentPhone" class="text-danger"></span>
         </div>
 
-        <div class="col-md-12 mb-3">
-            <label>Poznámka rodiče</label>
-            <textarea asp-for="Parent.Note" class="form-control"></textarea>
-            <span asp-validation-for="Parent.Note" class="text-danger"></span>
-        </div>
 
     </div>
 

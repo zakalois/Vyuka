@@ -18,33 +18,27 @@ namespace Vyuka.Pages.Teachers_only.Students
         [BindProperty]
         public Student Student { get; set; }
 
-        [BindProperty]
-        public Parent Parent { get; set; }
-
         public List<Lesson> Lessons { get; set; } = new();
         public List<LessonPlan> Plans { get; set; } = new();
-
         public List<Subject> Subjects { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
+            // Přihlášený učitel
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
+            var teacher = await _context.Teachers
+                .FirstOrDefaultAsync(t => t.UserId == userId);
 
             if (teacher == null)
                 return RedirectToPage("/Index");
 
-            // ⭐ Student bez Parent
+            // ⭐ Student patřící tomuto učiteli
             Student = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacher.Id);
+                .FirstOrDefaultAsync(s => s.Id == id && s.UserId == teacher.UserId);
 
             if (Student == null)
                 return RedirectToPage("/Teachers_only/Students/Index");
 
-            // ⭐ Načíst rodiče správně
-            Parent = await _context.Parents
-                .FirstOrDefaultAsync(p => p.StudentId == Student.Id)
-                ?? new Parent();
 
             // ⭐ Předměty učitele
             Subjects = await _context.Subjects
@@ -52,11 +46,13 @@ namespace Vyuka.Pages.Teachers_only.Students
                 .OrderBy(s => s.Name)
                 .ToListAsync();
 
+            // ⭐ Lekce studenta
             Lessons = await _context.Lessons
                 .Where(l => l.StudentId == id)
                 .OrderByDescending(l => l.Date)
                 .ToListAsync();
 
+            // ⭐ Plány lekcí
             Plans = await _context.LessonPlans
                 .Where(lp => lp.StudentId == id)
                 .OrderBy(lp => lp.Date)
@@ -67,17 +63,20 @@ namespace Vyuka.Pages.Teachers_only.Students
 
         public async Task<IActionResult> OnPostAsync(int id)
         {
+            // Přihlášený učitel
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
+            var teacher = await _context.Teachers
+                .FirstOrDefaultAsync(t => t.UserId == userId);
 
             if (teacher == null)
                 return RedirectToPage("/Index");
-
+            // ⭐ Student patřící tomuto učiteli
             var studentDb = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacher.Id);
+                .FirstOrDefaultAsync(s => s.Id == id && s.UserId == teacher.UserId);
 
             if (studentDb == null)
                 return RedirectToPage("/Teachers_only/Students/Index");
+
 
             // ⭐ Učitel může upravit jen bezpečná pole
             studentDb.Email = Student.Email;
@@ -87,23 +86,11 @@ namespace Vyuka.Pages.Teachers_only.Students
             studentDb.Level = Student.Level;
             studentDb.PreferredTime = Student.PreferredTime;
 
-            // ⭐ Rodič – načíst nebo vytvořit
-            var parentDb = await _context.Parents
-                .FirstOrDefaultAsync(p => p.StudentId == studentDb.Id);
-
-            if (parentDb == null)
-            {
-                parentDb = new Parent
-                {
-                    StudentId = studentDb.Id
-                };
-                _context.Parents.Add(parentDb);
-            }
-
-            parentDb.Name = Parent.Name;
-            parentDb.Email = Parent.Email;
-            parentDb.Phone = Parent.Phone;
-            parentDb.Note = Parent.Note;
+            // ⭐ Rodič – ukládá se přímo do Student
+            studentDb.ParentFirstName = Student.ParentFirstName;
+            studentDb.ParentLastName = Student.ParentLastName;
+            studentDb.ParentEmail = Student.ParentEmail;
+            studentDb.ParentPhone = Student.ParentPhone;
 
             await _context.SaveChangesAsync();
 

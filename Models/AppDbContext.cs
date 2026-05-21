@@ -26,7 +26,6 @@ namespace Vyuka.Models
         public DbSet<Parent> Parents { get; set; }
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
 
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -70,7 +69,7 @@ namespace Vyuka.Models
                 .HasForeignKey(l => l.TeacherId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Lesson → Student (1:N) – OPRAVENO, žádný StudentId1
+            // Lesson → Student (1:N)
             modelBuilder.Entity<Lesson>()
                 .HasOne(l => l.Student)
                 .WithMany(s => s.Lessons)
@@ -88,6 +87,20 @@ namespace Vyuka.Models
                 .HasOne(l => l.SubjectTopic)
                 .WithMany()
                 .HasForeignKey(l => l.SubjectTopicId);
+
+            // ⭐ LessonPlan → Teacher (1:N, TeacherId je int?)
+            modelBuilder.Entity<LessonPlan>()
+                .HasOne(lp => lp.Teacher)
+                .WithMany() // Teacher nemá kolekci LessonPlans, takže bez navigace
+                .HasForeignKey(lp => lp.TeacherId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ⭐ Teacher → AppUser (1:1, UserId je string, FK na AspNetUsers.Id)
+            modelBuilder.Entity<Teacher>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // StudentSubject PK
             modelBuilder.Entity<StudentSubject>()

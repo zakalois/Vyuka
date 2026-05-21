@@ -24,9 +24,9 @@ public class Lesson
     public int? SubjectTopicId { get; set; }
     public SubjectTopic? SubjectTopic { get; set; }
 
-    // NEW: Teacher
-    public int TeacherId { get; set; }
-    public Teacher Teacher { get; set; } = null!;
+    // Teacher (nullable – staré záznamy nemají TeacherId)
+    public int? TeacherId { get; set; }
+    public Teacher? Teacher { get; set; }
 
     // Status
     public bool IsTaught { get; set; }

@@ -35,35 +35,33 @@
     <tbody>
         @foreach (var item in Model.Students)
         {
-            var parent = Model.Parents.FirstOrDefault(p => p.StudentId == item.Id);
+            <tr class="@(item.Student.IsActive ? "" : "row-pink")">
 
-            <tr class="@(item.IsActive ? "" : "row-pink")">
+                <td>@item.Student.LastName</td>
+                <td>@item.Student.FirstName</td>
+                <td>@item.Student.Age</td>
+                <td>@item.Student.Email</td>
+                <td>@item.Student.Phone</td>
 
-                <td>@item.LastName</td>
-                <td>@item.FirstName</td>
-                <td>@item.Age</td>
-                <td>@item.Email</td>
-                <td>@item.Phone</td>
-
-                <!-- ⭐ NOVÝ BLOK PRO RODIČE -->
+                <!-- ⭐ RODIČ -->
                 <td>
-                    @if (parent != null)
+                    @if (item.Parent != null)
                     {
                         <div data-bs-toggle="tooltip" title="Jméno rodiče">
-                            <i class="bi bi-person"></i> @parent.Name
+                            <i class="bi bi-person"></i> @item.Parent.Name
                         </div>
 
-                        @if (!string.IsNullOrEmpty(parent.Phone))
+                        @if (!string.IsNullOrEmpty(item.Parent.Phone))
                         {
                             <div data-bs-toggle="tooltip" title="Telefon rodiče">
-                                <i class="bi bi-telephone"></i> @parent.Phone
+                                <i class="bi bi-telephone"></i> @item.Parent.Phone
                             </div>
                         }
 
-                        @if (!string.IsNullOrEmpty(parent.Email))
+                        @if (!string.IsNullOrEmpty(item.Parent.Email))
                         {
                             <div data-bs-toggle="tooltip" title="Email rodiče">
-                                <i class="bi bi-envelope"></i> @parent.Email
+                                <i class="bi bi-envelope"></i> @item.Parent.Email
                             </div>
                         }
                     }
@@ -73,12 +71,12 @@
                     }
                 </td>
 
-                <!-- UČITEL -->
-                <td class="teacher-cell @(item.TeacherId == null ? "no-teacher" : "has-teacher")">
-                    @if (item.Teacher != null)
+                <!-- ⭐ UČITEL -->
+                <td class="teacher-cell @(item.Student.UserId == null ? "no-teacher" : "has-teacher")">
+                    @if (item.Student.Teacher != null)
                     {
-                        <span title="@item.Teacher.User?.Email">
-                            @item.Teacher.FullName
+                        <span title="@item.Student.Teacher.User?.Email">
+                            @item.Student.Teacher.FullName
                         </span>
                     }
                     else
@@ -89,23 +87,23 @@
                     }
                 </td>
 
-                <!-- AKCE -->
+                <!-- ⭐ AKCE -->
                 <td class="text-center" style="white-space:nowrap;">
 
-                    <a asp-page="Edit" asp-route-id="@item.Id" class="text-primary me-2" title="Upravit">
+                    <a asp-page="Edit" asp-route-id="@item.Student.Id" class="text-primary me-2" title="Upravit">
                         <i class="bi bi-pencil-square"></i>
                     </a>
 
-                    <a asp-page="Details" asp-route-id="@item.Id" class="text-info me-2" title="Detail">
+                    <a asp-page="Details" asp-route-id="@item.Student.Id" class="text-info me-2" title="Detail">
                         <i class="bi bi-search"></i>
                     </a>
 
-                    <a asp-page="Delete" asp-route-id="@item.Id" class="text-danger me-3" title="Smazat">
+                    <a asp-page="Delete" asp-route-id="@item.Student.Id" class="text-danger me-3" title="Smazat">
                         <i class="bi bi-trash"></i>
                     </a>
 
                     <a asp-page="/Admin/Students/AssignTeacher"
-                       asp-route-id="@item.Id"
+                       asp-route-id="@item.Student.Id"
                        class="btn btn-outline-dark btn-sm"
                        title="Přiřadit učitele">
                         <i class="bi bi-person-fill-gear"></i>

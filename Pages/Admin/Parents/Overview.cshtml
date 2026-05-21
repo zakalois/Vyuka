@@ -1,0 +1,33 @@
+﻿@page
+@model Vyuka.Pages.Admin.Parents.OverviewModel
+
+<h1>Přehled rodičů</h1>
+
+<form method="get" class="mb-3 d-flex gap-2">
+    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Hledat studenta...">
+    <button class="btn btn-primary">Hledat</button>
+</form>
+
+<!-- DROPDOWN RODIČŮ -->
+<form method="get" class="mb-3">
+    <select name="id" class="form-select" onchange="this.form.submit()">
+        <option value="">Vyberte rodiče...</option>
+
+        @foreach (var p in Model.AllParents)
+        {
+            <option value="@p.Id" selected="@(Model.SelectedParent?.Id == p.Id)">
+                @p.ParentFirstName @p.ParentLastName
+            </option>
+        }
+    </select>
+</form>
+
+<!-- KARTA RODIČE -->
+@if (Model.SelectedParent != null)
+{
+    <partial name="_ParentCard" model="Model.SelectedParent" />
+}
+else
+{
+    <p class="text-muted">Vyberte rodiče z nabídky výše.</p>
+}

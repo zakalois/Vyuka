@@ -1,0 +1,28 @@
+﻿@page
+@model Vyuka.Pages.Admin.Students.OverviewModel
+
+<h1>Přehled studentů</h1>
+
+<!-- DROPDOWN SE STUDENTY -->
+<form method="get" class="mb-3">
+    <select name="id" class="form-select" onchange="this.form.submit()">
+        <option value="">Vyberte studenta...</option>
+
+        @foreach (var s in Model.AllStudents)
+        {
+            <option value="@s.Id" selected="@(Model.SelectedStudent?.Id == s.Id)">
+                @s.FirstName @s.LastName
+            </option>
+        }
+    </select>
+</form>
+
+<!-- JEDINÁ KARTA STUDENTA -->
+@if (Model.SelectedStudent != null)
+{
+    <partial name="_StudentCard" model="Model.SelectedStudent" />
+}
+else
+{
+    <p class="text-muted">Vyberte studenta z nabídky výše.</p>
+}

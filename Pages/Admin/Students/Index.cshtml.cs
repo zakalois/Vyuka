@@ -13,51 +13,52 @@ namespace Vyuka.Pages.Admin.Students
             _context = context;
         }
 
-        public IList<Student> Students { get; set; } = new List<Student>();
-        public IList<Parent> Parents { get; set; } = new List<Parent>();
+        public IList<StudentWithParent> Students { get; set; } = new List<StudentWithParent>();
 
         public async Task OnGetAsync()
         {
-            // Načteme studenty + učitele + AppUser (kvůli Email)
-            Students = await _context.Students
+            var students = await _context.Students
                 .Include(s => s.Teacher)
                     .ThenInclude(t => t.User)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            // Načteme rodiče (FK: Parent.StudentId)
-            Parents = await _context.Parents.ToListAsync();
-
-            // Načteme všechny odučené lekce
-            var lessons = await _context.Lessons
-                .Where(l => l.IsTaught)
-                .ToListAsync();
-
-            // Načteme všechny payments
+            var parents = await _context.Parents.ToListAsync();
+            var lessons = await _context.Lessons.Where(l => l.IsTaught).ToListAsync();
             var payments = await _context.Payments.ToListAsync();
 
-            // Výpočty pro každého studenta
-            foreach (var s in Students)
+            foreach (var s in students)
             {
-                // ODUČENÉ HODINY
+                var parent = parents.FirstOrDefault(p => p.StudentId == s.Id);
+
+                // Odučené hodiny
                 double taught = lessons
                     .Where(l => l.StudentId == s.Id)
                     .Sum(l => (l.End - l.Start).TotalHours);
 
-                s.TaughtHours = Math.Round(taught, 1);
-
-                // PŘEDPLACENÉ HODINY
+                // Předplacené hodiny
                 double paid = (double)payments
     .Where(p => p.StudentId == s.Id)
     .Sum(p => p.HoursPurchased);
 
 
-                s.PaidHours = Math.Round(paid, 1);
+                Students.Add(new StudentWithParent
+                {
+                    Student = s,
+                    Parent = parent
+                });
 
-                // ZBÝVAJÍCÍ HODINY
+                s.TaughtHours = Math.Round(taught, 1);
+                s.PaidHours = Math.Round(paid, 1);
                 s.RemainingHours = Math.Round(s.PaidHours - s.TaughtHours, 1);
             }
         }
+    }
+
+    public class StudentWithParent
+    {
+        public Student Student { get; set; }
+        public Parent Parent { get; set; }
     }
 }

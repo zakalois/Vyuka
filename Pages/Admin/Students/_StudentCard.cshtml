@@ -1,0 +1,89 @@
+﻿@model Vyuka.Models.Student
+
+<div class="card shadow-sm mb-4 @(Model.RemainingHours <= 2 ? "border-danger" : "")">
+
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <strong>@Model.FirstName @Model.LastName</strong>
+
+        <div>
+            @if (Model.IsActive)
+            {
+                <span class="badge bg-success">Aktivní</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Neaktivní</span>
+            }
+
+            @if (Model.RemainingHours <= 2)
+            {
+                <span class="badge bg-danger ms-2">Málo hodin</span>
+            }
+        </div>
+    </div>
+
+    <div class="card-body">
+
+        <!-- STUDENT -->
+        <h5 class="text-primary">Student</h5>
+        <div><strong>Věk:</strong> @Model.Age</div>
+        <div><strong>Email:</strong> @Model.Email</div>
+        <div><strong>Telefon:</strong> @Model.Phone</div>
+        <div><strong>Škola:</strong> @Model.School</div>
+        <div><strong>Adresa:</strong> @Model.Address</div>
+        <div><strong>Poznámka:</strong> @Model.Note</div>
+
+        <hr />
+
+        <!-- RODIČ -->
+        <h5 class="text-success">Rodič</h5>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ParentFirstName))
+        {
+            <div>
+                <a asp-page="/Admin/Parents/Overview" asp-route-id="@Model.Id">
+                    @Model.ParentFirstName @Model.ParentLastName
+                </a>
+            </div>
+            <div><strong>Email:</strong> @Model.ParentEmail</div>
+            <div><strong>Telefon:</strong> @Model.ParentPhone</div>
+
+            <a href="mailto:@Model.ParentEmail" class="btn btn-sm btn-outline-primary mt-2">
+                ✉️ Poslat email rodiči
+            </a>
+        }
+        else
+        {
+            <div class="text-muted">Neuveden</div>
+        }
+
+        <hr />
+
+        <!-- HODINY -->
+        <h5 class="text-warning">Hodiny</h5>
+        <div><strong>Odučeno:</strong> @Model.TaughtHours h</div>
+        <div><strong>Předplaceno:</strong> @Model.PaidHours h</div>
+        <div><strong>Zbývá:</strong> @Model.RemainingHours h</div>
+
+        <hr />
+
+        <!-- UČITEL -->
+        <h5 class="text-info">Učitel</h5>
+        @if (Model.Teacher != null)
+        {
+            <div>@Model.Teacher.FullName</div>
+        }
+        else
+        {
+            <div class="text-danger">Nepřiřazen</div>
+        }
+
+    </div>
+
+    <div class="card-footer text-end">
+        <a asp-page="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary me-2">Upravit</a>
+        <a asp-page="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-secondary me-2">Detail</a>
+        <a asp-page="Delete" asp-route-id="@Model.Id" class="btn btn-sm btn-danger">Smazat</a>
+    </div>
+
+</div>

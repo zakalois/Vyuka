@@ -48,8 +48,33 @@
     <nav class="admin-menu d-flex gap-3 px-4 py-2">
 
         <a class="nav-link" href="/Admin/Dashboard">Dashboard</a>
-        <a class="nav-link" href="/Admin/Students">Studenti</a>
-        <a class="nav-link" asp-page="/Admin/Students/Create">Přidat studenta</a>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="studentsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-people-fill me-1"></i> Studenti
+            </a>
+
+            <ul class="dropdown-menu" aria-labelledby="studentsDropdown">
+
+                <li>
+                    <a class="dropdown-item" asp-page="/Admin/Students/Overview">
+                        <i class="bi bi-table me-2"></i> Přehled studentů
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item" asp-page="/Admin/Students/Index">
+                        <i class="bi bi-person-lines-fill me-2"></i> Přiřazení učitelů
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item" asp-page="/Admin/Students/Create">
+                        <i class="bi bi-person-plus-fill me-2"></i> Přidat studenta
+                    </a>
+                </li>
+
+            </ul>
+        </li>
 
         <a class="nav-link" asp-page="/Admin/Teachers/Teachers">Učitelé</a>
         <a class="nav-link" href="/Admin/Hours">Odučené hodiny</a>

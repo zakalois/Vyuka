@@ -1,0 +1,56 @@
+﻿@model Vyuka.Models.Student
+
+<div class="card shadow-sm mb-4">
+
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <strong>@Model.ParentFirstName @Model.ParentLastName</strong>
+
+        <span class="badge bg-info">Rodič</span>
+    </div>
+
+    <div class="card-body">
+
+        <!-- RODIČ -->
+        <h5 class="text-success">Rodič</h5>
+        <div><strong>Email:</strong> @Model.ParentEmail</div>
+        <div><strong>Telefon:</strong> @Model.ParentPhone</div>
+
+        <a href="mailto:@Model.ParentEmail" class="btn btn-sm btn-outline-primary mt-2">
+            ✉️ Poslat email rodiči
+        </a>
+
+        <hr />
+
+        <!-- STUDENT -->
+        <h5 class="text-primary">Student</h5>
+        <div>
+            <a asp-page="/Admin/Students/Overview" asp-route-id="@Model.Id">
+                @Model.FirstName @Model.LastName
+            </a>
+        </div>
+        <div><strong>Věk:</strong> @Model.Age</div>
+        <div><strong>Email:</strong> @Model.Email</div>
+        <div><strong>Telefon:</strong> @Model.Phone</div>
+
+        <hr />
+
+        <!-- UČITEL -->
+        <h5 class="text-info">Učitel</h5>
+        @if (Model.Teacher != null)
+        {
+            <div>@Model.Teacher.FullName</div>
+        }
+        else
+        {
+            <div class="text-danger">Nepřiřazen</div>
+        }
+
+    </div>
+
+    <div class="card-footer text-end">
+        <a asp-page="/Admin/Students/Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            Upravit studenta
+        </a>
+    </div>
+
+</div>

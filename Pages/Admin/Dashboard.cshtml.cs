@@ -24,16 +24,17 @@ namespace Vyuka.Pages.Admin
             IsProduction = true;
 #endif
 
-            // ⭐ Načítáme bezpečně – včetně navigačních vlastností
+            // Načteme jen to, co Dashboard opravdu potřebuje
             var lessons = _context.LessonPlans
-                .Include(x => x.Student)
-                .Include(x => x.Subject)
-                .Include(x => x.SubjectTopic)
-                .Include(x => x.Teacher)   // ⭐ nově přidané
+                .Select(x => new
+                {
+                    x.Date,
+                    x.Start
+                })
                 .Where(x => x.Date >= DateTime.Today)
+                .AsNoTracking()
                 .ToList();
 
-            // ⭐ Výpočet nejbližší lekce – bezpečný
             NextLessonDate = lessons
                 .Select(x => new DateTime(
                     x.Date.Year,

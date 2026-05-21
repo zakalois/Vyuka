@@ -46,28 +46,27 @@ namespace Vyuka.Pages.Teachers_only.Students
             if (teacher == null)
                 return RedirectToPage("/Index");
 
-            // ⭐ Načteme studenty učitele
+            // ⭐ Načteme studenty podle TeacherId
             var students = await _context.Students
-                .Where(s => s.UserId == teacher.UserId)
+                .Where(s => s.TeacherId == teacher.Id)
                 .Include(s => s.Subject)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            // ⭐ Načteme všechny rodiče jedním dotazem
-            var parents = await _context.Parents.ToListAsync();
-
             foreach (var s in students)
             {
-                // ⭐ Najdeme rodiče pro daného studenta
-                var parent = parents.FirstOrDefault(p => p.StudentId == s.Id);
+                // ⭐ Rodič je uložený přímo v tabulce Students
+                var parentName = $"{s.ParentLastName} {s.ParentFirstName}".Trim();
+                var parentPhone = s.ParentPhone;
+                var parentEmail = s.ParentEmail;
 
                 // ⭐ Zaplacené hodiny
                 double paidHours = await _context.Payments
                     .Where(p => p.StudentId == s.Id)
                     .SumAsync(p => (double)p.HoursPurchased);
 
-                // ⭐ Odučené hodiny – fallback pro staré lekce s 00:00–00:00
+                // ⭐ Odučené hodiny
                 var taughtLessons = await _context.Lessons
                     .Where(l => l.StudentId == s.Id)
                     .ToListAsync();
@@ -75,7 +74,7 @@ namespace Vyuka.Pages.Teachers_only.Students
                 double taughtHours = taughtLessons.Sum(l =>
                 {
                     var duration = (l.End - l.Start).TotalHours;
-                    return duration > 0 ? duration : 1.0; // ⭐ staré lekce bereme jako 1h
+                    return duration > 0 ? duration : 1.0; // fallback pro staré lekce
                 });
 
                 double remaining = paidHours - taughtHours;
@@ -103,9 +102,9 @@ namespace Vyuka.Pages.Teachers_only.Students
                     TaughtHours = Math.Round(taughtHours, 1),
                     RemainingHours = Math.Round(remaining, 1),
 
-                    ParentName = parent?.Name,
-                    ParentPhone = parent?.Phone,
-                    ParentEmail = parent?.Email,
+                    ParentName = parentName,
+                    ParentPhone = parentPhone,
+                    ParentEmail = parentEmail,
 
                     LastLesson = lastLesson != null
                         ? $"{lastLesson.Date:dd.MM.yyyy} {lastLesson.Start:hh\\:mm}"
@@ -118,6 +117,11 @@ namespace Vyuka.Pages.Teachers_only.Students
                     NextLessonDate = nextLesson?.Date
                 });
             }
+
+            // ⭐ Seřadíme podle nejbližší lekce
+            Students = Students
+                .OrderBy(s => s.NextLessonDate ?? DateTime.MaxValue)
+                .ToList();
 
             return Page();
         }

@@ -1,28 +1,241 @@
 ﻿@page
 @model Vyuka.Pages.Admin.Students.OverviewModel
 
-<h1>Přehled studentů</h1>
+<h2 class="mb-4">Přehled studentů</h2>
 
-<!-- DROPDOWN SE STUDENTY -->
-<form method="get" class="mb-3">
-    <select name="id" class="form-select" onchange="this.form.submit()">
-        <option value="">Vyberte studenta...</option>
+<style>
+    .parent-cell {
+        min-width: 240px;
+    }
 
+    .table td {
+        vertical-align: middle;
+    }
+
+    .table thead th i {
+        margin-right: 6px;
+    }
+
+    /* Moderní akční tlačítka */
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.15s;
+    }
+
+        .action-btn:hover {
+            transform: scale(1.08);
+            opacity: 0.9;
+        }
+
+    /* Karta rodiče */
+    .parent-card {
+        line-height: 1.35;
+        padding: 4px 0;
+    }
+
+    /* Jemné barvy ikon */
+    .icon-blue {
+        color: #0d6efd;
+    }
+
+    .icon-green {
+        color: #198754;
+    }
+
+    .icon-red {
+        color: #dc3545;
+    }
+
+    .icon-orange {
+        color: #fd7e14;
+    }
+
+    .icon-gray {
+        color: #6c757d;
+    }
+
+    .icon-blue {
+        color: #0d6efd;
+    }
+
+    .icon-green {
+        color: #198754;
+    }
+
+    .icon-red {
+        color: #dc3545;
+    }
+
+    .icon-orange {
+        color: #fd7e14;
+    }
+
+    .icon-gray {
+        color: #6c757d;
+    }
+
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.15s;
+    }
+
+        .action-btn:hover {
+            transform: scale(1.08);
+            opacity: 0.9;
+        }
+    /* Jemné střídání řádků */
+    .table tbody tr:nth-child(odd) {
+        background-color: #fafbff;
+    }
+
+    .table tbody tr:nth-child(even) {
+        background-color: #ffffff;
+    }
+
+    /* Hover efekt */
+    .table tbody tr:hover {
+        background-color: #eef3ff;
+    }
+
+</style>
+
+<select class="form-select w-auto mb-3" onchange="location = this.value;">
+    <optgroup label="Filtr">
+        <option value="/Admin/Students/Overview" selected="@(Model.Filter == null)">Všichni studenti</option>
+        <option value="/Admin/Students/Overview?filter=active" selected="@(Model.Filter == "active")">Aktivní</option>
+        <option value="/Admin/Students/Overview?filter=inactive" selected="@(Model.Filter == "inactive")">Neaktivní</option>
+    </optgroup>
+
+    <optgroup label="Vybrat studenta">
         @foreach (var s in Model.AllStudents)
         {
-            <option value="@s.Id" selected="@(Model.SelectedStudent?.Id == s.Id)">
-                @s.FirstName @s.LastName
-            </option>
+            <option value="/Admin/Students/Edit/@s.Id">@s.LastName @s.FirstName</option>
         }
-    </select>
-</form>
+    </optgroup>
+</select>
 
-<!-- JEDINÁ KARTA STUDENTA -->
-@if (Model.SelectedStudent != null)
-{
-    <partial name="_StudentCard" model="Model.SelectedStudent" />
-}
-else
-{
-    <p class="text-muted">Vyberte studenta z nabídky výše.</p>
-}
+<table class="table table-hover align-middle">
+    <thead style="background-color:#f0f4ff; border-bottom:2px solid #0d6efd;">
+        <tr>
+            <th><i class="bi bi-person icon-blue"></i> Student</th>
+            <th><i class="bi bi-journal-bookmark icon-orange"></i> Předmět</th>
+            <th><i class="bi bi-people icon-red"></i> Rodič</th>
+            <th><i class="bi bi-check2-circle icon-green"></i> Stav</th>
+            <th class="text-center"><i class="bi bi-gear icon-gray"></i></th>
+        </tr>
+    </thead>
+
+
+
+    <tbody>
+        @foreach (var s in Model.Students)
+        {
+            <tr>
+
+                <!-- STUDENT -->
+                <td>
+                    <div class="fw-bold">
+                        <i class="bi bi-person-circle icon-blue"></i>
+                        @s.LastName @s.FirstName
+                    </div>
+                </td>
+
+                <!-- PŘEDMĚT -->
+                <td>
+                    <i class="bi bi-journal-text icon-orange"></i>
+                    @s.Subject?.Name
+                </td>
+
+                <!-- RODIČ -->
+                <td class="parent-cell">
+                    @if (!string.IsNullOrWhiteSpace(s.ParentLastName))
+                    {
+                        <div class="parent-card">
+
+                            <div class="fw-bold">
+                                <i class="bi bi-person-hearts icon-red"></i>
+                                @s.ParentLastName @s.ParentFirstName
+                            </div>
+
+                            <div class="text-muted small">
+                                <i class="bi bi-envelope icon-blue"></i>
+                                <a href="mailto:@s.ParentEmail">@s.ParentEmail</a>
+                            </div>
+
+                            <div class="text-muted small">
+                                <i class="bi bi-telephone icon-green"></i>
+                                <a href="tel:@s.ParentPhone">@s.ParentPhone</a>
+                            </div>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">
+                            <i class="bi bi-dash-circle icon-gray"></i> Bez rodiče
+                        </span>
+                    }
+                </td>
+
+                <!-- STAV -->
+                <td class="text-center">
+                    @if (s.IsActive)
+                    {
+                        <span class="fw-bold" style="color:#198754;">
+                            <i class="bi bi-check-circle-fill"></i> Aktivní
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="fw-bold" style="color:#dc3545;">
+                            <i class="bi bi-x-circle-fill"></i> Neaktivní
+                        </span>
+                    }
+                </td>
+
+
+                <!-- AKCE -->
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+
+                        <!-- Upravit -->
+                        <a asp-page="/Admin/Students/Edit" asp-route-id="@s.Id"
+                           class="btn btn-outline-primary action-btn">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+
+                        <!-- Aktivovat / deaktivovat -->
+                        @if (s.IsActive)
+                        {
+                            <a asp-page="/Admin/Students/ToggleActive" asp-route-id="@s.Id"
+                               class="btn btn-outline-danger action-btn">
+                                <i class="bi bi-person-dash"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-page="/Admin/Students/ToggleActive" asp-route-id="@s.Id"
+                               class="btn btn-outline-success action-btn">
+                                <i class="bi bi-person-check"></i>
+                            </a>
+                        }
+
+                    </div>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>

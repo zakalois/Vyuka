@@ -52,7 +52,7 @@ namespace Vyuka.Models
         public string? Note { get; set; }
 
         public int SubjectId { get; set; }
-        public Subject Subject { get; set; }
+        public Subject? Subject { get; set; }
 
         public List<Lesson> Lessons { get; set; } = new();
         public List<LessonPlan> LessonPlans { get; set; } = new();

@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 using Vyuka.Services;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Vyuka.Pages.Communications
 {
@@ -26,18 +26,13 @@ namespace Vyuka.Pages.Communications
         }
 
         public List<Student> Students { get; set; } = new();
-        public List<Parent> Parents { get; set; } = new();
-
-        // ⭐ Šablony dostupné v komunikaci
         public List<EmailTemplate> Templates { get; set; } = new();
 
-        // ⭐ Email studenta
         public string? SelectedStudentEmail =>
             Students.FirstOrDefault(s => s.Id == SelectedStudentId)?.Email;
 
-        // ⭐ Email rodiče (opraveno)
         public string? SelectedParentEmail =>
-            Parents.FirstOrDefault(p => p.StudentId == SelectedStudentId)?.Email;
+            Students.FirstOrDefault(s => s.Id == SelectedStudentId)?.ParentEmail;
 
         public string PreviewHtml { get; set; } = "";
 
@@ -52,8 +47,6 @@ namespace Vyuka.Pages.Communications
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
-
-            Parents = await _context.Parents.ToListAsync();
         }
 
         public async Task OnGetAsync()
@@ -76,19 +69,14 @@ namespace Vyuka.Pages.Communications
                 .FirstOrDefaultAsync();
         }
 
-        // ---------------------------------------------------------
-        // ⭐ PREVIEW
-        // ---------------------------------------------------------
         public async Task<IActionResult> OnPostPreviewAsync()
         {
             await LoadStudentsAsync();
             Templates = await _context.EmailTemplates
-    .OrderBy(t => t.Name)
-    .ToListAsync();
-
+                .OrderBy(t => t.Name)
+                .ToListAsync();
 
             var student = Students.FirstOrDefault(s => s.Id == SelectedStudentId);
-            var parent = Parents.FirstOrDefault(p => p.StudentId == SelectedStudentId);
 
             if (student == null)
             {
@@ -100,82 +88,28 @@ namespace Vyuka.Pages.Communications
 
             switch (SelectedTemplate)
             {
-                case "LessonPlanned":
-                    {
-                        var plan = await GetNextLessonAsync(student.Id);
-                        if (plan == null)
-                        {
-                            TempData["Message"] = "Tento student nemá žádnou naplánovanou lekci.";
-                            return Page();
-                        }
-
-                        model = new()
-                        {
-                            { "StudentName", $"{student.FirstName} {student.LastName}" },
-                            { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
-                            { "LessonDate", plan.Date.ToString("dd.MM.yyyy") },
-                            { "LessonTime", plan.Start.ToString(@"hh\\:mm") },
-                            { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
-                            { "TeacherName", "Alois Učitel" }
-                        };
-                        break;
-                    }
-
-                case "PaymentConfirmation":
-                    {
-                        var payment = await _context.Payments
-                            .Where(p => p.StudentId == student.Id)
-                            .OrderByDescending(p => p.Date)
-                            .FirstOrDefaultAsync();
-
-                        if (payment == null)
-                        {
-                            TempData["Message"] = "Tento student nemá žádnou platbu.";
-                            return Page();
-                        }
-
-                        model = new()
-                        {
-                            { "StudentName", $"{student.FirstName} {student.LastName}" },
-                            { "Amount", payment.Amount.ToString("0.##") },
-                            { "PaymentDate", payment.Date.ToString("dd.MM.yyyy") },
-                            { "Method", payment.Method ?? "neuvedeno" },
-                            { "HoursPurchased", payment.HoursPurchased.ToString("0.##") },
-                            { "PricePerHour", payment.PricePerHour?.ToString("0.##") ?? "—" },
-                            { "NoteHtml", string.IsNullOrWhiteSpace(payment.Note) ? "" : $"<p><strong>Poznámka:</strong> {payment.Note}</p>" }
-                        };
-                        break;
-                    }
-
                 case "OfferTemplate":
+                    model = new()
                     {
-                        model = new()
-                        {
-                            { "ParentName", parent?.Name ?? "" },
-                            { "StudentName", $"{student.FirstName} {student.LastName}" },
-                            { "CustomText", "" }
-                        };
-                        break;
-                    }
+                        { "ParentName", $"{student.ParentFirstName} {student.ParentLastName}" },
+                        { "StudentName", $"{student.FirstName} {student.LastName}" },
+                        { "CustomText", "" }
+                    };
+                    break;
             }
 
             PreviewHtml = _templateService.RenderTemplate(SelectedTemplate, model);
             return Page();
         }
 
-        // ---------------------------------------------------------
-        // ⭐ SEND
-        // ---------------------------------------------------------
         public async Task<IActionResult> OnPostSendAsync()
         {
             await LoadStudentsAsync();
             Templates = await _context.EmailTemplates
-    .OrderBy(t => t.Name)
-    .ToListAsync();
-
+                .OrderBy(t => t.Name)
+                .ToListAsync();
 
             var student = Students.FirstOrDefault(s => s.Id == SelectedStudentId);
-            var parent = Parents.FirstOrDefault(p => p.StudentId == SelectedStudentId);
 
             if (student == null)
             {
@@ -183,7 +117,6 @@ namespace Vyuka.Pages.Communications
                 return Page();
             }
 
-            // ⭐ Výběr adresátů
             List<string> recipients = new();
 
             if (RecipientType == "student" || RecipientType == "both")
@@ -191,8 +124,8 @@ namespace Vyuka.Pages.Communications
                     recipients.Add(student.Email);
 
             if (RecipientType == "parent" || RecipientType == "both")
-                if (!string.IsNullOrWhiteSpace(parent?.Email))
-                    recipients.Add(parent.Email);
+                if (!string.IsNullOrWhiteSpace(student.ParentEmail))
+                    recipients.Add(student.ParentEmail);
 
             if (recipients.Count == 0)
             {
@@ -206,76 +139,22 @@ namespace Vyuka.Pages.Communications
 
             switch (SelectedTemplate)
             {
-                case "LessonPlanned":
-                    {
-                        var plan = await GetNextLessonAsync(student.Id);
-                        if (plan == null)
-                        {
-                            TempData["Message"] = "Tento student nemá žádnou naplánovanou lekci.";
-                            return Page();
-                        }
-
-                        model = new()
-                        {
-                            { "StudentName", $"{student.FirstName} {student.LastName}" },
-                            { "SubjectName", plan.Subject?.Name ?? "Neuvedeno" },
-                            { "LessonDate", plan.Date.ToString("dd.MM.yyyy") },
-                            { "LessonTime", plan.Start.ToString(@"hh\\:mm") },
-                            { "LessonTopic", plan.SubjectTopic?.Name ?? "" },
-                            { "TeacherName", "Alois Učitel" }
-                        };
-
-                        subject = "Naplánovaná lekce";
-                        break;
-                    }
-
-                case "PaymentConfirmation":
-                    {
-                        var payment = await _context.Payments
-                            .Where(p => p.StudentId == student.Id)
-                            .OrderByDescending(p => p.Date)
-                            .FirstOrDefaultAsync();
-
-                        if (payment == null)
-                        {
-                            TempData["Message"] = "Tento student nemá žádnou platbu.";
-                            return Page();
-                        }
-
-                        model = new()
-                        {
-                            { "StudentName", $"{student.FirstName} {student.LastName}" },
-                            { "Amount", payment.Amount.ToString("0.##") },
-                            { "PaymentDate", payment.Date.ToString("dd.MM.yyyy") },
-                            { "Method", payment.Method ?? "neuvedeno" },
-                            { "HoursPurchased", payment.HoursPurchased.ToString("0.##") },
-                            { "PricePerHour", payment.PricePerHour?.ToString("0.##") ?? "—" },
-                            { "NoteHtml", string.IsNullOrWhiteSpace(payment.Note) ? "" : $"<p><strong>Poznámka:</strong> {payment.Note}</p>" }
-                        };
-
-                        subject = "Potvrzení platby";
-                        break;
-                    }
-
                 case "OfferTemplate":
+                    model = new()
                     {
-                        model = new()
-                        {
-                            { "ParentName", parent?.Name ?? "" },
-                            { "StudentName", $"{student.FirstName} {student.LastName}" },
-                            { "CustomText", "" }
-                        };
+                        { "ParentName", $"{student.ParentFirstName} {student.ParentLastName}" },
+                        { "StudentName", $"{student.FirstName} {student.LastName}" },
+                        { "CustomText", "" }
+                    };
 
-                        subject = "Nabídka online výuky";
+                    subject = "Nabídka online výuky";
 
-                        attachments = new()
-                        {
-                            new EmailAttachment("qr1", Path.Combine(_env.WebRootPath, "images/QR/1_hod_400.jpg")),
-                            new EmailAttachment("qr2", Path.Combine(_env.WebRootPath, "images/QR/10_hod_3500.jpg"))
-                        };
-
-                        break;
-                    }
+                    attachments = new()
+                    {
+                        new EmailAttachment("qr1", Path.Combine(_env.WebRootPath, "images/QR/1_hod_400.jpg")),
+                        new EmailAttachment("qr2", Path.Combine(_env.WebRootPath, "images/QR/10_hod_3500.jpg"))
+                    };
+                    break;
             }
 
             string html = _templateService.RenderTemplate(SelectedTemplate, model);

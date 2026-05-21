@@ -4,12 +4,12 @@
 <h1>Upravit studenta</h1>
 
 <form method="post">
+    <input type="hidden" asp-for="Student.Id" />
 
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
     <div class="row">
 
-        <!-- STUDENT -->
         <div class="col-md-6 mb-3">
             <label>Jméno</label>
             <input asp-for="Student.FirstName" class="form-control" />
@@ -52,7 +52,12 @@
             <span asp-validation-for="Student.Address" class="text-danger"></span>
         </div>
 
-        <!-- RODIČ -->
+        <div class="col-md-6 mb-3">
+            <label>Předmět</label>
+            <select asp-for="Student.SubjectId" asp-items="Model.Subjects" class="form-select"></select>
+            <span asp-validation-for="Student.SubjectId" class="text-danger"></span>
+        </div>
+
         <h4 class="mt-4">Rodič</h4>
 
         <div class="col-md-6 mb-3">
@@ -87,7 +92,12 @@
 
     </div>
 
-    <button type="submit" class="btn btn-primary">Uložit změny</button>
-    <a asp-page="/Admin/Students/Overview" asp-route-id="@Model.Student.Id" class="btn btn-secondary">Zpět</a>
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-save"></i> Uložit změny
+    </button>
+
+    <a asp-page="/Admin/Students/Overview" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Zpět
+    </a>
 
 </form>

@@ -24,14 +24,12 @@ namespace Vyuka.Pages.Admin.Students
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            var parents = await _context.Parents.ToListAsync();
             var lessons = await _context.Lessons.Where(l => l.IsTaught).ToListAsync();
             var payments = await _context.Payments.ToListAsync();
 
             foreach (var s in students)
             {
-                var parent = parents.FirstOrDefault(p => p.StudentId == s.Id);
-
+             
                 // Odučené hodiny
                 double taught = lessons
                     .Where(l => l.StudentId == s.Id)
@@ -46,7 +44,7 @@ namespace Vyuka.Pages.Admin.Students
                 Students.Add(new StudentWithParent
                 {
                     Student = s,
-                    Parent = parent
+             
                 });
 
                 s.TaughtHours = Math.Round(taught, 1);

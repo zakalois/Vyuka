@@ -62,16 +62,22 @@
                 <td>
                     @if (!string.IsNullOrEmpty(item.ParentName))
                     {
-                        <div data-bs-toggle="tooltip" title="Jméno rodiče">
+                        <a asp-page="/Teachers_only/Parents/Detail"
+                           asp-route-studentId="@item.Id"
+                           class="text-decoration-none"
+                           data-bs-toggle="tooltip"
+                           title="Karta rodiče">
                             <i class="bi bi-person"></i> @item.ParentName
-                        </div>
+                        </a>
                     }
+
                     @if (!string.IsNullOrEmpty(item.ParentPhone))
                     {
                         <div data-bs-toggle="tooltip" title="Telefon rodiče">
                             <i class="bi bi-telephone"></i> @item.ParentPhone
                         </div>
                     }
+
                     @if (!string.IsNullOrEmpty(item.ParentEmail))
                     {
                         <div data-bs-toggle="tooltip" title="Email rodiče">
@@ -79,6 +85,7 @@
                         </div>
                     }
                 </td>
+
 
                 <!-- TLAČÍTKO UPRAVIT -->
                 <td>

@@ -1,0 +1,28 @@
+﻿@page
+@model Vyuka.Pages.Teachers_only.Parents.DetailModel
+
+<h2 class="mb-4">Karta rodiče</h2>
+
+@if (string.IsNullOrWhiteSpace(Model.ParentName))
+{
+    <div class="alert alert-warning">Rodič není vyplněn.</div>
+}
+else
+{
+    <div class="card shadow-sm p-4" style="max-width: 500px;">
+        <h4>@Model.ParentName</h4>
+
+        <p><strong>Telefon:</strong> @Model.ParentPhone</p>
+        <p><strong>Email:</strong> @Model.ParentEmail</p>
+
+        <hr />
+
+        <h5>Student</h5>
+        <p>@Model.Student.LastName @Model.Student.FirstName</p>
+        <p><strong>Předmět:</strong> @Model.Student.Subject?.Name</p>
+    </div>
+}
+
+<a asp-page="/Teachers_only/Students/Index" class="btn btn-secondary mt-3">
+    Zpět na studenty
+</a>

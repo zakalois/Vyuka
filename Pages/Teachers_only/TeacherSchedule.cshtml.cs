@@ -81,8 +81,7 @@ namespace Vyuka.Pages.Teachers_only
             var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
 
             Students = await _context.Students
-                .Where(s => s.UserId == teacher.UserId)
-
+                .Where(s => s.TeacherId == teacher.Id)
                 .OrderBy(s => s.LastName)
                 .ToListAsync();
 
@@ -103,14 +102,13 @@ namespace Vyuka.Pages.Teachers_only
             EndOfWeek = StartOfWeek.AddDays(6);
 
             var plans = await _context.LessonPlans
-      .Include(lp => lp.Student)
-      .Include(lp => lp.Subject)
-      .Where(lp =>
-          lp.Student.UserId == teacher.UserId &&
-          lp.Date >= StartOfWeek &&
-          lp.Date <= EndOfWeek)
-      .ToListAsync();
-
+                .Include(lp => lp.Student)
+                .Include(lp => lp.Subject)
+                .Where(lp =>
+                    lp.Student.TeacherId == teacher.Id &&
+                    lp.Date >= StartOfWeek &&
+                    lp.Date <= EndOfWeek)
+                .ToListAsync();
 
             var lessons = await _context.Lessons
                 .Include(l => l.Student)
@@ -390,11 +388,8 @@ namespace Vyuka.Pages.Teachers_only
 
             if (plan != null)
             {
-                if (string.IsNullOrEmpty(plan.Student.UserId))
-                    throw new Exception("Student nemá přiřazeného učitele.");
-
                 var teacher = await _context.Teachers
-                    .FirstOrDefaultAsync(t => t.Id == int.Parse(plan.Student.UserId));
+                    .FirstOrDefaultAsync(t => t.Id == plan.Student.TeacherId);
 
                 if (teacher == null)
                     throw new Exception("Teacher not found.");

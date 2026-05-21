@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
@@ -13,45 +14,40 @@ namespace Vyuka.Pages.Admin.Students
             _context = context;
         }
 
+        public List<Student> Students { get; set; } = new();
         public List<Student> AllStudents { get; set; } = new();
-        public Student? SelectedStudent { get; set; }
 
-        public async Task OnGetAsync(int? id)
+        [BindProperty(SupportsGet = true)]
+        public string? Filter { get; set; }
+
+        public async Task OnGetAsync()
         {
-            // 🔹 Načteme všechny studenty pro dropdown
+            // Dropdown – všichni studenti
             AllStudents = await _context.Students
                 .OrderBy(s => s.LastName)
+                .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            if (id != null)
+            // Tabulka – filtrovaní studenti
+            var query = _context.Students
+                .Include(s => s.Subject)
+                .OrderBy(s => s.LastName)
+                .ThenBy(s => s.FirstName)
+                .AsQueryable();
+
+            switch (Filter)
             {
-                // ⭐ Načíst studenta i s Teacher a Subject
-                SelectedStudent = await _context.Students
-                    .Include(s => s.Teacher)
-                    .Include(s => s.Subject)
-                    .FirstOrDefaultAsync(s => s.Id == id);
+                case "active":
+                    query = query.Where(s => s.IsActive);
+                    break;
 
-                if (SelectedStudent != null)
-                {
-                    // ⭐ SPRÁVNÉ PÁROVÁNÍ: Teacher.UserId (GUID) ↔ Student.UserId (GUID)
-                    if (!string.IsNullOrEmpty(SelectedStudent.UserId))
-                    {
-                        SelectedStudent.Teacher = await _context.Teachers
-                            .FirstOrDefaultAsync(t => t.UserId == SelectedStudent.UserId);
-                    }
-
-                    SelectedStudent.TaughtHours = await _context.Lessons
-                        .Where(l => l.StudentId == id && l.IsTaught)
-                        .SumAsync(l => (double)l.Hours);
-
-                    SelectedStudent.PaidHours = await _context.Payments
-                        .Where(p => p.StudentId == id)
-                        .SumAsync(p => (double)p.HoursPurchased);
-
-                    SelectedStudent.RemainingHours =
-                        SelectedStudent.PaidHours - SelectedStudent.TaughtHours;
-                }
+                case "inactive":
+                    query = query.Where(s => !s.IsActive);
+                    break;
             }
+
+            Students = await query.ToListAsync();
         }
+
     }
 }

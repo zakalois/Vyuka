@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 
@@ -15,59 +16,44 @@ namespace Vyuka.Pages.Admin.Students
         }
 
         [BindProperty]
-        public Student Student { get; set; } = new();
+        public Student Student { get; set; }
 
-        // ⭐ ON GET — načtení studenta
+        public List<SelectListItem> Subjects { get; set; }
+
+        private async Task LoadSubjectsAsync()
+        {
+            Subjects = await _context.Subjects
+                .Select(s => new SelectListItem
+                {
+                    Value = s.Id.ToString(),
+                    Text = s.Name
+                })
+                .ToListAsync();
+        }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            Student = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == id);
+            Student = await _context.Students.FindAsync(id);
 
             if (Student == null)
-                return NotFound();
+                return RedirectToPage("/Admin/Students/Overview");
+
+            await LoadSubjectsAsync();
 
             return Page();
         }
 
-        // ⭐ ON POST — uložení studenta
         public async Task<IActionResult> OnPostAsync()
         {
+            await LoadSubjectsAsync(); // ← MUSÍ BÝT I TADY
+
             if (!ModelState.IsValid)
                 return Page();
 
-            var studentDb = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == Student.Id);
-
-            if (studentDb == null)
-                return NotFound();
-
-            // 🔹 Aktualizace studenta
-            studentDb.FirstName = Student.FirstName;
-            studentDb.LastName = Student.LastName;
-            studentDb.Age = Student.Age;
-            studentDb.Email = Student.Email;
-            studentDb.Phone = Student.Phone;
-            studentDb.School = Student.School;
-            studentDb.Address = Student.Address;
-
-            // 🔹 Rodič
-            studentDb.ParentFirstName = Student.ParentFirstName;
-            studentDb.ParentLastName = Student.ParentLastName;
-            studentDb.ParentEmail = Student.ParentEmail;
-            studentDb.ParentPhone = Student.ParentPhone;
-
-            // 🔹 Poznámka
-            studentDb.Note = Student.Note;
-
-            // 🔹 Úroveň a preferovaný čas
-            studentDb.Level = Student.Level;
-            studentDb.PreferredTime = Student.PreferredTime;
-
-            _context.Students.Update(studentDb);
+            _context.Attach(Student).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
-            // 🔹 Návrat na kartu studenta
-            return RedirectToPage("/Admin/Students/Overview", new { id = Student.Id });
+            return RedirectToPage("/Admin/Students/Overview");
         }
     }
 }

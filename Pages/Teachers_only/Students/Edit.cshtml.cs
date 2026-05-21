@@ -24,7 +24,6 @@ namespace Vyuka.Pages.Teachers_only.Students
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            // Přihlášený učitel
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var teacher = await _context.Teachers
                 .FirstOrDefaultAsync(t => t.UserId == userId);
@@ -32,13 +31,12 @@ namespace Vyuka.Pages.Teachers_only.Students
             if (teacher == null)
                 return RedirectToPage("/Index");
 
-            // ⭐ Student patřící tomuto učiteli
+            // ⭐ OPRAVA: student patřící učiteli podle TeacherId
             Student = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == id && s.UserId == teacher.UserId);
+                .FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacher.Id);
 
             if (Student == null)
                 return RedirectToPage("/Teachers_only/Students/Index");
-
 
             // ⭐ Předměty učitele
             Subjects = await _context.Subjects
@@ -63,20 +61,19 @@ namespace Vyuka.Pages.Teachers_only.Students
 
         public async Task<IActionResult> OnPostAsync(int id)
         {
-            // Přihlášený učitel
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var teacher = await _context.Teachers
                 .FirstOrDefaultAsync(t => t.UserId == userId);
 
             if (teacher == null)
                 return RedirectToPage("/Index");
-            // ⭐ Student patřící tomuto učiteli
+
+            // ⭐ OPRAVA: student patřící učiteli podle TeacherId
             var studentDb = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == id && s.UserId == teacher.UserId);
+                .FirstOrDefaultAsync(s => s.Id == id && s.TeacherId == teacher.Id);
 
             if (studentDb == null)
                 return RedirectToPage("/Teachers_only/Students/Index");
-
 
             // ⭐ Učitel může upravit jen bezpečná pole
             studentDb.Email = Student.Email;

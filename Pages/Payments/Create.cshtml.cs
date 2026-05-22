@@ -92,9 +92,9 @@ namespace Vyuka.Pages.Payments
                 return Page();
             }
 
-            // 3) Načíst rodiče (správně přes Parent.StudentId)
-            var parent = await _context.Parents
-                .FirstOrDefaultAsync(p => p.StudentId == student.Id);
+            // 3) Rodič a student email
+            string? parentEmail = student.ParentEmail;
+            string? studentEmail = student.Email;
 
             // 4) Načíst HTML šablonu
             var templatePath = Path.Combine(_env.ContentRootPath, "EmailsTemplates", "PaymentConfirmation.html");
@@ -114,16 +114,14 @@ namespace Vyuka.Pages.Payments
             // 6) Odeslat e-mail
             string? emailToSend = null;
 
-            // preferujeme rodiče
-            if (!string.IsNullOrWhiteSpace(parent?.Email))
-                emailToSend = parent.Email;
+            if (!string.IsNullOrWhiteSpace(parentEmail))
+                emailToSend = parentEmail;
+            else if (!string.IsNullOrWhiteSpace(studentEmail))
+                emailToSend = studentEmail;
+            else
+                emailToSend = "zaka@outlook.cz"; // fallback
 
-            // pokud rodič nemá email, použijeme email studenta
-            else if (!string.IsNullOrWhiteSpace(student.Email))
-                emailToSend = student.Email;
-
-            if (!string.IsNullOrWhiteSpace(emailToSend))
-                await _email.SendAsync(emailToSend, "Potvrzení platby", html);
+            await _email.SendAsync(emailToSend, "Potvrzení platby", html);
 
             // 7) Redirect
             return RedirectToPage("/Payments/Index");

@@ -18,22 +18,27 @@ namespace Vyuka.Pages.Admin.Teachers
         public async Task OnGetAsync()
         {
             Teachers = await _context.Teachers
-     .Include(t => t.User)
-     .Select(t => new TeacherListViewModel
-     {
-         Id = t.Id,
-         FirstName = t.User.FirstName,
-         LastName = t.User.LastName,
-         FullName = t.User.FirstName + " " + t.User.LastName,
-         Email = t.User.Email,
-         Phone = t.User.PhoneNumber,
-         Subjects = "",
-         StudentsCount = 0,
-         HoursThisMonth = 0,
-         IsActive = t.IsActive
-     })
-     .ToListAsync();
+                .Include(t => t.User)
+                .Select(t => new TeacherListViewModel
+                {
+                    Id = t.Id,
+                    FirstName = t.User.FirstName,
+                    LastName = t.User.LastName,
+                    FullName = t.User.FirstName + " " + t.User.LastName,
+                    Email = t.User.Email,
+                    Phone = t.User.PhoneNumber,
+                    Subjects = "",
 
+                    // ⭐ OPRAVA — správný počet studentů
+                    StudentsCount = _context.Students
+                        .Count(s => s.TeacherId == t.Id),
+
+                    // ⭐ Hodiny tento měsíc (zatím 0, doplníme později)
+                    HoursThisMonth = 0,
+
+                    IsActive = t.IsActive
+                })
+                .ToListAsync();
         }
     }
 }

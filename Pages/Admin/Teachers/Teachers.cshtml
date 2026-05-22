@@ -35,21 +35,28 @@
                 <td class="d-flex gap-2">
 
                     <a asp-page="/Admin/Teachers/TeacherDetail" asp-route-id="@t.Id"
-                           class="btn btn-sm btn-primary">
+                       class="btn btn-sm btn-primary">
                         Detail
                     </a>
 
+                    <a asp-page="/Admin/Teachers/Edit" asp-route-id="@t.Id"
+                       class="btn btn-sm btn-warning">
+                        Upravit
+                    </a>
+
                     <a asp-page="/Admin/Teachers/ToggleActive" asp-route-id="@t.Id"
-                           class="btn btn-sm @(t.IsActive ? "btn-success" : "btn-secondary")">
+                       class="btn btn-sm @(t.IsActive ? "btn-success" : "btn-secondary")">
                         @(t.IsActive ? "Aktivní" : "Neaktivní")
                     </a>
 
                     <a asp-page="/Admin/Teachers/Delete" asp-route-id="@t.Id"
-                           class="btn btn-sm btn-danger">
+                       class="btn btn-sm btn-danger">
                         Smazat
                     </a>
 
                 </td>
+
+
 
             </tr>
         }

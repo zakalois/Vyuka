@@ -32,6 +32,11 @@ builder.Services.AddScoped<LessonPlanEmailBuilder>();
 builder.Services.AddScoped<LessonEmailBuilder>();
 builder.Services.AddScoped<OfferEmailBuilder>();
 
+// ---------------------------------------------------------
+//QR kód
+// ---------------------------------------------------------
+builder.Services.AddSingleton<QrCodeGeneratorService>();
+
 // TemplateService
 builder.Services.AddScoped<ITemplateService, TemplateService>();
 

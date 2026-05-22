@@ -21,37 +21,51 @@ namespace Vyuka.Pages.Admin.Students
         public string StudentName { get; set; } = "";
 
         [BindProperty]
-        public string? SelectedTeacherId { get; set; }
+        public int? SelectedTeacherId { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? ReturnUrl { get; set; }
 
         public List<SelectListItem> Teachers { get; set; } = new();
 
-        public async Task<IActionResult> OnGetAsync(int id)
+        public async Task<IActionResult> OnGetAsync(int id, string? returnUrl)
         {
             StudentId = id;
+            ReturnUrl = returnUrl ?? "/Admin/Students/Overview";
 
             var student = await _context.Students
                 .Include(s => s.Teacher)
+                .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (student == null)
                 return RedirectToPage("Index");
 
-            // ⭐ OPRAVA – Student nemá FullName
             StudentName = $"{student.LastName} {student.FirstName}";
 
-            Teachers = await _context.Teachers
-    .Include(t => t.User)
-    .OrderBy(t => t.User.LastName)
-    .ThenBy(t => t.User.FirstName)
-    .Select(t => new SelectListItem
-    {
-        Value = t.Id.ToString(), // ← TADY
-        Text = $"{t.User.LastName} {t.User.FirstName}"
-    })
-    .ToListAsync();
+            Teachers = new List<SelectListItem>
+            {
+                new SelectListItem
+                {
+                    Value = "",
+                    Text = "— Bez učitele —"
+                }
+            };
 
+            Teachers.AddRange(
+                await _context.Teachers
+                    .Include(t => t.User)
+                    .OrderBy(t => t.User.LastName)
+                    .ThenBy(t => t.User.FirstName)
+                    .Select(t => new SelectListItem
+                    {
+                        Value = t.Id.ToString(),
+                        Text = $"{t.User.LastName} {t.User.FirstName} ({t.User.Email})"
+                    })
+                    .ToListAsync()
+            );
 
-            SelectedTeacherId = student.UserId;
+            SelectedTeacherId = student.TeacherId;
 
             return Page();
         }
@@ -64,12 +78,15 @@ namespace Vyuka.Pages.Admin.Students
             if (student == null)
                 return RedirectToPage("Index");
 
-            student.UserId = SelectedTeacherId;
+            student.TeacherId = SelectedTeacherId;
 
-            _context.Students.Update(student);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage("/Admin/Students/Overview", new { id = StudentId });
+            // ⭐ Návrat tam, odkud jsi přišel
+            if (!string.IsNullOrWhiteSpace(ReturnUrl))
+                return Redirect(ReturnUrl);
+
+            return RedirectToPage("/Admin/Students/Overview");
         }
     }
 }

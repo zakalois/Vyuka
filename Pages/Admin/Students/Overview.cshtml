@@ -212,7 +212,9 @@
 
                         <!-- Upravit -->
                         <a asp-page="/Admin/Students/Edit" asp-route-id="@s.Id"
-                           class="btn btn-outline-primary action-btn">
+                           class="btn btn-outline-primary action-btn"
+                           data-bs-toggle="tooltip"
+                           title="Upravit studenta">
                             <i class="bi bi-pencil-square"></i>
                         </a>
 
@@ -220,20 +222,25 @@
                         @if (s.IsActive)
                         {
                             <a asp-page="/Admin/Students/ToggleActive" asp-route-id="@s.Id"
-                               class="btn btn-outline-danger action-btn">
+                               class="btn btn-outline-danger action-btn"
+                               data-bs-toggle="tooltip"
+                               title="Deaktivovat studenta">
                                 <i class="bi bi-person-dash"></i>
                             </a>
                         }
                         else
                         {
                             <a asp-page="/Admin/Students/ToggleActive" asp-route-id="@s.Id"
-                               class="btn btn-outline-success action-btn">
+                               class="btn btn-outline-success action-btn"
+                               data-bs-toggle="tooltip"
+                               title="Aktivovat studenta">
                                 <i class="bi bi-person-check"></i>
                             </a>
                         }
 
                     </div>
                 </td>
+
 
             </tr>
         }

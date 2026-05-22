@@ -1,8 +1,5 @@
 ﻿@page
 @model Vyuka.Pages.Communications.IndexModel
-@{
-    ViewData["Title"] = "Komunikace";
-}
 
 <h2 class="mb-4">E‑mailová komunikace</h2>
 
@@ -11,7 +8,7 @@
 
         <form method="post">
 
-            <!-- STUDENT -->
+            <!-- Student -->
             <div class="mb-3">
                 <label class="form-label fw-bold">Student</label>
                 <select asp-for="SelectedStudentId" class="form-select">
@@ -23,77 +20,57 @@
                 </select>
             </div>
 
-            <!-- ADRESÁT -->
+            <!-- Šablona -->
             <div class="mb-3">
-                <label class="form-label fw-bold">Adresát</label>
-
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" asp-for="RecipientType" value="student" checked />
-                    <label class="form-check-label">
-                        Student (@Model.SelectedStudentEmail)
-                    </label>
-                </div>
-
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" asp-for="RecipientType" value="parent" />
-                    <label class="form-check-label">
-                        Rodič (@Model.SelectedParentEmail)
-                    </label>
-                </div>
-
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" asp-for="RecipientType" value="both" />
-                    <label class="form-check-label">
-                        Oba
-                    </label>
-                </div>
-            </div>
-
-            <!-- ŠABLONA -->
-            <div class="mb-3">
-                <label class="form-label fw-bold">Šablona e‑mailu</label>
+                <label class="form-label fw-bold">Šablona</label>
                 <select asp-for="SelectedTemplate" class="form-select">
                     @foreach (var t in Model.Templates)
                     {
                         <option value="@t.Name">@t.Name</option>
                     }
                 </select>
-
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Komu odeslat</label>
+                <select asp-for="RecipientType" class="form-select">
+                    <option value="student">Studentovi</option>
+                    <option value="parent">Rodiči</option>
+                    <option value="both">Oběma</option>
+                </select>
             </div>
 
-            <!-- TLAČÍTKA -->
-            <div class="d-flex gap-2 mt-3">
-                <button type="submit" formaction="?handler=Preview" class="btn btn-primary">
-                    Zobrazit náhled
-                </button>
 
-                <button type="submit" formaction="?handler=Send" class="btn btn-success">
-                    Odeslat e‑mail
-                </button>
+            <!-- Dynamická částka -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Částka (Kč)</label>
+                <input asp-for="PaymentAmount" class="form-control" />
             </div>
+
+            <!-- Zpráva -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Zpráva pro příjemce</label>
+                <input asp-for="PaymentMessage" class="form-control" />
+            </div>
+
+            <!-- Tlačítka -->
+            <button type="submit" formaction="?handler=Preview" class="btn btn-primary">Náhled</button>
+            <button type="submit" formaction="?handler=Send" class="btn btn-success">Odeslat</button>
 
         </form>
-
     </div>
 </div>
 
-<!-- NÁHLED -->
 @if (!string.IsNullOrWhiteSpace(Model.PreviewHtml))
 {
     <div class="card shadow-sm mt-4">
-        <div class="card-header fw-bold">
-            Náhled e‑mailu
-        </div>
+        <div class="card-header fw-bold">Náhled</div>
         <div class="card-body">
             @Html.Raw(Model.PreviewHtml)
         </div>
     </div>
 }
 
-<!-- ZPRÁVA -->
 @if (TempData["Message"] != null)
 {
-    <div class="alert alert-info mt-3">
-        @TempData["Message"]
-    </div>
+    <div class="alert alert-info mt-3">@TempData["Message"]</div>
 }

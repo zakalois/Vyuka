@@ -104,6 +104,7 @@
 
                     <a asp-page="/Admin/Students/AssignTeacher"
                        asp-route-id="@item.Student.Id"
+                       asp-route-returnUrl="@HttpContext.Request.Path@HttpContext.Request.QueryString"
                        class="btn btn-outline-dark btn-sm"
                        title="Přiřadit učitele">
                         <i class="bi bi-person-fill-gear"></i>

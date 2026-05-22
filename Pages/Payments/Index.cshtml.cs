@@ -73,8 +73,17 @@ namespace Vyuka.Pages.Payments
             TotalPrepaidHours = Math.Round(
                 await _context.Payments.SumAsync(p => (decimal?)p.HoursPurchased) ?? 0, 1);
 
+            var taughtLessons = await _context.Lessons
+    .Where(l => l.IsTaught)
+    .ToListAsync();
+
             TotalTaughtHours = Math.Round(
-                await _context.Lessons.SumAsync(l => (decimal?)l.Hours) ?? 0, 1);
+                taughtLessons.Sum(l =>
+                    l.End > l.Start
+                        ? (decimal)Math.Round((l.End - l.Start).TotalHours, 1)
+                        : l.Hours
+                ), 1);
+
 
             var query = _context.Payments
                 .Include(p => p.Student)
@@ -100,10 +109,17 @@ namespace Vyuka.Pages.Payments
                         .Where(p => p.StudentId == SelectedStudentId)
                         .SumAsync(p => (decimal?)p.HoursPurchased) ?? 0, 1);
 
+                var taughtStudentLessons = await _context.Lessons
+    .Where(l => l.StudentId == SelectedStudentId && l.IsTaught)
+    .ToListAsync();
+
                 SelectedStudentTaughtHours = Math.Round(
-                    await _context.Lessons
-                        .Where(l => l.StudentId == SelectedStudentId)
-                        .SumAsync(l => (decimal?)l.Hours) ?? 0, 1);
+                    taughtStudentLessons.Sum(l =>
+                        l.End > l.Start
+                            ? (decimal)Math.Round((l.End - l.Start).TotalHours, 1)
+                            : l.Hours
+                    ), 1);
+
 
                 SelectedStudentTotalPaid = await _context.Payments
                     .Where(p => p.StudentId == SelectedStudentId)

@@ -45,9 +45,28 @@
     <!-- ========================================= -->
     <!-- ADMIN MENU -->
     <!-- ========================================= -->
+    @inject IWebHostEnvironment Env
+
     <nav class="admin-menu d-flex gap-3 px-4 py-2">
 
+        @if (Env.IsDevelopment())
+        {
+            <span class="nav-link text-warning fw-bold">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                Vývojová verze
+            </span>
+        }
+        else
+        {
+            <span class="nav-link text-success fw-bold">
+                <i class="bi bi-check-circle-fill me-1"></i>
+                Produkční verze
+            </span>
+        }
+
+        <!-- ⭐ TVÉ MENU -->
         <a class="nav-link" href="/Admin/Dashboard">Dashboard</a>
+
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="studentsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-people-fill me-1"></i> Studenti
@@ -78,8 +97,6 @@
 
         <a class="nav-link" asp-page="/Admin/Teachers/Teachers">Učitelé</a>
         <a class="nav-link" href="/Admin/Hours">Odučené hodiny</a>
-
-        <!-- ⭐ OPRAVENO: přidána class="nav-link" + správná route -->
         <a class="nav-link" asp-page="/Admin/Schedule/Index">Rozvrh</a>
         <a class="nav-link" href="/Payments/Index">Finance</a>
         <a class="nav-link" href="/Communications">E‑maily</a>
@@ -87,14 +104,15 @@
         <a class="nav-link" href="/Account/Profile">
             <i class="bi bi-person-circle"></i> Profil
         </a>
+
         <div class="admin-right">
             <button id="darkToggle" class="btn btn-sm btn-light">
                 Tmavý režim
             </button>
         </div>
 
-
     </nav>
+
 
 
 
@@ -129,5 +147,10 @@
     </script>
 
     @RenderSection("Scripts", required: false)
+    <script>
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+    </script>
+
 </body>
 </html>

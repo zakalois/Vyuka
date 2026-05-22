@@ -1,14 +1,25 @@
-﻿namespace Vyuka.Services
+﻿using Vyuka.Models;
+
+namespace Vyuka.Services
 {
     public interface IEmailService
     {
         // ⭐ Základní odeslání
         Task SendAsync(string to, string subject, string html);
 
-        // ⭐ Odeslání s přílohami (QR kódy, obrázky)
+        // ⭐ Odeslání s přílohami
         Task SendAsync(string to, string subject, string html, List<EmailAttachment>? attachments);
 
-        // ⭐ Nová metoda pro reset hesla
+        // ⭐ Odeslání s přílohami + dynamický QR kód
+        Task SendAsync(
+            string to,
+            string subject,
+            string html,
+            List<EmailAttachment>? attachments,
+            decimal? dynamicAmount,
+            string? dynamicMessage);
+
+        // ⭐ Reset hesla
         Task SendPasswordResetEmail(string email, string name, string token);
     }
 }

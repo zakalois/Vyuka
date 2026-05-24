@@ -47,71 +47,91 @@
     <!-- ========================================= -->
     @inject IWebHostEnvironment Env
 
-    <nav class="admin-menu d-flex gap-3 px-4 py-2">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 py-2">
+        <div class="container-fluid">
 
-        @if (Env.IsDevelopment())
-        {
-            <span class="nav-link text-warning fw-bold">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                Vývojová verze
-            </span>
-        }
-        else
-        {
-            <span class="nav-link text-success fw-bold">
-                <i class="bi bi-check-circle-fill me-1"></i>
-                Produkční verze
-            </span>
-        }
-
-        <!-- ⭐ TVÉ MENU -->
-        <a class="nav-link" href="/Admin/Dashboard">Dashboard</a>
-
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="studentsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-people-fill me-1"></i> Studenti
+            <a class="navbar-brand" href="/Admin/Dashboard">
+                <i class="bi bi-speedometer2 text-info me-1"></i> Administrace
             </a>
 
-            <ul class="dropdown-menu" aria-labelledby="studentsDropdown">
-
-                <li>
-                    <a class="dropdown-item" asp-page="/Admin/Students/Overview">
-                        <i class="bi bi-table me-2"></i> Přehled studentů
-                    </a>
-                </li>
-
-                <li>
-                    <a class="dropdown-item" asp-page="/Admin/Students/Index">
-                        <i class="bi bi-person-lines-fill me-2"></i> Přiřazení učitelů
-                    </a>
-                </li>
-
-                <li>
-                    <a class="dropdown-item" asp-page="/Admin/Students/Create">
-                        <i class="bi bi-person-plus-fill me-2"></i> Přidat studenta
-                    </a>
-                </li>
-
-            </ul>
-        </li>
-
-        <a class="nav-link" asp-page="/Admin/Teachers/Teachers">Učitelé</a>
-        <a class="nav-link" href="/Admin/Hours">Odučené hodiny</a>
-        <a class="nav-link" asp-page="/Admin/Schedule/Index">Rozvrh</a>
-        <a class="nav-link" href="/Payments/Index">Finance</a>
-        <a class="nav-link" href="/Communications">E‑maily</a>
-
-        <a class="nav-link" href="/Account/Profile">
-            <i class="bi bi-person-circle"></i> Profil
-        </a>
-
-        <div class="admin-right">
-            <button id="darkToggle" class="btn btn-sm btn-light">
-                Tmavý režim
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav">
+                <span class="navbar-toggler-icon"></span>
             </button>
-        </div>
 
+            <div class="collapse navbar-collapse" id="adminNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Admin/Dashboard">
+                            <i class="bi bi-speedometer2 text-info me-1"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <!-- STUDENTI -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-people-fill text-primary me-1"></i> Studenti
+                        </a>
+
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" asp-page="/Admin/Students/Overview"><i class="bi bi-table text-success me-2"></i> Přehled studentů</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Students/Index"><i class="bi bi-person-lines-fill text-warning me-2"></i> Přiřazení učitelů</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Students/Create"><i class="bi bi-person-plus-fill text-info me-2"></i> Přidat studenta</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Admin/Teachers/Teachers">
+                            <i class="bi bi-person-badge-fill text-purple me-1"></i> Učitelé
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Admin/Notes/Notes">
+                            <i class="bi bi-journal-text text-warning me-1"></i> Poznámky
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Admin/Hours">
+                            <i class="bi bi-clock-history text-info me-1"></i> Odučené hodiny
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Admin/Schedule/Index">
+                            <i class="bi bi-calendar-week text-success me-1"></i> Rozvrh
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Payments/Index">
+                            <i class="bi bi-cash-stack text-warning me-1"></i> Finance
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Communications">
+                            <i class="bi bi-envelope-fill text-danger me-1"></i> E‑maily
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Account/Profile">
+                            <i class="bi bi-person-circle text-info me-1"></i> Profil
+                        </a>
+                    </li>
+
+                </ul>
+
+                <button id="darkToggle" class="btn btn-sm btn-light">Tmavý režim</button>
+            </div>
+
+        </div>
     </nav>
+
+
+
 
 
 

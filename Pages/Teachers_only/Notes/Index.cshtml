@@ -1,0 +1,76 @@
+﻿@page "{studentId?}"
+@model Vyuka.Pages.Teachers_only.Notes.IndexModel
+
+<h2>Poznámky</h2>
+
+<!-- FORMULÁŘ PRO VÝBĚR STUDENTA -->
+<form method="post" asp-page-handler="Select">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label>Student</label>
+            <select asp-for="SelectedStudentId" class="form-select" onchange="this.form.submit()">
+                <option value="">-- Vyber studenta --</option>
+                @foreach (var s in Model.Students)
+                {
+                    <option value="@s.Id">@s.LastName @s.FirstName</option>
+                }
+            </select>
+        </div>
+    </div>
+</form>
+
+@if (Model.SelectedStudent != null)
+{
+    <!-- INFO O STUDENTOVI -->
+    <div class="alert alert-secondary">
+        <strong>@Model.SelectedStudent.FirstName @Model.SelectedStudent.LastName</strong> |
+        Tel: @Model.SelectedStudent.Phone |
+        Email: @Model.SelectedStudent.Email |
+        Zbývající hodiny: @Model.SelectedStudent.RemainingHours
+    </div>
+
+    <!-- FORMULÁŘ PRO PŘIDÁNÍ POZNÁMKY -->
+    <form method="post" asp-page-handler="AddNote">
+        <!-- ⭐ DŮLEŽITÉ: BEZ TOHO SE STUDENTID NEULOŽÍ -->
+        <input type="hidden" asp-for="SelectedStudentId" />
+
+        <div class="input-group mb-3">
+            <input asp-for="NewNoteText" class="form-control" placeholder="Napište poznámku..." />
+            <button class="btn btn-primary">Uložit</button>
+        </div>
+    </form>
+
+    <!-- TABULKA POZNÁMEK -->
+    <table class="table table-dark table-striped">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Autor</th>
+                <th>Poznámka</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var n in Model.Notes)
+            {
+                <tr>
+                    <td>@n.Created.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>
+                        @if (n.CreatedBy == "Admin")
+                        {
+                            <span class="note-badge note-admin">Admin</span>
+                        }
+                        else if (n.CreatedBy.Contains("učitel") || n.CreatedBy.Contains("Teacher"))
+                        {
+                            <span class="note-badge note-teacher">@n.CreatedBy</span>
+                        }
+                        else
+                        {
+                            <span class="note-badge note-system">@n.CreatedBy</span>
+                        }
+                    </td>
+                    <td>@n.Text</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

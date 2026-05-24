@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
+using Vyuka.Models;
+
 
 namespace Vyuka.Models
 {
@@ -25,6 +27,8 @@ namespace Vyuka.Models
         public DbSet<Teacher> Teachers { get; set; }
         public DbSet<Parent> Parents { get; set; }
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
+        public DbSet<Note> Notes { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

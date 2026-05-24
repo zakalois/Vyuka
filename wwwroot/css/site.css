@@ -645,3 +645,47 @@ body.dark .admin-menu {
         transform: scale(1.08);
         opacity: 0.9;
     }
+
+.note-badge {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+}
+
+.note-admin {
+    background-color: #ff6b6b;
+}
+
+.note-teacher {
+    background-color: #4dabf7;
+}
+
+.note-system {
+    background-color: #adb5bd;
+}
+/* Dark mode tabulka – vlastní pruhování */
+body.dark table.table-dark tbody tr:nth-child(odd) {
+    background-color: #1f1f1f;
+}
+
+body.dark table.table-dark tbody tr:nth-child(even) {
+    background-color: #2a2a2a;
+}
+
+body.dark table.table-dark tbody tr:hover {
+    background-color: #3a3a3a;
+}
+/* Pruhování pro table-dark – funguje všude */
+table.table-dark tbody tr:nth-child(odd) {
+    background-color: #1e1e1e !important;
+}
+
+table.table-dark tbody tr:nth-child(even) {
+    background-color: #2a2a2a !important;
+}
+
+table.table-dark tbody tr:hover {
+    background-color: #3a3a3a !important;
+}

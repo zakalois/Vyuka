@@ -12,12 +12,16 @@ namespace Vyuka.Services
 
         // ⭐ Odeslání s přílohami + dynamický QR kód
         Task SendAsync(
-            string to,
-            string subject,
-            string html,
-            List<EmailAttachment>? attachments,
-            decimal? dynamicAmount,
-            string? dynamicMessage);
+     string to,
+     string subject,
+     string html,
+     List<EmailAttachment>? attachments,
+     decimal? dynamicAmount,
+     string? dynamicMessage,
+     string? customText,
+     string? studentName
+ );
+
 
         // ⭐ Reset hesla
         Task SendPasswordResetEmail(string email, string name, string token);

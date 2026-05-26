@@ -65,9 +65,10 @@ namespace Vyuka.Pages.Communications
 
             string html = _templateService.RenderTemplate(SelectedTemplate, new());
 
-            html = html.Replace("{StudentName}", $"{student.FirstName} {student.LastName}");
-            html = html.Replace("{PRICE}", PaymentAmount.ToString());
-            html = html.Replace("{MESSAGE}", PaymentMessage);
+            html = html.Replace("{{StudentName}}", $"{student.FirstName} {student.LastName}");
+            html = html.Replace("{{Amount}}", PaymentAmount.ToString());
+            html = html.Replace("{{Message}}", PaymentMessage);
+            html = html.Replace("{{CustomText}}", "");
 
             PreviewHtml = html;
             return Page();
@@ -106,23 +107,28 @@ namespace Vyuka.Pages.Communications
                 return Page();
             }
 
-
             string html = _templateService.RenderTemplate(SelectedTemplate, new());
 
-            html = html.Replace("{StudentName}", $"{student.FirstName} {student.LastName}");
-            html = html.Replace("{PRICE}", PaymentAmount.ToString());
-            html = html.Replace("{MESSAGE}", PaymentMessage);
+            html = html.Replace("{{StudentName}}", $"{student.FirstName} {student.LastName}");
+            html = html.Replace("{{Amount}}", PaymentAmount.ToString());
+            html = html.Replace("{{Message}}", PaymentMessage);
+            html = html.Replace("{{CustomText}}", "");
 
             foreach (var email in recipients)
             {
+                string subject = "Učitel Žák – automatická zpráva";
+
                 await _emailService.SendAsync(
                     email,
-                    "Nabídka výuky",
+                    subject,
                     html,
                     null,
                     PaymentAmount,
-                    PaymentMessage
+                    PaymentMessage,
+                    "",
+                    $"{student.FirstName} {student.LastName}"
                 );
+
             }
 
             TempData["Message"] = "E‑mail byl odeslán.";

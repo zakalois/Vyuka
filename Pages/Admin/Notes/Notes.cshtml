@@ -67,7 +67,7 @@
     </form>
 
     <!-- TABULKA POZNÁMEK -->
-    <table class="table table-dark table-striped">
+    <table class="table notes-table">
         <thead>
             <tr>
                 <th>Datum</th>
@@ -80,7 +80,9 @@
             {
                 <tr>
                     <td>@n.Created.ToString("dd.MM.yyyy HH:mm")</td>
-                    <td>@n.CreatedBy</td>
+                    <td class="@(n.CreatedBy == "Alois Žák" ? "note-author-me" : "note-author-other")">
+                        @n.CreatedBy
+                    </td>
                     <td>@n.Text</td>
                 </tr>
             }

@@ -22,27 +22,48 @@ namespace Vyuka.Services
             _qr = qr;
         }
 
-        // ⭐ 1) Jednoduché odeslání bez příloh
+        // Jednoduché odeslání
         public async Task SendAsync(string to, string subject, string html)
         {
-            await SendAsync(to, subject, html, null, null, null);
+            await SendAsync(to, subject, html, null, null, null, null, null);
         }
 
-        // ⭐ 2) PŮVODNÍ METODA z IEmailService (nutná!)
+        // Původní metoda
         public async Task SendAsync(string to, string subject, string html, List<EmailAttachment>? attachments)
         {
-            await SendAsync(to, subject, html, attachments, null, null);
+            await SendAsync(to, subject, html, attachments, null, null, null, null);
         }
 
-        // ⭐ 3) Nová rozšířená metoda s dynamickým QR
+        // ⭐ ROZŠÍŘENÁ METODA – nyní doplněné placeholdery
         public async Task SendAsync(
             string to,
             string subject,
             string html,
             List<EmailAttachment>? attachments,
             decimal? dynamicAmount,
-            string? dynamicMessage)
+            string? dynamicMessage,
+            string? customText,
+            string? studentName)
         {
+            // ⭐ NAHRAZENÍ PLACEHOLDERŮ
+            if (dynamicAmount.HasValue)
+                html = html.Replace("{{Amount}}", dynamicAmount.Value.ToString("0"));
+
+            if (!string.IsNullOrWhiteSpace(dynamicMessage))
+                html = html.Replace("{{Message}}", dynamicMessage);
+            else
+                html = html.Replace("{{Message}}", "");
+
+            if (!string.IsNullOrWhiteSpace(customText))
+                html = html.Replace("{{CustomText}}", customText);
+            else
+                html = html.Replace("{{CustomText}}", "");
+
+            if (!string.IsNullOrWhiteSpace(studentName))
+                html = html.Replace("{{StudentName}}", studentName);
+            else
+                html = html.Replace("{{StudentName}}", "");
+
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress("Výuka App", _smtp.From));
             message.To.Add(new MailboxAddress(to, to));
@@ -65,12 +86,7 @@ namespace Vyuka.Services
             // ⭐ Dynamický QR kód
             if (dynamicAmount.HasValue && !string.IsNullOrWhiteSpace(dynamicMessage))
             {
-                var qrBytes = _qr.GeneratePaymentQr(
-    dynamicAmount.Value,
-    dynamicMessage
-);
-
-
+                var qrBytes = _qr.GeneratePaymentQr(dynamicAmount.Value, dynamicMessage);
                 AddImageFromBytes(builder, "qrDynamic", qrBytes);
             }
 
@@ -100,7 +116,7 @@ namespace Vyuka.Services
             }
         }
 
-        // ⭐ Obrázek ze souboru
+        // Obrázek ze souboru
         private void AddImageFromFile(BodyBuilder builder, string contentId, string path)
         {
             if (File.Exists(path))
@@ -111,7 +127,7 @@ namespace Vyuka.Services
             }
         }
 
-        // ⭐ Obrázek z byte[] (dynamický QR)
+        // Obrázek z byte[] (dynamický QR)
         private void AddImageFromBytes(BodyBuilder builder, string contentId, byte[] bytes)
         {
             var img = builder.LinkedResources.Add(contentId + ".png", bytes, new ContentType("image", "png"));
@@ -119,8 +135,7 @@ namespace Vyuka.Services
             img.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
         }
 
-
-        // ⭐ Reset hesla
+        // Reset hesla
         public async Task SendPasswordResetEmail(string email, string name, string token)
         {
             var resetLink = $"https://{_smtp.AppDomain}/Account/ResetPassword?token={token}";

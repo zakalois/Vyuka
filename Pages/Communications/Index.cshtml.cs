@@ -1,6 +1,8 @@
+using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
 using Vyuka.Models;
 using Vyuka.Services;
 
@@ -29,9 +31,9 @@ namespace Vyuka.Pages.Communications
         [BindProperty] public string SelectedTemplate { get; set; } = "";
         [BindProperty] public string RecipientType { get; set; } = "student";
 
-        // ⭐ Dynamický QR
-        [BindProperty] public decimal PaymentAmount { get; set; } = 1750;
-        [BindProperty] public string PaymentMessage { get; set; } = "Balíček 5 hodin";
+        [BindProperty] public decimal PaymentAmount { get; set; }
+        [BindProperty] public string PaymentMessage { get; set; }
+
 
         public string PreviewHtml { get; set; } = "";
 
@@ -50,7 +52,32 @@ namespace Vyuka.Pages.Communications
             Templates = await _context.EmailTemplates.OrderBy(t => t.Name).ToListAsync();
         }
 
-        // ⭐ Náhled
+        private async Task<string> BuildEmailHtml(Student student)
+        {
+            string html = _templateService.RenderTemplate(SelectedTemplate, new());
+
+            var lastLesson = await _context.Lessons
+                .Where(l => l.StudentId == student.Id)
+                .OrderByDescending(l => l.Date)
+                .FirstOrDefaultAsync();
+
+            string lessonDate = lastLesson?.Date.ToString("dd.MM.yyyy") ?? "";
+            string lessonTime = lastLesson?.Date.ToString("HH:mm") ?? "";
+
+            html = html.Replace("{{StudentName}}", $"{student.FirstName} {student.LastName}");
+            html = html.Replace("{{Amount}}", PaymentAmount.ToString());
+            html = html.Replace("{{Message}}", PaymentMessage);
+            html = html.Replace("{{CustomText}}", "");
+
+            html = html.Replace("{{LessonDate}}", lessonDate);
+            html = html.Replace("{{LessonTime}}", lessonTime);
+
+            // QR kód se generuje až v EmailService → náhled bude prázdný
+            html = html.Replace("{{QrCode}}", "");
+
+            return html;
+        }
+
         public async Task<IActionResult> OnPostPreviewAsync()
         {
             await LoadStudentsAsync();
@@ -63,18 +90,10 @@ namespace Vyuka.Pages.Communications
                 return Page();
             }
 
-            string html = _templateService.RenderTemplate(SelectedTemplate, new());
-
-            html = html.Replace("{{StudentName}}", $"{student.FirstName} {student.LastName}");
-            html = html.Replace("{{Amount}}", PaymentAmount.ToString());
-            html = html.Replace("{{Message}}", PaymentMessage);
-            html = html.Replace("{{CustomText}}", "");
-
-            PreviewHtml = html;
+            PreviewHtml = await BuildEmailHtml(student);
             return Page();
         }
 
-        // ⭐ Odeslání e‑mailu
         public async Task<IActionResult> OnPostSendAsync()
         {
             await LoadStudentsAsync();
@@ -107,27 +126,25 @@ namespace Vyuka.Pages.Communications
                 return Page();
             }
 
-            string html = _templateService.RenderTemplate(SelectedTemplate, new());
-
-            html = html.Replace("{{StudentName}}", $"{student.FirstName} {student.LastName}");
-            html = html.Replace("{{Amount}}", PaymentAmount.ToString());
-            html = html.Replace("{{Message}}", PaymentMessage);
-            html = html.Replace("{{CustomText}}", "");
+            string html = await BuildEmailHtml(student);
 
             foreach (var email in recipients)
             {
                 string subject = "Učitel Žák – automatická zpráva";
 
                 await _emailService.SendAsync(
-                    email,
-                    subject,
-                    html,
-                    null,
-                    PaymentAmount,
-                    PaymentMessage,
-                    "",
-                    $"{student.FirstName} {student.LastName}"
-                );
+    email,                          // to
+    subject,                        // subject
+    html,                           // html
+    null,                           // attachments (zatím nepoužíváš)
+    PaymentAmount,                  // dynamicAmount
+    PaymentMessage,                 // dynamicMessage
+    null,                           // customText
+    $"{student.FirstName} {student.LastName}",   // studentName
+    "payment",                      // emailType
+    student.Id                      // studentId
+);
+
 
             }
 

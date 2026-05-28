@@ -1,0 +1,54 @@
+﻿@page "{id:int}"
+@model Vyuka.Pages.Communications.LogsDetailModel
+
+<h2>Detail e‑mailu</h2>
+
+<div class="card mt-3">
+    <div class="card-body">
+
+        <p><strong>Datum:</strong> @Model.Log.SentAt.ToString("dd.MM.yyyy HH:mm")</p>
+        <p><strong>Komu:</strong> @Model.Log.Recipient</p>
+        <p><strong>Předmět:</strong> @Model.Log.Subject</p>
+        <p><strong>Typ:</strong> @Model.Log.EmailType</p>
+        <p><strong>Student:</strong> @Model.Log.StudentName</p>
+
+        <p>
+            <strong>QR kód:</strong>
+            @if (Model.Log.HasQrCode)
+            {
+                <span style="color: green; font-weight: bold;">✔ Ano</span>
+            }
+            else
+            {
+                <span style="color: gray;">Ne</span>
+            }
+        </p>
+
+        <p>
+            <strong>Stav:</strong>
+            @if (Model.Log.Success)
+            {
+                <span class="badge bg-success">OK</span>
+            }
+            else
+            {
+                <span class="badge bg-danger">Chyba</span>
+                <br />
+                <strong>Chyba:</strong> 
+                @Model.Log.ErrorMessage
+            }
+        </p>
+
+        <hr />
+
+        <h4>HTML obsah</h4>
+        <div class="border p-3" style="background:white;">
+            @Html.Raw(Model.Log.Html)
+        </div>
+
+        <form method="post" asp-page-handler="Resend" asp-route-id="@Model.Log.Id" class="mt-3">
+            <button class="btn btn-warning">Znovu odeslat</button>
+        </form>
+
+    </div>
+</div>

@@ -28,6 +28,8 @@ namespace Vyuka.Models
         public DbSet<Parent> Parents { get; set; }
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
         public DbSet<Note> Notes { get; set; }
+        public DbSet<EmailLog> EmailLogs { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

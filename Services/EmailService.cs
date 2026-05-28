@@ -11,30 +11,33 @@ namespace Vyuka.Services
         private readonly SmtpSettings _smtp;
         private readonly IWebHostEnvironment _env;
         private readonly QrCodeGeneratorService _qr;
+        private readonly AppDbContext _context;
 
         public EmailService(
             IOptions<SmtpSettings> smtp,
             IWebHostEnvironment env,
-            QrCodeGeneratorService qr)
+            QrCodeGeneratorService qr,
+            AppDbContext context)
         {
             _smtp = smtp.Value;
             _env = env;
             _qr = qr;
+            _context = context;
         }
 
         // Jednoduché odeslání
         public async Task SendAsync(string to, string subject, string html)
         {
-            await SendAsync(to, subject, html, null, null, null, null, null);
+            await SendAsync(to, subject, html, null, null, null, null, null, "system", null);
         }
 
-        // Původní metoda
+        // Odeslání s přílohami
         public async Task SendAsync(string to, string subject, string html, List<EmailAttachment>? attachments)
         {
-            await SendAsync(to, subject, html, attachments, null, null, null, null);
+            await SendAsync(to, subject, html, attachments, null, null, null, null, "system", null);
         }
 
-        // ⭐ ROZŠÍŘENÁ METODA – nyní doplněné placeholdery
+        // ⭐ ROZŠÍŘENÁ METODA – placeholdery + QR + logování
         public async Task SendAsync(
             string to,
             string subject,
@@ -43,26 +46,15 @@ namespace Vyuka.Services
             decimal? dynamicAmount,
             string? dynamicMessage,
             string? customText,
-            string? studentName)
+            string? studentName,
+            string emailType,
+            int? studentId)
         {
             // ⭐ NAHRAZENÍ PLACEHOLDERŮ
-            if (dynamicAmount.HasValue)
-                html = html.Replace("{{Amount}}", dynamicAmount.Value.ToString("0"));
-
-            if (!string.IsNullOrWhiteSpace(dynamicMessage))
-                html = html.Replace("{{Message}}", dynamicMessage);
-            else
-                html = html.Replace("{{Message}}", "");
-
-            if (!string.IsNullOrWhiteSpace(customText))
-                html = html.Replace("{{CustomText}}", customText);
-            else
-                html = html.Replace("{{CustomText}}", "");
-
-            if (!string.IsNullOrWhiteSpace(studentName))
-                html = html.Replace("{{StudentName}}", studentName);
-            else
-                html = html.Replace("{{StudentName}}", "");
+            html = html.Replace("{{Amount}}", dynamicAmount?.ToString("0") ?? "");
+            html = html.Replace("{{Message}}", dynamicMessage ?? "");
+            html = html.Replace("{{CustomText}}", customText ?? "");
+            html = html.Replace("{{StudentName}}", studentName ?? "");
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress("Výuka App", _smtp.From));
@@ -83,11 +75,14 @@ namespace Vyuka.Services
             AddImageFromFile(builder, "qr3500", Path.Combine(_env.WebRootPath, "images", "QR", "10_hod_3500.jpg"));
             AddImageFromFile(builder, "qr4000", Path.Combine(_env.WebRootPath, "images", "QR", "10_hod_4000.jpg"));
 
-            // ⭐ Dynamický QR kód
-            if (dynamicAmount.HasValue && !string.IsNullOrWhiteSpace(dynamicMessage))
+            // ⭐ Dynamický QR kód – generovat vždy
+            bool hasQr = false;
+
+            if (dynamicAmount.HasValue)
             {
-                var qrBytes = _qr.GeneratePaymentQr(dynamicAmount.Value, dynamicMessage);
+                var qrBytes = _qr.GeneratePaymentQr(dynamicAmount.Value, dynamicMessage ?? "");
                 AddImageFromBytes(builder, "qrDynamic", qrBytes);
+                hasQr = true;
             }
 
             // ⭐ Přílohy
@@ -109,11 +104,72 @@ namespace Vyuka.Services
                 await client.ConnectAsync(_smtp.Host, _smtp.Port, SecureSocketOptions.StartTls);
                 await client.AuthenticateAsync(_smtp.User, _smtp.Password);
                 await client.SendAsync(message);
+
+                // ⭐ LOGOVÁNÍ ÚSPĚCHU
+                await LogEmailAsync(
+                    to,
+                    subject,
+                    html,
+                    emailType,
+                    success: true,
+                    error: null,
+                    hasQr,
+                    studentName,
+                    studentId
+                );
+            }
+            catch (Exception ex)
+            {
+                // ⭐ LOGOVÁNÍ CHYBY
+                await LogEmailAsync(
+                    to,
+                    subject,
+                    html,
+                    emailType,
+                    success: false,
+                    error: ex.Message,
+                    hasQr,
+                    studentName,
+                    studentId
+                );
+
+                throw;
             }
             finally
             {
                 await client.DisconnectAsync(true);
             }
+        }
+
+        // ⭐ PROFESIONÁLNÍ LOGOVÁNÍ
+        private async Task LogEmailAsync(
+            string to,
+            string subject,
+            string html,
+            string emailType,
+            bool success,
+            string? error,
+            bool hasQr,
+            string? studentName,
+            int? studentId)
+        {
+            var log = new EmailLog
+            {
+                SentAt = DateTime.Now,
+                Recipient = to,
+                Subject = subject,
+                Html = html,
+                EmailType = emailType,
+                Success = success,
+                ErrorMessage = error,
+                HasQrCode = hasQr,
+                StudentName = studentName,
+                StudentId = studentId,
+                SentBy = "system"
+            };
+
+            _context.EmailLogs.Add(log);
+            await _context.SaveChangesAsync();
         }
 
         // Obrázek ze souboru
@@ -134,20 +190,19 @@ namespace Vyuka.Services
             img.ContentId = contentId;
             img.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
         }
-
-        // Reset hesla
         public async Task SendPasswordResetEmail(string email, string name, string token)
         {
             var resetLink = $"https://{_smtp.AppDomain}/Account/ResetPassword?token={token}";
 
             string html = $@"
-                <p>Ahoj {name},</p>
-                <p>Klikni na tento odkaz pro reset hesla:</p>
-                <p><a href=""{resetLink}"">{resetLink}</a></p>
-                <p>Odkaz je platný 1 hodinu.</p>
-                <p>Výuka App</p>";
+        <p>Ahoj {name},</p>
+        <p>Klikni na tento odkaz pro reset hesla:</p>
+        <p><a href=""{resetLink}"">{resetLink}</a></p>
+        <p>Odkaz je platný 1 hodinu.</p>
+        <p>Výuka App</p>";
 
             await SendAsync(email, "Reset hesla", html);
         }
+
     }
 }

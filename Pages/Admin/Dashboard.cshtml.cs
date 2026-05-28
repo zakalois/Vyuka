@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 
 namespace Vyuka.Pages.Admin
@@ -13,26 +12,35 @@ namespace Vyuka.Pages.Admin
             _context = context;
         }
 
-        public bool IsProduction { get; set; }
         public DateTime? NextLessonDate { get; set; }
+
+        // ⭐ Přidané vlastnosti
+        public int EmailsLast30Days { get; set; }
+        public int EmailErrorsLast30Days { get; set; }
+        public double HoursThisWeek { get; set; }
+
 
         public void OnGet()
         {
-#if DEBUG
-            IsProduction = false;
-#else
-            IsProduction = true;
-#endif
+            // Výpočet hodin v týdnu - od pondělí do neděle
+            var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+            var endOfWeek = startOfWeek.AddDays(7);
 
-            // Načteme jen to, co Dashboard opravdu potřebuje
+            // 1) Načteme lekce z databáze (SQL část)
+            var lessonsThisWeek = _context.LessonPlans
+                .Where(x => x.Date >= startOfWeek && x.Date < endOfWeek)
+                .ToList(); // ← TADY je klíč – přepnutí na C# výpočet
+
+            // 2) Spočítáme hodiny v C# (client-side)
+            HoursThisWeek = lessonsThisWeek
+                .Sum(x => (x.End - x.Start).TotalHours);
+
+
+
+            // původní kód pro NextLessonDate
             var lessons = _context.LessonPlans
-                .Select(x => new
-                {
-                    x.Date,
-                    x.Start
-                })
                 .Where(x => x.Date >= DateTime.Today)
-                .AsNoTracking()
                 .ToList();
 
             NextLessonDate = lessons
@@ -47,6 +55,15 @@ namespace Vyuka.Pages.Admin
                 .Where(dt => dt > DateTime.Now)
                 .OrderBy(dt => dt)
                 .FirstOrDefault();
+
+            // ⭐ Nové statistiky e‑mailů
+            var since = DateTime.Now.AddDays(-30);
+
+            EmailsLast30Days = _context.EmailLogs
+                .Count(l => l.SentAt >= since);
+
+            EmailErrorsLast30Days = _context.EmailLogs
+                .Count(l => l.SentAt >= since && !l.Success);
         }
     }
 }

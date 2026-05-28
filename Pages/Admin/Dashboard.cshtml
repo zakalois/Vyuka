@@ -48,7 +48,7 @@
 
         <div class="kpi-box">
             <div class="kpi-title">Hodiny tento týden</div>
-            <div class="kpi-value">8</div>
+            <div class="kpi-value">@Model.HoursThisWeek</div>
         </div>
 
         <div class="kpi-box">
@@ -60,6 +60,12 @@
                 @(Model.NextLessonDate?.ToString("HH:mm") ?? "")
             </div>
         </div>
+        <div class="kpi-box" onclick="location.href='/Communications/Logs'" style="cursor:pointer;">
+            <div class="kpi-title">E‑maily (30 dní)</div>
+            <div class="kpi-value">@Model.EmailsLast30Days</div>
+            <div class="kpi-sub">Chyby: @Model.EmailErrorsLast30Days</div>
+        </div>
+
     </div>
 </div>
 

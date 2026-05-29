@@ -1,0 +1,109 @@
+﻿@page
+@model Vyuka.Pages.Communications.BulkEmailModel
+
+<h2>Hromadný e‑mail</h2>
+
+<!-- FORM 1: Načtení šablony -->
+<form method="post" asp-page-handler="LoadTemplate" class="mb-4">
+
+    <h3>Šablona</h3>
+
+    <select asp-for="TemplateId" class="form-select">
+        <option value="">-- Vyberte šablonu --</option>
+        @foreach (var t in Model.Templates)
+        {
+            <option value="@t.Id">@t.Name</option>
+        }
+    </select>
+
+    <!-- Přenést Recipients -->
+    @for (int i = 0; i < Model.Recipients.Count; i++)
+    {
+        <input type="hidden" asp-for="Recipients[i].Id" />
+        <input type="hidden" asp-for="Recipients[i].Email" />
+        <input type="hidden" asp-for="Recipients[i].FullName" />
+        <input type="hidden" asp-for="Recipients[i].Selected" />
+    }
+
+    <!-- ⭐ DŮLEŽITÉ: přenést Amount a PaymentMessage -->
+    <input type="hidden" asp-for="Amount" />
+    <input type="hidden" asp-for="PaymentMessage" />
+
+    <button type="submit" class="btn btn-secondary mt-2">
+        Načíst šablonu
+    </button>
+</form>
+
+
+
+<!-- FORM 2: Odeslání emailu -->
+<form method="post" asp-page-handler="Send">
+
+    <input type="hidden" asp-for="TemplateId" />
+
+    <h3>Vyberte příjemce</h3>
+
+    <label>
+        <input type="checkbox" id="selectAll" onclick="toggleAll()" />
+        Vybrat vše
+    </label>
+
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th></th>
+                <th class="text-start">Jméno</th>
+                <th class="text-start">E‑mail</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Recipients.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <input type="checkbox" asp-for="Recipients[i].Selected" />
+                        <input type="hidden" asp-for="Recipients[i].Id" />
+                        <input type="hidden" asp-for="Recipients[i].Email" />
+                        <input type="hidden" asp-for="Recipients[i].FullName" />
+                    </td>
+                    <td class="text-start">@Model.Recipients[i].FullName</td>
+                    <td class="text-start">@Model.Recipients[i].Email</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+    <h3>Předmět</h3>
+    <input asp-for="Subject" class="form-control" />
+
+    <h3>Text e‑mailu</h3>
+    <textarea asp-for="Body" rows="10" class="form-control"></textarea>
+
+    <h3>Platba</h3>
+
+    <label>Cena (Kč)</label>
+    <input asp-for="Amount" class="form-control" />
+
+    <label>Zpráva pro příjemce</label>
+    <input asp-for="PaymentMessage" class="form-control" />
+
+    <button type="submit" class="btn btn-primary mt-3">
+        Odeslat
+    </button>
+</form>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">
+        @TempData["Success"]
+    </div>
+}
+
+<script>
+    function toggleAll() {
+        const master = document.getElementById("selectAll");
+        const boxes = document.querySelectorAll("input[type='checkbox'][name*='Selected']");
+        boxes.forEach(b => b.checked = master.checked);
+    }
+</script>

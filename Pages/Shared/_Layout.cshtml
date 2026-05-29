@@ -21,6 +21,27 @@
 
 <body>
 
+    <!-- ENVIRONMENT STRIP -->
+    <environment include="Development">
+        <div style="background:#ff0066; color:#000000; padding:4px 10px;
+            font-size:18px; font-weight:bold; text-align:center;">
+            Vývojová verze – @ViewData["Title"]
+        </div>
+
+    </environment>
+
+    <environment exclude="Development">
+        <div style="background:#009900; color:#000000; padding:4px 10px;
+            font-size:18px; font-weight:bold; text-align:center;">
+            Produkční verze – @ViewData["Title"]
+        </div>
+    </environment>
+
+    <header>
+        ...
+
+
+
     <!-- ========================================= -->
     <!-- ADMIN MENU -->
     <!-- ========================================= -->
@@ -62,6 +83,13 @@
                                     <i class="bi bi-person-plus-fill me-2"></i> Přidat studenta
                                 </a>
                             </li>
+                            <!-- POZNÁMKY -->
+                                <li>
+                                    <a class="dropdown-item" asp-page="/Admin/Notes/Notes">
+
+                                    <i class="bi bi-journal-text me-2"></i> Poznámky
+                                </a>
+                            </li>
                         </ul>
                     </li>
 
@@ -71,14 +99,7 @@
                             <i class="bi bi-person-badge-fill me-1"></i> Učitelé
                         </a>
                     </li>
-
-                    <!-- POZNÁMKY -->
-                    <li class="nav-item">
-                        <a class="nav-link" asp-page="/Admin/Notes/Notes">
-                            <i class="bi bi-journal-text me-1"></i> Poznámky
-                        </a>
-                    </li>
-
+                                       
                     <!-- ODUČENÉ HODINY -->
                     <li class="nav-item">
                         <a class="nav-link" href="/Admin/Hours">
@@ -99,8 +120,48 @@
                             <i class="bi bi-cash-stack me-1"></i> Finance
                         </a>
                     </li>
+                    <!-- E-MAILY (DROPDOWN) -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-envelope-fill me-1"></i> E‑maily
+                        </a>
 
-                    <!-- LOGOVÁNÍ EMAILŮ -->
+                        <ul class="dropdown-menu">
+
+                            <li>
+                                <a class="dropdown-item" asp-page="/Communications/BulkEmail">
+                                    <i class="bi bi-people-fill me-2"></i> Hromadný e‑mail
+                                </a>
+                            </li>
+                                <li>
+                                    <a class="dropdown-item" href="/Communications">
+                                        <img class="google-icon me-2"
+                                             src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg"
+                                             alt="">
+                                        E‑mailová komunikace
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" href="/Admin/Templates/Index">
+                                        <img class="google-icon me-2"
+                                             src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg"
+                                             alt="">
+                                        Šablony e‑mailů
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" asp-page="/Communications/Logs">
+                                        <i class="bi bi-envelope-paper me-2"></i> Log e‑mailů
+                                    </a>
+                                </li>
+
+
+                        </ul>
+                    </li>
+
+                    @* <!-- LOGOVÁNÍ EMAILŮ -->
                     <li class="nav-item">
                         <a class="nav-link" asp-page="/Communications/Logs">
                             <i class="bi bi-envelope-paper"></i> Log e‑mailů
@@ -113,7 +174,7 @@
                         <a class="nav-link" href="/Communications">
                             <i class="bi bi-envelope-fill me-1"></i> E‑maily
                         </a>
-                    </li>
+                    </li> *@
 
                     <!-- PROFIL -->
                     <li class="nav-item">

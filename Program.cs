@@ -22,7 +22,9 @@ builder.Services.Configure<SmtpSettings>(
     builder.Configuration.GetSection("SmtpSettings")
 );
 
-// EmailService
+// ---------------------------------------------------------
+// EmailService – JEDINÁ správná registrace
+// ---------------------------------------------------------
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 // ---------------------------------------------------------
@@ -33,7 +35,7 @@ builder.Services.AddScoped<LessonEmailBuilder>();
 builder.Services.AddScoped<OfferEmailBuilder>();
 
 // ---------------------------------------------------------
-//QR kód
+// QR kód
 // ---------------------------------------------------------
 builder.Services.AddSingleton<QrCodeGeneratorService>();
 
@@ -89,10 +91,7 @@ builder.Services.AddSingleton(provider =>
     var config = provider.GetRequiredService<IConfiguration>();
     var env = provider.GetRequiredService<IHostEnvironment>();
 
-    // Název souboru z appsettings.json
     var keyPath = config["Google:ServiceAccountKeyPath"];
-
-    // Správná cesta – hledá JSON vedle EXE (publish)
     keyPath = Path.Combine(env.ContentRootPath, keyPath);
 
     if (!File.Exists(keyPath))
@@ -111,7 +110,6 @@ builder.Services.AddSingleton(provider =>
         });
 });
 
-
 // Služba pro práci s Google Calendar
 builder.Services.AddScoped<GoogleCalendarService>();
 
@@ -128,7 +126,7 @@ builder.Services.AddSession(options =>
 var app = builder.Build();
 
 // ---------------------------------------------------------
-// Inicializace rolí + ADMIN účtu při startu aplikace (ASYNC, BEZ MIGRACÍ)
+// Inicializace rolí + ADMIN účtu při startu aplikace
 // ---------------------------------------------------------
 using (var scope = app.Services.CreateAsyncScope())
 {
@@ -147,9 +145,6 @@ using (var scope = app.Services.CreateAsyncScope())
         }
     }
 
-    // ---------------------------------------------------------
-    // AUTOMATICKÉ VYTVOŘENÍ ADMINA, POKUD NEEXISTUJE
-    // ---------------------------------------------------------
     string adminEmail = "zakalois@ucitelzak.eu";
     string adminPassword = "zlastaLO";
 

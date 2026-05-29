@@ -18,6 +18,10 @@ namespace Vyuka.Pages.Admin
         public int EmailsLast30Days { get; set; }
         public int EmailErrorsLast30Days { get; set; }
         public double HoursThisWeek { get; set; }
+        public int TotalStudents { get; set; }
+        public int ActiveStudents { get; set; }
+        public int InactiveStudents { get; set; }
+
 
 
         public void OnGet()
@@ -36,7 +40,10 @@ namespace Vyuka.Pages.Admin
             HoursThisWeek = lessonsThisWeek
                 .Sum(x => (x.End - x.Start).TotalHours);
 
-
+            // Výpočet studentů
+            TotalStudents = _context.Students.Count();
+            ActiveStudents = _context.Students.Count(s => s.IsActive);
+            InactiveStudents = _context.Students.Count(s => !s.IsActive);
 
             // původní kód pro NextLessonDate
             var lessons = _context.LessonPlans

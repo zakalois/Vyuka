@@ -23,8 +23,6 @@
 
 <h1 class="mb-4">Řídicí panel Administrátora</h1>
 
-<!-- BAREVNÝ PROUŽEK – PRODUKCE / VÝVOJ -->
-
 <div class="user-kpi-row">
     <div class="profile-inline">
         <img src="/images/logo.jpg" alt="Profil">
@@ -43,8 +41,13 @@
     <div class="kpi-inline-grid">
         <div class="kpi-box">
             <div class="kpi-title">Studenti</div>
-            <div class="kpi-value">24</div>
+            <div class="kpi-value">@Model.TotalStudents</div>
         </div>
+        <div class="kpi-box">
+            <div class="kpi-title">Aktivní studenti</div>
+            <div class="kpi-value">@Model.ActiveStudents</div>
+        </div>
+
 
         <div class="kpi-box">
             <div class="kpi-title">Hodiny tento týden</div>
@@ -69,13 +72,13 @@
     </div>
 </div>
 
-<div class="actions">
+@* <div class="actions">
     <a class="btn" href="/Admin/Students/Create">Přidat studenta</a>
     <a class="btn" href="/Admin/Students">Studenti</a>
     <a class="btn btn-primary" asp-page="/Admin/Schedule/Index">Rozvrh</a>
     <a class="btn" href="/Communications?template=Offer">Vytvořit nabídku</a>
     <a class="btn" href="/Payments/Index">Finance</a>
-</div>
+</div> *@
 
 <div class="gmail-box">
     <h3>Online služby</h3>
@@ -105,16 +108,7 @@
             <img class="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="">
             WhatsApp
         </a>
-
-        <a href="/Communications">
-            <img class="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg" alt="">
-            E‑mailová komunikace
-        </a>
-        <a href="/Admin/Templates/Index">
-            <img class="google-icon" src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg" alt="">
-            Šablony e‑mailů
-        </a>
-
+                
     </div>
 
     <p style="text-align:center; opacity:0.7; font-size:14px;">

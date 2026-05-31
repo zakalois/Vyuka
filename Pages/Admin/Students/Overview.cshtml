@@ -16,7 +16,6 @@
         margin-right: 6px;
     }
 
-    /* Moderní akční tlačítka */
     .action-btn {
         width: 34px;
         height: 34px;
@@ -33,13 +32,11 @@
             opacity: 0.9;
         }
 
-    /* Karta rodiče */
     .parent-card {
         line-height: 1.35;
         padding: 4px 0;
     }
 
-    /* Jemné barvy ikon */
     .icon-blue {
         color: #0d6efd;
     }
@@ -60,42 +57,6 @@
         color: #6c757d;
     }
 
-    .icon-blue {
-        color: #0d6efd;
-    }
-
-    .icon-green {
-        color: #198754;
-    }
-
-    .icon-red {
-        color: #dc3545;
-    }
-
-    .icon-orange {
-        color: #fd7e14;
-    }
-
-    .icon-gray {
-        color: #6c757d;
-    }
-
-    .action-btn {
-        width: 34px;
-        height: 34px;
-        padding: 0;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: 0.15s;
-    }
-
-        .action-btn:hover {
-            transform: scale(1.08);
-            opacity: 0.9;
-        }
-    /* Jemné střídání řádků */
     .table tbody tr:nth-child(odd) {
         background-color: #fafbff;
     }
@@ -104,11 +65,13 @@
         background-color: #ffffff;
     }
 
-    /* Hover efekt */
     .table tbody tr:hover {
         background-color: #eef3ff;
-    }
 
+        .text-brown {
+            color: #C19A6B; /* SaddleBrown */
+        }
+    }
 </style>
 
 <select class="form-select w-auto mb-3" onchange="location = this.value;">
@@ -132,12 +95,13 @@
             <th><i class="bi bi-person icon-blue"></i> Student</th>
             <th><i class="bi bi-journal-bookmark icon-orange"></i> Předmět</th>
             <th><i class="bi bi-people icon-red"></i> Rodič</th>
+            <th><i class="bi bi-cash-coin icon-green"></i> Uhrazené</th>
+            <th><i class="bi bi-book icon-blue"></i> Odučené</th>
+            <th><i class="bi bi-hourglass-split icon-orange"></i> Zbývá</th>
             <th><i class="bi bi-check2-circle icon-green"></i> Stav</th>
             <th class="text-center"><i class="bi bi-gear icon-gray"></i></th>
         </tr>
     </thead>
-
-
 
     <tbody>
         @foreach (var s in Model.Students)
@@ -155,7 +119,7 @@
                 <!-- PŘEDMĚT -->
                 <td>
                     <i class="bi bi-journal-text icon-orange"></i>
-                    @s.Subject?.Name
+                    @s.Subject
                 </td>
 
                 <!-- RODIČ -->
@@ -163,7 +127,6 @@
                     @if (!string.IsNullOrWhiteSpace(s.ParentLastName))
                     {
                         <div class="parent-card">
-
                             <div class="fw-bold">
                                 <i class="bi bi-person-hearts icon-red"></i>
                                 @s.ParentLastName @s.ParentFirstName
@@ -178,7 +141,6 @@
                                 <i class="bi bi-telephone icon-green"></i>
                                 <a href="tel:@s.ParentPhone">@s.ParentPhone</a>
                             </div>
-
                         </div>
                     }
                     else
@@ -189,22 +151,39 @@
                     }
                 </td>
 
+                <!-- UHRAZENÉ -->
+                <td>
+                    <span class="fw-bold">@s.PaidHours h</span>
+                </td>
+
+                <!-- ODUČENÉ -->
+                <td>
+                    <span>@s.TaughtHours h</span>
+                </td>
+
+                <!-- ZBÝVÁ -->
+                <td>
+                    <span class="fw-bold @(s.RemainingHours <= 2 ? "text-danger" : s.RemainingHours <= 5 ? "text-brown" : "text-success")">
+                        @s.RemainingHours h
+                    </span>
+
+                </td>
+
                 <!-- STAV -->
                 <td class="text-center">
                     @if (s.IsActive)
                     {
-                        <span class="fw-bold" style="color:#198754;">
+                        <span class="fw-bold text-success">
                             <i class="bi bi-check-circle-fill"></i> Aktivní
                         </span>
                     }
                     else
                     {
-                        <span class="fw-bold" style="color:#dc3545;">
+                        <span class="fw-bold text-danger">
                             <i class="bi bi-x-circle-fill"></i> Neaktivní
                         </span>
                     }
                 </td>
-
 
                 <!-- AKCE -->
                 <td class="text-center">
@@ -213,7 +192,6 @@
                         <!-- Upravit -->
                         <a asp-page="/Admin/Students/Edit" asp-route-id="@s.Id"
                            class="btn btn-outline-primary action-btn"
-                           data-bs-toggle="tooltip"
                            title="Upravit studenta">
                             <i class="bi bi-pencil-square"></i>
                         </a>
@@ -223,7 +201,6 @@
                         {
                             <a asp-page="/Admin/Students/ToggleActive" asp-route-id="@s.Id"
                                class="btn btn-outline-danger action-btn"
-                               data-bs-toggle="tooltip"
                                title="Deaktivovat studenta">
                                 <i class="bi bi-person-dash"></i>
                             </a>
@@ -232,7 +209,6 @@
                         {
                             <a asp-page="/Admin/Students/ToggleActive" asp-route-id="@s.Id"
                                class="btn btn-outline-success action-btn"
-                               data-bs-toggle="tooltip"
                                title="Aktivovat studenta">
                                 <i class="bi bi-person-check"></i>
                             </a>
@@ -240,7 +216,6 @@
 
                     </div>
                 </td>
-
 
             </tr>
         }

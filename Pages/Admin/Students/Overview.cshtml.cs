@@ -14,7 +14,7 @@ namespace Vyuka.Pages.Admin.Students
             _context = context;
         }
 
-        public List<Student> Students { get; set; } = new();
+        public List<StudentOverviewDto> Students { get; set; } = new();
         public List<Student> AllStudents { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
@@ -28,13 +28,14 @@ namespace Vyuka.Pages.Admin.Students
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            // Tabulka – filtrovaní studenti
+            // Základní dotaz
             var query = _context.Students
                 .Include(s => s.Subject)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .AsQueryable();
 
+            // Filtr
             switch (Filter)
             {
                 case "active":
@@ -46,8 +47,72 @@ namespace Vyuka.Pages.Admin.Students
                     break;
             }
 
-            Students = await query.ToListAsync();
-        }
+            var students = await query.ToListAsync();
 
+            // Načteme všechny lekce a platby najednou (rychlé)
+            var lessons = await _context.Lessons
+                .Where(l => l.IsTaught)
+                .ToListAsync();
+
+            var payments = await _context.Payments.ToListAsync();
+
+            // Sestavení DTO
+            Students = students.Select(s =>
+            {
+                var paid = payments
+                    .Where(p => p.StudentId == s.Id)
+                    .Sum(p => (double)p.HoursPurchased);
+
+                var taught = lessons
+                    .Where(l => l.StudentId == s.Id)
+                    .Sum(l =>
+                        l.End > l.Start
+                            ? (l.End - l.Start).TotalMinutes / 60.0
+                            : (double)l.Hours
+                    );
+
+                return new StudentOverviewDto
+                {
+                    Id = s.Id,
+                    FirstName = s.FirstName,
+                    LastName = s.LastName,
+                    Subject = s.Subject.Name,
+
+                    ParentFirstName = s.ParentFirstName,
+                    ParentLastName = s.ParentLastName,
+                    ParentEmail = s.ParentEmail,
+                    ParentPhone = s.ParentPhone,
+
+                    IsActive = s.IsActive,
+
+                    PaidHours = paid,
+                    TaughtHours = taught,
+                    RemainingHours = paid - taught
+                };
+            })
+            .ToList();
+        }
+    }
+
+    // DTO pro přehled studentů
+    public class StudentOverviewDto
+    {
+        public int Id { get; set; }
+
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+
+        public string Subject { get; set; } = "";
+
+        public string? ParentFirstName { get; set; }
+        public string? ParentLastName { get; set; }
+        public string? ParentEmail { get; set; }
+        public string? ParentPhone { get; set; }
+
+        public bool IsActive { get; set; }
+
+        public double PaidHours { get; set; }
+        public double TaughtHours { get; set; }
+        public double RemainingHours { get; set; }
     }
 }

@@ -26,19 +26,29 @@ namespace Vyuka.Pages.Admin
 
         public void OnGet()
         {
-            // Výpočet hodin v týdnu - od pondělí do neděle
             var today = DateTime.Today;
-            var startOfWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+
+            // Správný výpočet pondělí i v neděli
+            int offset = (int)today.DayOfWeek == 0
+                ? -6
+                : (int)DayOfWeek.Monday - (int)today.DayOfWeek;
+
+            var startOfWeek = today.AddDays(offset);
             var endOfWeek = startOfWeek.AddDays(7);
 
-            // 1) Načteme lekce z databáze (SQL část)
-            var lessonsThisWeek = _context.LessonPlans
-                .Where(x => x.Date >= startOfWeek && x.Date < endOfWeek)
-                .ToList(); // ← TADY je klíč – přepnutí na C# výpočet
+            // Načtení lekcí
+            var lessonsThisWeek = _context.Lessons
+                .Where(l => l.IsTaught == true &&
+                            l.Date >= startOfWeek &&
+                            l.Date < endOfWeek)
+                .ToList();
 
-            // 2) Spočítáme hodiny v C# (client-side)
+            // Výpočet hodin přesně jako SQL
             HoursThisWeek = lessonsThisWeek
-                .Sum(x => (x.End - x.Start).TotalHours);
+               .Sum(l => l.End > l.Start
+    ? Math.Round((l.End - l.Start).TotalMinutes / 60.0, 1)
+    : (double)l.Hours);
+
 
             // Výpočet studentů
             TotalStudents = _context.Students.Count();

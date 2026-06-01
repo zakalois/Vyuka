@@ -3,12 +3,14 @@
 
 <h1>Přidat nový předmět</h1>
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="subjectForm">
+    <div asp-validation-summary="All" class="text-danger"></div>
     <div class="mb-3">
         <label>Obrázek předmětu</label>
         <input type="file" name="ImageFile" class="form-control" onchange="showPreview(this)" />
-        <img id="preview" class="image-preview" />
+        <img id="preview" class="image-preview mt-2" style="max-width: 200px; display: none;" />
     </div>
+
     <div class="mb-3">
         <label class="form-label">Název</label>
         <input asp-for="Subject.Name" class="form-control" />
@@ -18,20 +20,15 @@
     <div class="mb-3">
         <label class="form-label">Témata</label>
 
-        <div id="topics-container">
-            <div class="input-group mb-2">
-                <input type="text" class="form-control topic-input" placeholder="Napište téma..." />
-                <button type="button" class="btn btn-danger remove-topic">X</button>
-            </div>
-        </div>
+        <div id="topics-container"></div>
 
-        <button type="button" id="add-topic" class="btn btn-secondary">+ Přidat téma</button>
+        <button type="button" id="add-topic" class="btn btn-secondary mt-2">+ Přidat téma</button>
 
-        <!-- Skryté pole, do kterého se uloží všechna témata -->
+        <!-- Skryté pole pro uložení témat -->
         <textarea asp-for="Subject.Topics" id="topics-hidden" hidden></textarea>
     </div>
 
-    <button type="submit" class="btn btn-success" onclick="saveTopics()">Uložit</button>
+    <button type="submit" class="btn btn-success">Uložit</button>
     <a asp-page="Index" class="btn btn-secondary">Zpět</a>
 </form>
 
@@ -59,8 +56,8 @@
             }
         });
 
-        // Uložení témat do hidden textarea
-        function saveTopics() {
+        // Před odesláním formuláře uložíme témata
+        document.getElementById("subjectForm").addEventListener("submit", function () {
             const inputs = document.querySelectorAll(".topic-input");
             const hidden = document.getElementById("topics-hidden");
 
@@ -72,15 +69,19 @@
             });
 
             hidden.value = lines.join("\n");
-        }
-        // Náhked obrázku
-        function showPreview(input) {
+        });
+
+        // Náhled obrázku
+                function showPreview(input) {
             const preview = document.getElementById("preview");
             const file = input.files[0];
 
             if (file) {
                 const reader = new FileReader();
-                reader.onload = e => preview.src = e.target.result;
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.style.display = "block"; // ⭐ zobrazíme obrázek
+                };
                 reader.readAsDataURL(file);
             }
         }

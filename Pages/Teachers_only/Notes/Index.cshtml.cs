@@ -13,6 +13,8 @@ namespace Vyuka.Pages.Teachers_only.Notes
         private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
 
+        public string CurrentTeacherName { get; set; }
+
         public IndexModel(AppDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
@@ -27,23 +29,25 @@ namespace Vyuka.Pages.Teachers_only.Notes
 
         public Student SelectedStudent { get; set; }
 
-        // GET
-        public void OnGet(int? studentId)
+        // ⭐ GET – musí být async Task, ne async void
+        public async Task OnGet(int? studentId)
         {
             SelectedStudentId = studentId;
 
+            await LoadCurrentTeacherName();
             LoadStudents();
             LoadSelectedStudent();
             LoadNotes();
         }
 
-        // POST – změna studenta
-        public IActionResult OnPostSelect()
+        // ⭐ POST – změna studenta
+        public async Task<IActionResult> OnPostSelect()
         {
+            await LoadCurrentTeacherName();
             return RedirectToPage(new { studentId = SelectedStudentId });
         }
 
-        // POST – přidání poznámky
+        // ⭐ POST – přidání poznámky
         public async Task<IActionResult> OnPostAddNote()
         {
             if (SelectedStudentId == null)
@@ -69,7 +73,8 @@ namespace Vyuka.Pages.Teachers_only.Notes
             _context.Notes.Add(note);
             await _context.SaveChangesAsync();
 
-            // ⭐ ZŮSTAT NA STEJNÉM STUDENTOVI
+            await LoadCurrentTeacherName();
+
             return RedirectToPage(new { studentId = SelectedStudentId });
         }
 
@@ -105,6 +110,13 @@ namespace Vyuka.Pages.Teachers_only.Notes
                 .Where(n => n.StudentId == SelectedStudentId)
                 .OrderByDescending(n => n.Created)
                 .ToList();
+        }
+
+        // ⭐ Získání jména přihlášeného učitele
+        private async Task LoadCurrentTeacherName()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            CurrentTeacherName = user?.Name; // nebo user.FullName pokud máš
         }
     }
 }

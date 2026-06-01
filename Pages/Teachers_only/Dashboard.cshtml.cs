@@ -1,15 +1,21 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Vyuka.Models; // ← Tohle je důležité
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using Vyuka.Models;
 
 namespace Vyuka.Pages.Teachers_only
 {
+    [Authorize(Roles = "Teacher")]
     public class DashboardModel : PageModel
     {
+        private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
 
-        public DashboardModel(UserManager<AppUser> userManager)
+        public DashboardModel(AppDbContext context, UserManager<AppUser> userManager)
         {
+            _context = context;
             _userManager = userManager;
         }
 
@@ -23,33 +29,80 @@ namespace Vyuka.Pages.Teachers_only
 
         public async Task OnGet()
         {
-            // 🔹 Načteme přihlášeného učitele
+            // 1️⃣ Přihlášený učitel
             CurrentTeacher = await _userManager.GetUserAsync(User);
 
-            // MOCK DATA
-            TodayLessons = new List<LessonInfo>
-            {
-                new LessonInfo("08:00", "Jan Novák", "Matematika"),
-                new LessonInfo("10:00", "Petra Malá", "Fyzika"),
-                new LessonInfo("14:00", "Adam Král", "Angličtina")
-            };
+            var teacher = await _context.Teachers
+                .Include(t => t.Students)
+                .FirstOrDefaultAsync(t => t.UserId == CurrentTeacher.Id);
 
-            StudentCount = 12;
-            LowCreditCount = 3;
+            if (teacher == null)
+                return;
 
-            WeeklySchedule = new List<DaySchedule>
-            {
-                new DaySchedule("Pondělí", 2),
-                new DaySchedule("Úterý", 1),
-                new DaySchedule("Středa", 3),
-                new DaySchedule("Čtvrtek", 0),
-                new DaySchedule("Pátek", 2)
-            };
+            // 2️⃣ Dnešní hodiny
+            var today = DateTime.Today;
 
-            Notifications = new List<string>
+            TodayLessons = await _context.Lessons
+    .Include(l => l.Student)
+    .Include(l => l.Subject)
+    .Where(l => l.TeacherId == teacher.Id &&
+                l.Date.Date == today)
+    .OrderBy(l => l.Date)
+    .Select(l => new LessonInfo(
+        l.Date.ToString("HH:mm"),
+        l.Student.FirstName + " " + l.Student.LastName,
+        l.Subject.Name // ← TADY JE OPRAVA
+    ))
+    .ToListAsync();
+
+
+            // 3️⃣ Počet studentů
+            StudentCount = teacher.Students.Count;
+
+            // 4️⃣ Studenti s nízkým kreditem
+            LowCreditCount = teacher.Students.Count(s => s.RemainingHours <= 1);
+
+            // 5️⃣ Týdenní rozvrh
+            var weekLessons = await _context.Lessons
+                .Where(l => l.TeacherId == teacher.Id &&
+                            l.Date >= today &&
+                            l.Date < today.AddDays(7))
+                .ToListAsync(); // ← DŮLEŽITÉ!
+
+            WeeklySchedule = weekLessons
+                .GroupBy(l => l.Date.DayOfWeek)
+                .Select(g => new DaySchedule(
+                    GetCzechDayName(g.Key),
+                    g.Count()
+                ))
+                .ToList();
+
+
+            // 6️⃣ Upozornění
+            Notifications = _context.Notes
+    .Include(n => n.Student)
+    .Where(n => n.TeacherId == teacher.Id)
+    .OrderByDescending(n => n.Created)
+    .Take(5)
+    .Select(n => $"{n.Created:dd.MM.yyyy HH:mm} – {n.Student.FirstName} {n.Student.LastName}: {n.Text}")
+    .ToList();
+
+
+        }
+
+        // Pomocná funkce pro české názvy dnů
+        private string GetCzechDayName(DayOfWeek day)
+        {
+            return day switch
             {
-                "Student Petr zrušil hodinu.",
-                "Studentka Eva má nízký kredit."
+                DayOfWeek.Monday => "Pondělí",
+                DayOfWeek.Tuesday => "Úterý",
+                DayOfWeek.Wednesday => "Středa",
+                DayOfWeek.Thursday => "Čtvrtek",
+                DayOfWeek.Friday => "Pátek",
+                DayOfWeek.Saturday => "Sobota",
+                DayOfWeek.Sunday => "Neděle",
+                _ => ""
             };
         }
 

@@ -30,10 +30,9 @@ namespace Vyuka.Pages.Subjects
             if (!ModelState.IsValid)
                 return Page();
 
-            // Uložení obrázku
             if (ImageFile != null)
             {
-                var fileName = Path.GetFileName(ImageFile.FileName);
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
                 var filePath = Path.Combine(_env.WebRootPath, "images", fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
@@ -44,10 +43,17 @@ namespace Vyuka.Pages.Subjects
                 Subject.ImageUrl = fileName;
             }
 
+            if (string.IsNullOrWhiteSpace(Subject.Topics))
+                Subject.Topics = "";
+
+            // ⭐ DŮLEŽITÉ – bez toho se předmět NEULOŽÍ
+            Subject.TeacherId = 1;
+
             _context.Subjects.Add(Subject);
             await _context.SaveChangesAsync();
 
             return RedirectToPage("Index");
         }
+
     }
 }

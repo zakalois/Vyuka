@@ -115,6 +115,16 @@ namespace Vyuka.Pages.Admin.Schedule
                 .ToListAsync();
         }
 
+        // ⭐ Handler pro AJAX načítání témat
+        public JsonResult OnGetTopics(int subjectId)
+        {
+            var topics = _context.SubjectTopics
+                .Where(t => t.SubjectId == subjectId)
+                .Select(t => new { id = t.Id, name = t.Name })
+                .ToList();
+
+            return new JsonResult(topics);
+        }
         // -----------------------------
         // GET – NAČTENÍ STRÁNKY
         // -----------------------------

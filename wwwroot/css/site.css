@@ -813,3 +813,29 @@ body.dark .notes-table th {
     .admin-navbar .dropdown-menu i {
         color: #ffffff !important;
     }
+.teacher-assigned {
+    background-color: #d4f8d4; /* světle zelená */
+    color: #0f7a0f; /* tmavě zelená */
+    font-weight: 600;
+}
+
+.teacher-unassigned {
+    background-color: #ffd6d6; /* světle červená */
+    color: #b30000; /* tmavě červená */
+    font-weight: 600;
+}
+.teacher-cell.has-teacher {
+    background-color: #d4f8d4; /* světle zelená */
+    color: #0f7a0f; /* tmavě zelená */
+    font-weight: 600;
+}
+
+.teacher-cell.no-teacher {
+    background-color: #ffd6d6; /* světle červená */
+    color: #b30000; /* tmavě červená */
+    font-weight: 600;
+}
+.notes-table td,
+.notes-table th {
+    color: #000 !important;
+}

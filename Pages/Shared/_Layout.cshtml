@@ -93,6 +93,13 @@
                         </ul>
                     </li>
 
+                    <!-- PŘEDMĚTY -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Subjects/Index">
+                            <i class="bi bi-book-fill me-1"></i> Předměty
+                        </a>
+                    </li>
+
                     <!-- UČITELÉ -->
                     <li class="nav-item">
                         <a class="nav-link" asp-page="/Admin/Teachers/Teachers">
@@ -115,11 +122,26 @@
                     </li>
 
                     <!-- FINANCE -->
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Payments/Index">
-                            <i class="bi bi-cash-stack me-1"></i> Finance
-                        </a>
-                    </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="bi bi-cash-coin"></i> Finance
+                            </a>
+
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" asp-page="/Payments/Index">
+                                        Přehled plateb
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" asp-page="/Payments/Create">
+                                        Nová platba
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
                     <!-- E-MAILY (DROPDOWN) -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">

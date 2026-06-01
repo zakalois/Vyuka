@@ -5,6 +5,20 @@
     .row-pink {
         background-color: #f8d7da !important;
     }
+
+    /* učitel – přiřazen */
+    .teacher-cell.has-teacher {
+        background-color: #d4f8d4; /* světle zelená */
+        color: #0f7a0f; /* tmavě zelená */
+        font-weight: 600;
+    }
+
+    /* učitel – nepřiřazen */
+    .teacher-cell.no-teacher {
+        background-color: #ffd6d6; /* světle červená */
+        color: #b30000; /* tmavě červená */
+        font-weight: 600;
+    }
 </style>
 
 <h1>Seznam studentů</h1>
@@ -21,16 +35,14 @@
             <th>Příjmení</th>
             <th>Jméno</th>
             <th>Věk</th>
-            <th>Email</th>
-            <th>Telefon</th>
-
-            <th>Rodič</th>
-
+            <th class="text-start">Email</th>
+            <th>Telefon R</th>
+            <th>Telefon S</th>
             <th>Učitel</th>
-
             <th class="text-center" style="width:110px;">Akce</th>
         </tr>
     </thead>
+
 
     <tbody>
         @foreach (var item in Model.Students)
@@ -40,39 +52,37 @@
                 <td>@item.Student.LastName</td>
                 <td>@item.Student.FirstName</td>
                 <td>@item.Student.Age</td>
-                <td>@item.Student.Email</td>
-                <td>@item.Student.Phone</td>
 
-                <!-- ⭐ RODIČ -->
+                <!-- ⭐ EMAIL vlevo -->
+                <td class="text-start">@item.Student.Email</td>
+
                 <td>
-                    @if (item.Parent != null)
+                    @if (!string.IsNullOrWhiteSpace(item.Student.ParentPhone))
                     {
-                        <div data-bs-toggle="tooltip" title="Jméno rodiče">
-                            <i class="bi bi-person"></i> @item.Parent.Name
-                        </div>
-
-                        @if (!string.IsNullOrEmpty(item.Parent.Phone))
-                        {
-                            <div data-bs-toggle="tooltip" title="Telefon rodiče">
-                                <i class="bi bi-telephone"></i> @item.Parent.Phone
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(item.Parent.Email))
-                        {
-                            <div data-bs-toggle="tooltip" title="Email rodiče">
-                                <i class="bi bi-envelope"></i> @item.Parent.Email
-                            </div>
-                        }
+                        @item.Student.ParentPhone
                     }
                     else
                     {
-                        <span class="text-muted">Neuveden</span>
+                        <span class="text-muted">—</span>
                     }
                 </td>
 
-                <!-- ⭐ UČITEL -->
-                <td class="teacher-cell @(item.Student.UserId == null ? "no-teacher" : "has-teacher")">
+
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(item.Student.Phone))
+                    {
+                        @item.Student.Phone
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </td>
+
+
+
+                <!-- ⭐ UČITEL – barevné podbarvení -->
+                <td class="teacher-cell @(item.Student.Teacher != null ? "has-teacher" : "no-teacher")">
                     @if (item.Student.Teacher != null)
                     {
                         <span title="@item.Student.Teacher.User?.Email">
@@ -81,7 +91,7 @@
                     }
                     else
                     {
-                        <span class="text-dark">
+                        <span>
                             <i class="bi bi-exclamation-circle"></i> Nepřiřazen
                         </span>
                     }

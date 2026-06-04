@@ -221,22 +221,12 @@ namespace Vyuka.Pages.Admin.Schedule
 
             await _email.SendAsync(student.Email, "Plánovaná lekce", html);
 
-            // URČENÍ TEACHER ID
-            var currentUserId = User.FindFirst("sub")?.Value;
-            int? teacherIdToAssign = null;
+            // URČENÍ TEACHER ID – vždy podle studenta
+            int? teacherIdToAssign = _context.Students
+                .Where(s => s.Id == NewStudentId.Value)
+                .Select(s => s.TeacherId)
+                .SingleOrDefault();
 
-            if (User.IsInRole("Teacher"))
-            {
-                teacherIdToAssign = _context.Teachers
-                    .Where(t => t.UserId == currentUserId)
-                    .Select(t => t.Id)
-                    .SingleOrDefault();
-            }
-            else
-            {
-                if (int.TryParse(this.TeacherId, out var tid))
-                    teacherIdToAssign = tid;
-            }
 
             // ULOŽENÍ LEKCE
             var plan = new LessonPlan

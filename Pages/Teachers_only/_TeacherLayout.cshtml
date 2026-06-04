@@ -18,6 +18,23 @@
 </head>
 
 <body class="dark">
+    @{
+        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+    }
+
+    @if (env == "Development")
+    {
+        <div style="background:#b30000; color:white; padding:6px 12px; text-align:center; font-weight:bold;">
+            ⚠️ DEVELOPMENT – TESTOVACÍ PROSTŘEDÍ
+        </div>
+    }
+    else
+    {
+        <div style="background:#28a745; color:white; padding:6px 12px; text-align:center; font-weight:bold;">
+            ✔️ PRODUCTION – OSTRÉ PROSTŘEDÍ
+        </div>
+    }
+
 
     <!-- HORNÍ NAVIGACE -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-4 py-2 shadow">

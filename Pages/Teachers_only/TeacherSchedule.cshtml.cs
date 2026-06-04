@@ -39,15 +39,7 @@ namespace Vyuka.Pages.Teachers_only
         [BindProperty(SupportsGet = true)]
         public int Week { get; set; }
 
-        public int CurrentWeek { get; set; }
-        public int PreviousWeek { get; set; }
-        public int NextWeek { get; set; }
-
-        public DateTime StartOfWeek { get; set; }
-        public DateTime EndOfWeek { get; set; }
-
         [BindProperty]
-        [ValidateNever]
         public NewLessonInput NewLesson { get; set; } = new();
 
         [BindProperty]
@@ -56,8 +48,17 @@ namespace Vyuka.Pages.Teachers_only
         [BindProperty]
         public bool EditingIsPlan { get; set; }
 
+        public int CurrentWeek { get; set; }
+        public int PreviousWeek { get; set; }
+        public int NextWeek { get; set; }
+
+        public DateTime StartOfWeek { get; set; }
+        public DateTime EndOfWeek { get; set; }
+
         public List<Student> Students { get; set; } = new();
         public List<Subject> Subjects { get; set; } = new();
+        public List<SubjectTopic> Topics { get; set; } = new();
+
         public List<DaySchedule> WeeklySchedule { get; set; } = new();
 
         private readonly string[] _colors = new[]
@@ -75,7 +76,7 @@ namespace Vyuka.Pages.Teachers_only
             return _colors[index];
         }
 
-        private async Task LoadStudentsAndSubjects()
+        private async Task LoadStudentsSubjectsTopics()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
@@ -88,12 +89,14 @@ namespace Vyuka.Pages.Teachers_only
             Subjects = await _context.Subjects
                 .OrderBy(s => s.Name)
                 .ToListAsync();
+
+            Topics = await _context.SubjectTopics
+                .OrderBy(t => t.Name)
+                .ToListAsync();
         }
 
         private async Task LoadSchedule()
         {
-            await LoadStudentsAndSubjects();
-
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
 
@@ -104,6 +107,7 @@ namespace Vyuka.Pages.Teachers_only
             var plans = await _context.LessonPlans
                 .Include(lp => lp.Student)
                 .Include(lp => lp.Subject)
+                .Include(lp => lp.SubjectTopic)
                 .Where(lp =>
                     lp.Student.TeacherId == teacher.Id &&
                     lp.Date >= StartOfWeek &&
@@ -144,6 +148,8 @@ namespace Vyuka.Pages.Teachers_only
                                 StudentId = lp.StudentId,
                                 Subject = lp.Subject.Name,
                                 SubjectId = lp.SubjectId,
+                                SubjectTopicId = lp.SubjectTopicId,
+                                SubjectTopic = lp.SubjectTopic?.Name,
                                 MeetLink = lp.MeetLink,
                                 Color = GetStudentColor(lp.Student),
                                 IsTaught = lp.IsTaught
@@ -174,7 +180,7 @@ namespace Vyuka.Pages.Teachers_only
 
         public async Task<IActionResult> OnGetAsync(int? editId, bool? isPlan)
         {
-            ModelState.Clear();
+            await LoadStudentsSubjectsTopics();
 
             if (Week <= 0)
             {
@@ -187,70 +193,119 @@ namespace Vyuka.Pages.Teachers_only
             PreviousWeek = Week - 1;
             NextWeek = Week + 1;
 
-            if (editId != null && isPlan == true)
+            if (editId.HasValue)
             {
-                var plan = await _context.LessonPlans
-                    .Include(lp => lp.Student)
-                    .Include(lp => lp.Subject)
-                    .FirstOrDefaultAsync(lp => lp.Id == editId.Value);
+                EditingIsPlan = isPlan ?? false;
 
-                if (plan != null)
+                if (EditingIsPlan)
                 {
-                    EditingIsPlan = true;
+                    var plan = await _context.LessonPlans
+                        .Include(lp => lp.Student)
+                        .Include(lp => lp.Subject)
+                        .Include(lp => lp.SubjectTopic)
+                        .FirstOrDefaultAsync(lp => lp.Id == editId.Value);
 
-                    EditingLesson = new UnifiedLesson
+                    if (plan != null)
                     {
-                        LessonPlanId = plan.Id,
-                        Date = plan.Date,
-                        Start = plan.Start,
-                        End = plan.End,
-                        StudentId = plan.StudentId,
-                        SubjectId = plan.SubjectId,
-                        MeetLink = plan.MeetLink
-                    };
+                        EditingLesson = new UnifiedLesson
+                        {
+                            LessonPlanId = plan.Id,
+                            StudentId = plan.StudentId,
+                            SubjectId = plan.SubjectId,
+                            SubjectTopicId = plan.SubjectTopicId,
+                            Date = plan.Date,
+                            Start = plan.Start,
+                            End = plan.End
+                        };
+                    }
+                }
+                else
+                {
+                    var lesson = await _context.Lessons
+                        .Include(l => l.Student)
+                        .Include(l => l.Subject)
+                        .FirstOrDefaultAsync(l => l.Id == editId.Value);
 
-                    if (string.IsNullOrEmpty(NewLesson.MeetLink))
-                        NewLesson.MeetLink = plan.MeetLink;
+                    if (lesson != null)
+                    {
+                        EditingLesson = new UnifiedLesson
+                        {
+                            LessonId = lesson.Id,
+                            StudentId = lesson.StudentId,
+                            SubjectId = lesson.SubjectId,
+                            SubjectTopicId = lesson.SubjectTopicId,
+                            Date = lesson.Date,
+                            Start = lesson.Start,
+                            End = lesson.End
+                        };
+                    }
                 }
             }
 
             await LoadSchedule();
+            return Page();
+        }
 
-            if (NewLesson.Date == default)
-                NewLesson.Date = StartOfWeek;
-
-            if (string.IsNullOrEmpty(NewLesson.MeetLink))
+        // ULOŽENÍ ZMĚN PO EDITACI
+        public async Task<IActionResult> OnPostEditSaveAsync(
+            int id,
+            bool isPlan,
+            int studentId,
+            int subjectId,
+            int? subjectTopicId,
+            DateTime date,
+            TimeSpan start,
+            TimeSpan end,
+            int week)
+        {
+            if (isPlan)
             {
-                var existingPlan = await _context.LessonPlans
-                    .Include(lp => lp.Student)
-                    .FirstOrDefaultAsync(lp =>
-                        lp.StudentId == NewLesson.StudentId &&
-                        lp.SubjectId == NewLesson.SubjectId);
+                var plan = await _context.LessonPlans.FirstOrDefaultAsync(lp => lp.Id == id);
+                if (plan == null)
+                    return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
 
-                if (existingPlan != null)
-                    NewLesson.MeetLink = existingPlan.MeetLink;
+                plan.StudentId = studentId;
+                plan.SubjectId = subjectId;
+                plan.SubjectTopicId = subjectTopicId;
+                plan.Date = date;
+                plan.Start = start;
+                plan.End = end;
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var lesson = await _context.Lessons.FirstOrDefaultAsync(l => l.Id == id);
+                if (lesson == null)
+                    return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
+
+                lesson.StudentId = studentId;
+                lesson.SubjectId = subjectId;
+                lesson.SubjectTopicId = subjectTopicId;
+                lesson.Date = date;
+                lesson.Start = start;
+                lesson.End = end;
+
+                await _context.SaveChangesAsync();
             }
 
-            return Page();
+            return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
         }
 
         public async Task<IActionResult> OnPostAddLessonAsync(int week)
         {
-            ModelState.Clear();
+            await LoadStudentsSubjectsTopics();
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
-
-            if (teacher == null)
+            if (NewLesson.Date == default || NewLesson.Start == default || NewLesson.End == default)
                 return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
 
-            var student = await _context.Students
-                .FirstOrDefaultAsync(s => s.Id == NewLesson.StudentId);
-
+            var student = await _context.Students.FindAsync(NewLesson.StudentId);
             if (student == null)
                 return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
 
             var subject = await _context.Subjects.FindAsync(NewLesson.SubjectId);
+            if (subject == null)
+                return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
 
             var meet = await _calendar.CreateMeetEventAsync(
                 NewLesson.Date + NewLesson.Start,
@@ -270,6 +325,7 @@ namespace Vyuka.Pages.Teachers_only
                 End = NewLesson.End,
                 StudentId = NewLesson.StudentId,
                 SubjectId = NewLesson.SubjectId,
+                SubjectTopicId = NewLesson.SubjectTopicId,
                 MeetLink = meet.MeetLink,
                 IsTaught = false
             };
@@ -277,73 +333,7 @@ namespace Vyuka.Pages.Teachers_only
             _context.LessonPlans.Add(plan);
             await _context.SaveChangesAsync();
 
-            var html = await _emailBuilder.BuildPlannedAsync(
-                $"{student.FirstName} {student.LastName}",
-                subject.Name,
-                "",
-                NewLesson.Date,
-                NewLesson.Start,
-                meet.MeetLink
-            );
-
-            await _email.SendAsync(student.Email, "Plánovaná lekce", html);
-
             return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
-        }
-
-        public async Task<IActionResult> OnPostEditSaveAsync(
-            int id,
-            bool isPlan,
-            DateTime date,
-            TimeSpan start,
-            TimeSpan end,
-            int studentId,
-            int subjectId,
-            string? meetLink,
-            int week)
-        {
-            if (isPlan)
-            {
-                var plan = await _context.LessonPlans
-                    .Include(lp => lp.Student)
-                    .FirstOrDefaultAsync(p => p.Id == id);
-
-                if (plan == null)
-                    return RedirectToPage(new { week });
-
-                plan.Date = date;
-                plan.Start = start;
-                plan.End = end;
-                plan.StudentId = studentId;
-                plan.SubjectId = subjectId;
-
-                if (!string.IsNullOrWhiteSpace(meetLink))
-                    plan.MeetLink = meetLink;
-
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                var lesson = await _context.Lessons
-                    .Include(l => l.Student)
-                    .FirstOrDefaultAsync(l => l.Id == id);
-
-                if (lesson == null)
-                    return RedirectToPage(new { week });
-
-                lesson.Date = date;
-                lesson.Start = start;
-                lesson.End = end;
-                lesson.StudentId = studentId;
-                lesson.SubjectId = subjectId;
-
-                if (!string.IsNullOrWhiteSpace(meetLink))
-                    lesson.MeetLink = meetLink;
-
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToPage(new { week });
         }
 
         public async Task<IActionResult> OnPostDeleteLessonAsync(int id, int week)
@@ -420,6 +410,7 @@ namespace Vyuka.Pages.Teachers_only
     {
         public int StudentId { get; set; }
         public int SubjectId { get; set; }
+        public int? SubjectTopicId { get; set; }
         public DateTime Date { get; set; }
         public TimeSpan Start { get; set; }
         public TimeSpan End { get; set; }
@@ -443,6 +434,8 @@ namespace Vyuka.Pages.Teachers_only
 
         public int? LessonId { get; set; }
         public int? LessonPlanId { get; set; }
+        public int? SubjectTopicId { get; set; }
+        public string? SubjectTopic { get; set; }
 
         public string Color { get; set; } = "#ffffff";
     }

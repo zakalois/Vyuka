@@ -14,7 +14,11 @@
         </a>
 
         <div class="text-center mx-2">
-            <h5 class="mb-1">@Model.StartOfWeek.ToString("dd.MM.yyyy") – @Model.EndOfWeek.ToString("dd.MM.yyyy")</h5>
+            <h5 class="mb-1">
+                @Model.StartOfWeek.ToString("dd.MM.yyyy")
+                –
+                @Model.EndOfWeek.ToString("dd.MM.yyyy")
+            </h5>
             <a class="btn btn-info btn-sm" asp-page="./TeacherSchedule" asp-route-week="0">
                 Aktuální týden
             </a>
@@ -25,104 +29,25 @@
         </a>
     </div>
 
-
-    <!-- 🟩 EDITACE -->
-    @if (Model.EditingLesson != null)
-    {
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white text-center">
-                <strong>Upravit hodinu / plán</strong>
-            </div>
-
-            <div class="card-body">
-
-                <form method="post" asp-page-handler="EditSave">
-
-                    <input type="hidden" name="id" value="@(Model.EditingLesson.LessonPlanId ?? Model.EditingLesson.LessonId)" />
-                    <input type="hidden" name="isPlan" value="@(Model.EditingLesson.LessonPlanId != null ? "true" : "false")" />
-                    <input type="hidden" name="week" value="@Model.Week" />
-
-
-                    <div class="row g-2">
-
-                        <div class="col-md-3">
-                            <label class="form-label">Datum</label>
-                            <input name="date" type="date"
-                                   value="@Model.EditingLesson.Date.ToString("yyyy-MM-dd")"
-                                   class="form-control" />
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label">Začátek</label>
-                            <input name="start" type="time"
-                                   value="@Model.EditingLesson.Start.ToString(@"hh\:mm")"
-                                   class="form-control" />
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label">Konec</label>
-                            <input name="end" type="time"
-                                   value="@Model.EditingLesson.End.ToString(@"hh\:mm")"
-                                   class="form-control" />
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label">Předmět</label>
-                            <select name="subjectId" class="form-select">
-                                @foreach (var s in Model.Subjects)
-                                {
-                                    <option value="@s.Id" selected="@(s.Id == Model.EditingLesson.SubjectId)">
-                                        @s.Name
-                                    </option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="col-md-4 mt-2">
-                            <label class="form-label">Student</label>
-                            <select name="studentId" class="form-select">
-                                @foreach (var s in Model.Students)
-                                {
-                                    <option value="@s.Id" selected="@(s.Id == Model.EditingLesson.StudentId)">
-                                        @s.LastName @s.FirstName
-                                    </option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="col-md-12 mt-2">
-                            <label class="form-label">Meet link</label>
-                            <input name="meetLink" class="form-control" value="@Model.EditingLesson.MeetLink" />
-                        </div>
-
-                    </div>
-
-                    <button type="submit" class="btn btn-success w-100 mt-3">Uložit změny</button>
-
-                </form>
-
-            </div>
-        </div>
-    }
-
-    <!-- 🟨 PŘIDAT HODINU -->
+    <!-- 🟨 PŘIDAT / EDITOVAT HODINU -->
     @if (Model.EditingLesson == null)
     {
+        <!-- FORMULÁŘ PRO PŘIDÁNÍ -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-success text-white text-center">
                 <strong>Přidat hodinu</strong>
             </div>
 
             <div class="card-body">
-                <form method="post" asp-page="/Teachers_only/TeacherSchedule" asp-page-handler="AddLesson">
 
+                <form method="post" asp-page-handler="AddLesson">
                     <input type="hidden" name="week" value="@Model.Week" />
 
                     <div class="row">
 
                         <div class="col-md-3">
                             <label class="form-label">Student</label>
-                            <select asp-for="NewLesson.StudentId" class="form-select">
+                            <select name="NewLesson.StudentId" class="form-select" id="addStudentSelect">
                                 @foreach (var s in Model.Students)
                                 {
                                     <option value="@s.Id">@s.LastName @s.FirstName</option>
@@ -132,7 +57,7 @@
 
                         <div class="col-md-3">
                             <label class="form-label">Předmět</label>
-                            <select asp-for="NewLesson.SubjectId" class="form-select">
+                            <select name="NewLesson.SubjectId" class="form-select" id="addSubjectSelect">
                                 @foreach (var s in Model.Subjects)
                                 {
                                     <option value="@s.Id">@s.Name</option>
@@ -140,35 +65,125 @@
                             </select>
                         </div>
 
+                        <div class="col-md-3">
+                            <label class="form-label">Téma</label>
+                            <select name="NewLesson.SubjectTopicId" class="form-select" id="addTopicSelect">
+                                <option value="">-- Vyber téma --</option>
+                                @foreach (var t in Model.Topics)
+                                {
+                                    <option value="@t.Id" data-subject="@t.SubjectId">@t.Name</option>
+                                }
+                            </select>
+                        </div>
+
                         <div class="col-md-2">
                             <label class="form-label">Datum</label>
-                            <input asp-for="NewLesson.Date" type="date" class="form-control" />
+                            <input name="NewLesson.Date" type="date" class="form-control" />
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label">Začátek</label>
-                            <input asp-for="NewLesson.Start" type="time" class="form-control" />
+                            <input name="NewLesson.Start" type="time" class="form-control" />
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label">Konec</label>
-                            <input asp-for="NewLesson.End" type="time" class="form-control" />
+                            <input name="NewLesson.End" type="time" class="form-control" />
                         </div>
-                                                
+
                     </div>
 
                     <button type="submit" class="btn btn-success w-100 mt-3">
                         Přidat hodinu
                     </button>
-
                 </form>
-
-
 
             </div>
         </div>
     }
+    else
+    {
+        <!-- FORMULÁŘ PRO EDITACI -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white text-center">
+                <strong>Upravit hodinu</strong>
+            </div>
 
+            <div class="card-body">
+
+                <form method="post" asp-page-handler="EditSave">
+                    <input type="hidden" name="id" value="@(Model.EditingLesson.LessonId ?? Model.EditingLesson.LessonPlanId)" />
+                    <input type="hidden" name="isPlan" value="@(Model.EditingLesson.LessonPlanId != null)" />
+                    <input type="hidden" name="week" value="@Model.Week" />
+
+                    <div class="row">
+
+                        <div class="col-md-3">
+                            <label class="form-label">Student</label>
+                            <select name="studentId" class="form-select" id="editStudentSelect">
+                                @foreach (var s in Model.Students)
+                                {
+                                    <option value="@s.Id">@s.LastName @s.FirstName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Předmět</label>
+                            <select name="subjectId" class="form-select" id="editSubjectSelect">
+                                @foreach (var s in Model.Subjects)
+                                {
+                                    <option value="@s.Id">@s.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Téma</label>
+                            <select name="subjectTopicId" class="form-select" id="editTopicSelect">
+                                <option value="">-- Vyber téma --</option>
+                                @foreach (var t in Model.Topics)
+                                {
+                                    <option value="@t.Id" data-subject="@t.SubjectId">@t.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label">Datum</label>
+                            <input name="date" type="date" class="form-control"
+                                   value="@Model.EditingLesson.Date.ToString("yyyy-MM-dd")" />
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label">Začátek</label>
+                            <input name="start" type="time" class="form-control"
+                                   value="@Model.EditingLesson.Start.ToString(@"hh\:mm")" />
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label">Konec</label>
+                            <input name="end" type="time" class="form-control"
+                                   value="@Model.EditingLesson.End.ToString(@"hh\:mm")" />
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mt-3">
+                        Uložit změny
+                    </button>
+
+                    <a class="btn btn-secondary w-100 mt-2"
+                       asp-page="./TeacherSchedule"
+                       asp-route-week="@Model.Week">
+                        Zrušit
+                    </a>
+
+                </form>
+
+            </div>
+        </div>
+    }
 
     <!-- 🟦 TÝDENNÍ ROZVRH -->
     <div class="card shadow-sm mb-4">
@@ -192,7 +207,9 @@
                         <div class="day-header">
                             <strong>@day.Day</strong><br />
                             <small class="text-muted">@day.Date.ToString("dd.MM.")</small><br />
-                            <span class="text-muted">@day.Lessons.Sum(l => (l.End - l.Start).TotalHours) hodin</span>
+                            <span class="text-muted">
+                                @day.Lessons.Sum(l => (l.End - l.Start).TotalHours) hodin
+                            </span>
                         </div>
 
                         <hr />
@@ -201,10 +218,17 @@
                         {
                             foreach (var l in day.Lessons)
                             {
-                                <div class="lesson-block @(l.IsTaught ? "taught" : "")" style="background-color:@l.Color">
+                                <div class="lesson-block @(l.IsTaught ? "taught" : "")"
+                                     style="background-color:@l.Color">
 
                                     <div class="lesson-body">
                                         <strong>@l.Student</strong><br />
+
+                                        @if (!string.IsNullOrEmpty(l.SubjectTopic))
+                                        {
+                                            <span class="text-muted">@l.SubjectTopic</span><br />
+                                        }
+
                                         <span class="text-muted">@l.Subject</span><br />
                                         @l.Start.ToString(@"hh\:mm") – @l.End.ToString(@"hh\:mm")<br />
 
@@ -215,34 +239,34 @@
 
                                         <div class="lesson-icons mt-1">
 
-                                            <!-- ✏️ EDITACE -->
+                                            <!-- EDITACE -->
                                             <form method="get" class="d-inline">
                                                 <input type="hidden" name="editId" value="@(l.LessonId ?? l.LessonPlanId)" />
                                                 <input type="hidden" name="isPlan" value="@(l.LessonPlanId != null ? "true" : "false")" />
                                                 <input type="hidden" name="week" value="@Model.Week" />
-                                                <button class="icon-btn">✏️</button>
+                                                <button class="icon-btn" type="submit">✏️</button>
                                             </form>
 
-
-                                            <!-- 🗑️ SMAZAT -->
-                                            <form method="post" asp-page-handler="@(l.LessonId != null ? "DeleteLesson" : "DeletePlan")" class="d-inline">
+                                            <!-- SMAZÁNÍ -->
+                                            <form method="post"
+                                                  asp-page-handler="@(l.LessonId != null ? "DeleteLesson" : "DeletePlan")"
+                                                  class="d-inline">
                                                 <input type="hidden" name="id" value="@(l.LessonId ?? l.LessonPlanId)" />
                                                 <input type="hidden" name="week" value="@Model.Week" />
-                                                <button class="icon-btn">🗑️</button>
+                                                <button class="icon-btn" type="submit">🗑️</button>
                                             </form>
 
-                                            <!-- ✔️ ODUČENO -->
+                                            <!-- OZNAČIT JAKO ODUČENÉ -->
                                             @if (!l.IsTaught)
                                             {
                                                 <form method="post" asp-page-handler="TeachLesson" class="d-inline">
                                                     <input type="hidden" name="id" value="@(l.LessonId ?? l.LessonPlanId)" />
                                                     <input type="hidden" name="week" value="@Model.Week" />
-                                                    <button class="icon-btn">✔️</button>
+                                                    <button class="icon-btn" type="submit">✔️</button>
                                                 </form>
                                             }
 
                                         </div>
-
 
                                     </div>
                                 </div>
@@ -258,3 +282,41 @@
         </div>
     </div>
 </div>
+
+<script>
+    function filterTopics(subjectId, topicId) {
+        const subjectSelect = document.getElementById(subjectId);
+        const topicSelect = document.getElementById(topicId);
+        if (!subjectSelect || !topicSelect) return;
+
+        const selectedSubject = subjectSelect.value;
+
+        topicSelect.querySelectorAll("option[data-subject]").forEach(opt => {
+            opt.style.display = opt.getAttribute("data-subject") === selectedSubject ? "" : "none";
+        });
+
+        if (topicSelect.selectedOptions.length > 0) {
+            const sel = topicSelect.selectedOptions[0];
+            if (sel.getAttribute("data-subject") !== selectedSubject) {
+                topicSelect.value = "";
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        filterTopics("addSubjectSelect", "addTopicSelect");
+        filterTopics("editSubjectSelect", "editTopicSelect");
+
+        document.getElementById("addSubjectSelect")?.addEventListener("change", () => filterTopics("addSubjectSelect", "addTopicSelect"));
+        document.getElementById("editSubjectSelect")?.addEventListener("change", () => filterTopics("editSubjectSelect", "editTopicSelect"));
+
+        @if (Model.EditingLesson != null)
+        {
+                <text>
+                        document.getElementById("editStudentSelect").value = "@Model.EditingLesson.StudentId";
+                        document.getElementById("editSubjectSelect").value = "@Model.EditingLesson.SubjectId";
+                        document.getElementById("editTopicSelect").value = "@Model.EditingLesson.SubjectTopicId";
+                </text>
+        }
+    });
+</script>

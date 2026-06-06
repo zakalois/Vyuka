@@ -19,9 +19,6 @@ namespace Vyuka.Pages.Admin.Students
         [BindProperty]
         public Student Student { get; set; } = new();
 
-        [BindProperty]
-        public Parent Parent { get; set; } = new();
-
         public void OnGet()
         {
         }
@@ -31,7 +28,7 @@ namespace Vyuka.Pages.Admin.Students
             if (!ModelState.IsValid)
                 return Page();
 
-            // 1) Vytvoření Identity účtu
+            // 1) Identity účet
             var user = new AppUser
             {
                 UserName = Student.Email,
@@ -55,11 +52,6 @@ namespace Vyuka.Pages.Admin.Students
             Student.UserId = user.Id;
 
             _context.Students.Add(Student);
-            await _context.SaveChangesAsync();   // Student.Id je nyní dostupné
-
-            // 3) Uložení rodiče – správně přes Parent.StudentId
-            Parent.StudentId = Student.Id;
-            _context.Parents.Add(Parent);
             await _context.SaveChangesAsync();
 
             return RedirectToPage("Index");

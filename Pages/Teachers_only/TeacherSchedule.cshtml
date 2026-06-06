@@ -104,85 +104,105 @@
     else
     {
         <!-- FORMULÁŘ PRO EDITACI -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white text-center">
-                <strong>Upravit hodinu</strong>
-            </div>
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white text-center">
+        <strong>Upravit hodinu</strong>
+    </div>
 
-            <div class="card-body">
+    <div class="card-body">
 
-                <form method="post" asp-page-handler="EditSave">
-                    <input type="hidden" name="id" value="@(Model.EditingLesson.LessonId ?? Model.EditingLesson.LessonPlanId)" />
-                    <input type="hidden" name="isPlan" value="@(Model.EditingLesson.LessonPlanId != null)" />
+        <form method="post" asp-page-handler="EditSave">
+
+            <!-- Skryté hodnoty -->
+                    <input type="hidden" name="id" value="@Model.EditingLesson.LessonPlanId" />
                     <input type="hidden" name="week" value="@Model.Week" />
 
-                    <div class="row">
 
-                        <div class="col-md-3">
-                            <label class="form-label">Student</label>
+            <div class="row">
+
+                <!-- STUDENT -->
+                <div class="col-md-3">
+                    <label class="form-label">Student</label>
                             <select name="studentId" class="form-select" id="editStudentSelect">
                                 @foreach (var s in Model.Students)
                                 {
-                                    <option value="@s.Id">@s.LastName @s.FirstName</option>
+                                    <option value="@s.Id" selected="@(s.Id == Model.EditingLesson.StudentId)">
+                                        @s.LastName @s.FirstName
+                                    </option>
                                 }
                             </select>
-                        </div>
 
-                        <div class="col-md-3">
-                            <label class="form-label">Předmět</label>
+                </div>
+
+                <!-- PŘEDMĚT -->
+                <div class="col-md-3">
+                    <label class="form-label">Předmět</label>
                             <select name="subjectId" class="form-select" id="editSubjectSelect">
                                 @foreach (var s in Model.Subjects)
                                 {
-                                    <option value="@s.Id">@s.Name</option>
+                                    <option value="@s.Id" selected="@(s.Id == Model.EditingLesson.SubjectId)">
+                                        @s.Name
+                                    </option>
                                 }
                             </select>
-                        </div>
 
-                        <div class="col-md-3">
-                            <label class="form-label">Téma</label>
+                </div>
+
+                <!-- TÉMA -->
+                <div class="col-md-3">
+                    <label class="form-label">Téma</label>
                             <select name="subjectTopicId" class="form-select" id="editTopicSelect">
                                 <option value="">-- Vyber téma --</option>
                                 @foreach (var t in Model.Topics)
                                 {
-                                    <option value="@t.Id" data-subject="@t.SubjectId">@t.Name</option>
+                                    <option value="@t.Id"
+                                            data-subject="@t.SubjectId"
+                                            selected="@(t.Id == Model.EditingLesson.SubjectTopicId)">
+                                        @t.Name
+                                    </option>
                                 }
                             </select>
-                        </div>
 
-                        <div class="col-md-2">
-                            <label class="form-label">Datum</label>
-                            <input name="date" type="date" class="form-control"
-                                   value="@Model.EditingLesson.Date.ToString("yyyy-MM-dd")" />
-                        </div>
+                </div>
 
-                        <div class="col-md-2">
-                            <label class="form-label">Začátek</label>
-                            <input name="start" type="time" class="form-control"
-                                   value="@Model.EditingLesson.Start.ToString(@"hh\:mm")" />
-                        </div>
+                <!-- DATUM -->
+                <div class="col-md-2">
+                    <label class="form-label">Datum</label>
+                    <input name="date" type="date" class="form-control"
+                           value="@Model.EditingLesson.Date.ToString("yyyy-MM-dd")" />
+                </div>
 
-                        <div class="col-md-2">
-                            <label class="form-label">Konec</label>
-                            <input name="end" type="time" class="form-control"
-                                   value="@Model.EditingLesson.End.ToString(@"hh\:mm")" />
-                        </div>
+                <!-- ZAČÁTEK -->
+                <div class="col-md-2">
+                    <label class="form-label">Začátek</label>
+                    <input name="start" type="time" class="form-control"
+                           value="@Model.EditingLesson.Start.ToString(@"hh\:mm")" />
+                </div>
 
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100 mt-3">
-                        Uložit změny
-                    </button>
-
-                    <a class="btn btn-secondary w-100 mt-2"
-                       asp-page="./TeacherSchedule"
-                       asp-route-week="@Model.Week">
-                        Zrušit
-                    </a>
-
-                </form>
+                <!-- KONEC -->
+                <div class="col-md-2">
+                    <label class="form-label">Konec</label>
+                    <input name="end" type="time" class="form-control"
+                           value="@Model.EditingLesson.End.ToString(@"hh\:mm")" />
+                </div>
 
             </div>
-        </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-3">
+                Uložit změny
+            </button>
+
+            <a class="btn btn-secondary w-100 mt-2"
+               asp-page="./TeacherSchedule"
+               asp-route-week="@Model.Week">
+                Zrušit
+            </a>
+
+        </form>
+
+    </div>
+</div>
+
     }
 
     <!-- 🟦 TÝDENNÍ ROZVRH -->
@@ -241,11 +261,25 @@
 
                                             <!-- EDITACE -->
                                             <form method="get" class="d-inline">
-                                                <input type="hidden" name="editId" value="@(l.LessonId ?? l.LessonPlanId)" />
-                                                <input type="hidden" name="isPlan" value="@(l.LessonPlanId != null ? "true" : "false")" />
+
+                                                @if (l.LessonPlanId != null)
+                                                {
+                                                    <!-- Plánovaná hodina -->
+                                                    <input type="hidden" name="editId" value="@l.LessonPlanId" />
+                                                }
+                                                else
+                                                {
+                                                    <!-- Odučená hodina – NEEDITUJEME -->
+                                                    <input type="hidden" name="editId" value="" />
+                                                }
+
                                                 <input type="hidden" name="week" value="@Model.Week" />
-                                                <button class="icon-btn" type="submit">✏️</button>
+                                                <button class="icon-btn" type="submit" @(l.LessonPlanId == null ? "disabled" : "")>✏️</button>
                                             </form>
+
+
+
+
 
                                             <!-- SMAZÁNÍ -->
                                             <form method="post"

@@ -58,26 +58,22 @@
 
         <div class="col-md-6 mb-3">
             <label>Jméno rodiče</label>
-            <input asp-for="Parent.Name" class="form-control" />
-            <span asp-validation-for="Parent.Name" class="text-danger"></span>
+            <input asp-for="Student.ParentFirstName" class="form-control" />
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label>Příjmení rodiče</label>
+            <input asp-for="Student.ParentLastName" class="form-control" />
         </div>
 
         <div class="col-md-6 mb-3">
             <label>Email rodiče</label>
-            <input asp-for="Parent.Email" class="form-control" />
-            <span asp-validation-for="Parent.Email" class="text-danger"></span>
+            <input asp-for="Student.ParentEmail" class="form-control" />
         </div>
 
         <div class="col-md-6 mb-3">
             <label>Telefon rodiče</label>
-            <input asp-for="Parent.Phone" class="form-control" />
-            <span asp-validation-for="Parent.Phone" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-12 mb-3">
-            <label>Poznámka</label>
-            <input asp-for="Parent.Note" class="form-control" />
-            <span asp-validation-for="Parent.Note" class="text-danger"></span>
+            <input asp-for="Student.ParentPhone" class="form-control" />
         </div>
 
     </div>

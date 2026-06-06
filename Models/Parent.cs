@@ -9,7 +9,9 @@ namespace Vyuka.Models
         public int Id { get; set; }
 
         [MaxLength(100)]
-        public string? Name { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+
 
         [MaxLength(100)]
         public string? Email { get; set; }

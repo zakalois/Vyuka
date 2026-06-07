@@ -52,6 +52,17 @@
             <input asp-for="Student.Address" class="form-control" />
             <span asp-validation-for="Student.Address" class="text-danger"></span>
         </div>
+        <!-- PŘEDMĚT -->
+        <div class="col-md-12 mb-3">
+            <label>Předmět</label>
+            <select asp-for="SubjectId"
+                    class="form-control"
+                    asp-items="@(new SelectList(Model.Subjects, "Id", "Name"))">
+                <option value="">-- Vyberte předmět --</option>
+            </select>
+            <span asp-validation-for="SubjectId" class="text-danger"></span>
+        </div>
+
 
         <!-- RODIČ -->
         <h4 class="mt-4">Rodič</h4>

@@ -19,14 +19,23 @@ namespace Vyuka.Pages.Admin.Students
         [BindProperty]
         public Student Student { get; set; } = new();
 
+        [BindProperty]
+        public int SubjectId { get; set; }
+
+        public List<Subject> Subjects { get; set; } = new();
+
         public void OnGet()
         {
+            Subjects = _context.Subjects.ToList();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
+            {
+                Subjects = _context.Subjects.ToList();
                 return Page();
+            }
 
             // 1) Identity účet
             var user = new AppUser
@@ -45,11 +54,13 @@ namespace Vyuka.Pages.Admin.Students
                 foreach (var error in result.Errors)
                     ModelState.AddModelError("", error.Description);
 
+                Subjects = _context.Subjects.ToList();
                 return Page();
             }
 
             // 2) Uložení studenta
             Student.UserId = user.Id;
+            Student.SubjectId = SubjectId;   // ⭐ ULOŽENÍ PŘEDMĚTU
 
             _context.Students.Add(Student);
             await _context.SaveChangesAsync();

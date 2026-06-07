@@ -1,0 +1,42 @@
+﻿@page
+@model Vyuka.Pages.Admin.Students.ArchiveListModel
+
+<h1>Archiv studentů</h1>
+
+<table class="table table-striped table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Jméno</th>
+            <th>Předmět</th>
+            <th>Telefon rodiče</th>
+            <th>Archivováno</th>
+            <th>Důvod archivace</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    <tbody>
+        @foreach (var s in Model.Students)
+        {
+            <tr>
+                    <td>@s.LastName @s.FirstName</td>
+                    <td>@s.Subject?.Name</td>
+                    <td>@s.ParentPhone</td>
+                    <td>@s.ArchivedAt?.ToString("dd.MM.yyyy")</td>
+                    <td class="text-start">@s.ArchiveReason</td>
+
+                    <td class="text-center">
+                        <a asp-page="/Admin/Students/Restore"
+                           asp-route-id="@s.Id"
+                           class="btn btn-outline-success btn-sm"
+                           title="Obnovit studenta">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-page="/Admin/Students/Overview" class="btn btn-secondary mt-3">Zpět</a>

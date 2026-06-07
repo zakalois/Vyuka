@@ -1,0 +1,19 @@
+﻿@page
+@model Vyuka.Pages.Admin.Students.RestoreModel
+
+<h1>Obnovení studenta</h1>
+
+<p>Opravdu chcete obnovit tohoto studenta z archivu?</p>
+
+<div class="mb-3">
+    <strong>@Model.CurrentStudent.FirstName @Model.CurrentStudent.LastName</strong><br />
+    @Model.CurrentStudent.Email<br />
+    @Model.CurrentStudent.Phone
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="CurrentStudent.Id" />
+
+    <button type="submit" class="btn btn-success">Obnovit studenta</button>
+    <a asp-page="ArchiveList" class="btn btn-secondary">Zpět</a>
+</form>

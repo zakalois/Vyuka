@@ -8,25 +8,25 @@
 <table class="table table-bordered">
     <thead>
         <tr>
-            <th>Název</th>
-            <th>Předmět</th>
-            <th>Akce</th>
+            <th class="text-start">Název</th>
+            <th class="text-start">Předmět</th>
+            <th class="text-start">Akce</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var t in Model.Templates)
         {
             <tr>
-                <td>@t.Name</td>
-                <td>@t.Subject</td>
-                <td>
+                <td class="text-start">@t.Name</td>
+                <td class="text-start">@t.Subject</td>
+                <td class="text-start">
                     <a class="btn btn-sm btn-warning" asp-page="Edit" asp-route-id="@t.Id">Upravit</a>
                     <a class="btn btn-sm btn-info" asp-page="Preview" asp-route-id="@t.Id">Náhled</a>
                     <a class="btn btn-sm btn-danger" asp-page="Delete" asp-route-id="@t.Id">Smazat</a>
                     <a class="btn btn-sm btn-secondary" asp-page="Duplicate" asp-route-id="@t.Id">Duplikovat</a>
                 </td>
-
             </tr>
         }
     </tbody>
 </table>
+

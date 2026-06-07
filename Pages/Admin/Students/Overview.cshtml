@@ -196,9 +196,17 @@
                             <i class="bi bi-pencil-square"></i>
                         </a>
 
-                        <!-- Aktivovat / deaktivovat -->
+                        <!-- Archivovat (jen aktivní studenti) -->
                         @if (s.IsActive)
                         {
+                            <a asp-page="/Admin/Students/Archive"
+                               asp-route-id="@s.Id"
+                               class="btn btn-outline-warning action-btn"
+                               title="Přesunout do archivu">
+                                <i class="bi bi-archive"></i>
+                            </a>
+
+                            <!-- Deaktivovat -->
                             <a asp-page="/Admin/Students/ToggleActive" asp-route-id="@s.Id"
                                class="btn btn-outline-danger action-btn"
                                title="Deaktivovat studenta">
@@ -207,6 +215,7 @@
                         }
                         else
                         {
+                            <!-- Aktivovat -->
                             <a asp-page="/Admin/Students/ToggleActive" asp-route-id="@s.Id"
                                class="btn btn-outline-success action-btn"
                                title="Aktivovat studenta">
@@ -216,6 +225,7 @@
 
                     </div>
                 </td>
+
 
             </tr>
         }

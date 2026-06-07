@@ -40,7 +40,7 @@ namespace Vyuka.Pages.Communications
         private async Task LoadStudentsAsync()
         {
             Students = await _context.Students
-                .Where(s => s.IsActive)
+                //.Where(s => s.IsActive)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();

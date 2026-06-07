@@ -22,15 +22,17 @@ namespace Vyuka.Pages.Admin.Students
 
         public async Task OnGetAsync()
         {
-            // Dropdown – všichni studenti
+            // Dropdown – všichni studenti (jen aktivní, nearchivovaní)
             AllStudents = await _context.Students
+                .Where(s => s.IsActive && s.ArchivedAt == null)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            // Základní dotaz
+            // Základní dotaz – vždy ignorujeme archivované
             var query = _context.Students
                 .Include(s => s.Subject)
+                .Where(s => s.ArchivedAt == null)   // ⭐ TADY JE KLÍČOVÁ OPRAVA
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .AsQueryable();
@@ -92,6 +94,7 @@ namespace Vyuka.Pages.Admin.Students
             })
             .ToList();
         }
+
     }
 
     // DTO pro přehled studentů

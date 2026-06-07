@@ -1,0 +1,24 @@
+﻿@page
+@model Vyuka.Pages.Admin.Students.ArchiveModel
+
+<h1>Archivace studenta</h1>
+
+<p>Opravdu chcete přesunout studenta do archivu?</p>
+
+<div class="mb-3">
+    <strong>@Model.CurrentStudent.FirstName @Model.CurrentStudent.LastName</strong><br />
+    @Model.CurrentStudent.Email<br />
+    @Model.CurrentStudent.Phone
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="CurrentStudent.Id" />
+
+    <div class="mb-3">
+        <label>Důvod archivace</label>
+        <textarea asp-for="ArchiveReason" class="form-control" rows="3"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-warning">Archivovat studenta</button>
+    <a asp-page="Index" class="btn btn-secondary">Zpět</a>
+</form>

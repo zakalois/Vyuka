@@ -29,6 +29,10 @@ namespace Vyuka.Models
 
         public bool IsActive { get; set; } = true;
 
+        public DateTime? ArchivedAt { get; set; }
+        public string? ArchiveReason { get; set; }
+
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? LastLogin { get; set; }
 

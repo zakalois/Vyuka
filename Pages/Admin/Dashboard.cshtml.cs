@@ -21,6 +21,8 @@ namespace Vyuka.Pages.Admin
         public int TotalStudents { get; set; }
         public int ActiveStudents { get; set; }
         public int InactiveStudents { get; set; }
+        public int ArchivedStudentsCount { get; set; }
+
 
 
 
@@ -52,8 +54,12 @@ namespace Vyuka.Pages.Admin
 
             // Výpočet studentů
             TotalStudents = _context.Students.Count();
-            ActiveStudents = _context.Students.Count(s => s.IsActive);
-            InactiveStudents = _context.Students.Count(s => !s.IsActive);
+
+            ActiveStudents = _context.Students.Count(s => s.IsActive && s.ArchivedAt == null);
+
+            InactiveStudents = _context.Students.Count(s => !s.IsActive && s.ArchivedAt == null);
+
+            ArchivedStudentsCount = _context.Students.Count(s => s.ArchivedAt != null);
 
             // původní kód pro NextLessonDate
             var lessons = _context.LessonPlans

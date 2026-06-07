@@ -839,3 +839,69 @@ body.dark .notes-table th {
 .notes-table th {
     color: #000 !important;
 }
+.dashboard-logo {
+    width: 60px; /* velikost loga */
+    height: 60px; /* čtverec */
+    object-fit: cover; /* zachová poměr stran */
+    border-radius: 8px; /* jemné zaoblení */
+    margin-right: 15px; /* mezera od jména */
+}
+.top-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+}
+.top-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+    .top-actions button.btn {
+        height: 36px !important;
+        padding: 6px 14px !important;
+        line-height: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+.btn-darkmode-link {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0.5rem 1rem;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+    .btn-darkmode-link:hover {
+        color: #fff;
+        opacity: 0.8;
+    }
+.darkmode-link {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0.5rem 1rem;
+    font-size: inherit;
+    font-weight: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+    .darkmode-link:hover {
+        color: #fff;
+        opacity: 0.8;
+    }
+.darkmode-link {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.templates-table th,
+.templates-table td {
+    text-align: left;
+}
+

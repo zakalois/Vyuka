@@ -1,7 +1,7 @@
 ﻿@page "/Admin/Schedule"
 @model Vyuka.Pages.Admin.Schedule.IndexModel
 @using System.Globalization
-@using Vyuka.Extensions <!-- 🔥 TADY JE OPRAVA -->
+@using Vyuka.Extensions
 
 @if (Model.StartOfWeek == default(DateTime) || Model.EndOfWeek == default(DateTime))
 {
@@ -10,9 +10,14 @@
 }
 
 @{
-    var safeStart = Model.StartOfWeek;
+    // 🔥 JEDINÁ správná definice
+    var safeStart = Model.StartOfWeek == DateTime.MinValue
+        ? DateTime.Today
+        : Model.StartOfWeek;
+
     var safeEnd = Model.EndOfWeek;
 }
+
 
 <h1>Týdenní rozvrh</h1>
 
@@ -236,103 +241,136 @@ else
     </div>
 }
 
-@{
-    var safeStart2 = Model.StartOfWeek == DateTime.MinValue
+@* @{
+    var safeStart = Model.StartOfWeek == DateTime.MinValue
         ? DateTime.Today
         : Model.StartOfWeek;
-}
+} *@
 
 <div class="container mt-4">
-    <div class="schedule-grid">
 
-        @for (int i = 0; i < 7; i++)
-        {
-            var date = safeStart2.AddDays(i);
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning text-center">
+            <strong>Týdenní rozvrh</strong>
+        </div>
 
-            <div class="day-column border p-2 text-center @(date.DayOfWeek == DayOfWeek.Saturday ? "saturday" : date.DayOfWeek == DayOfWeek.Sunday ? "sunday" : "")">
+        <div class="card-body">
+            <div class="schedule-grid">
 
-                <strong>
-                    @(
-                        CultureInfo.GetCultureInfo("cs-CZ")
-                            .TextInfo
-                            .ToTitleCase(date.ToString("dddd", new CultureInfo("cs-CZ")))
-                    )
-                </strong><br />
-
-                @date.ToString("dd.MM.")
-
-                <hr />
-
-                @foreach (var p in Model.Plans.Where(p => p.Date != default && p.Date.Date == date.Date))
+                @for (int i = 0; i < 7; i++)
                 {
-                    var taughtStyle = p.IsTaught
-                        ? "opacity:0.7;border-left:4px solid #28a745;"
-                        : "";
+                    var date = safeStart.AddDays(i);
 
-                    var bgColor = Model.GetColorForStudent(p.StudentId) ?? "#cccccc";
+                    string dayClass = date.DayOfWeek switch
+                    {
+                        DayOfWeek.Saturday => "day-sat",
+                        DayOfWeek.Sunday => "day-sun",
+                        _ => ""
+                    };
 
-                    <div class="p-2 mb-2 rounded text-start"
-                         style="background-color:@bgColor;@taughtStyle">
+                    <div class="day-column @dayClass">
+                        <div class="day-header">
+                            <strong>
+                                @(
+                                    CultureInfo.GetCultureInfo("cs-CZ")
+                                        .TextInfo
+                                        .ToTitleCase(date.ToString("dddd", new CultureInfo("cs-CZ")))
+                                )
+                            </strong><br />
 
-                        <strong>@p.Student.LastName @p.Student.FirstName</strong><br />
-                        @p.Subject.Name – @p.SubjectTopic?.Name<br />
-                        @p.Start.ToString(@"hh\:mm") – @p.End.ToString(@"hh\:mm")<br />
+                            <small class="text-muted">@date.ToString("dd.MM.")</small><br />
 
-                        @if (!string.IsNullOrEmpty(p.MeetLink))
+                            <span class="text-muted">
+                                @(Model.Plans
+    .Where(p => p.Date.Date == date.Date)
+    .Sum(p => (p.End - p.Start).TotalHours)
+) hodin
+
+                            </span>
+                        </div>
+
+                        <hr />
+
+                        @* ---- HODINY ---- *@
+                        @foreach (var p in Model.Plans.Where(p => p.Date.Date == date.Date).OrderBy(p => p.Start))
                         {
-                            <a href="@p.MeetLink" target="_blank">Meet</a><br />
+                            var bgColor = Model.GetColorForStudent(p.StudentId) ?? "#cccccc";
+
+                            <div class="lesson-block @(p.IsTaught ? "taught" : "")"
+                                 style="background-color:@bgColor">
+
+                                <div class="lesson-body">
+
+                                    <strong>@p.Student.LastName @p.Student.FirstName</strong><br />
+
+                                    @if (!string.IsNullOrEmpty(p.SubjectTopic?.Name))
+                                    {
+                                        <span class="text-muted">@p.SubjectTopic.Name</span><br />
+                                    }
+
+                                    <span class="text-muted">@p.Subject.Name</span><br />
+                                    @p.Start.ToString(@"hh\:mm") – @p.End.ToString(@"hh\:mm")<br />
+
+                                    @if (!string.IsNullOrEmpty(p.MeetLink))
+                                    {
+                                        <a href="@p.MeetLink" target="_blank" class="meet-link">Meet</a>
+                                    }
+
+                                    <div class="lesson-icons mt-1">
+
+                                        @* OZNAČIT JAKO ODUČENÉ *@
+                                        @if (!p.IsTaught)
+                                        {
+                                            <form method="post" asp-page-handler="Teach" class="d-inline">
+                                                <input type="hidden" name="id" value="@p.Id" />
+                                                <input type="hidden" name="Week" value="@Model.Week" />
+                                                <button class="icon-btn" type="submit">✔️</button>
+                                            </form>
+                                        }
+
+                                        @* EDITACE *@
+                                        <form method="post"
+                                              asp-page="/Admin/Schedule"
+                                              asp-page-handler="EditStart"
+                                              class="d-inline">
+                                            <input type="hidden" name="id" value="@p.Id" />
+                                            <input type="hidden" name="Week" value="@Model.Week" />
+                                            <input type="hidden" name="TeacherId" value="@p.TeacherId" />
+                                            <button class="icon-btn" type="submit">✏️</button>
+                                        </form>
+
+                                        @* SMAZÁNÍ *@
+                                        <form method="post" asp-page-handler="Delete" class="d-inline">
+                                            <input type="hidden" name="id" value="@p.Id" />
+                                            <input type="hidden" name="Week" value="@Model.Week" />
+                                            <button class="icon-btn" type="submit">🗑️</button>
+                                        </form>
+
+                                    </div>
+
+                                   @*  @if (p.IsTaught)
+                                    {
+                                        <span class="badge bg-success mt-1">Odučeno</span>
+                                    } *@
+
+                                </div>
+                            </div>
                         }
 
-                        <div class="d-flex flex-row flex-nowrap gap-1 mt-1 align-items-center">
-
-                            @if (!p.IsTaught)
-                            {
-                                <form method="post" asp-page-handler="Teach" class="m-0 p-0">
-                                    <input type="hidden" name="id" value="@p.Id" />
-                                    <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
-
-                                    <button class="btn btn-success btn-sm px-1 py-0"
-                                            title="Označit jako odučené">
-                                        ✔
-                                    </button>
-                                </form>
-                            }
-
-                            <form method="post"
-                                  asp-page="/Admin/Schedule"
-                                  asp-page-handler="EditStart"
-                                  class="m-0 p-0">
-
-                                <input type="hidden" name="id" value="@p.Id" />
-                                <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
-                                <input type="hidden" name="TeacherId" value="@p.TeacherId" />
-
-                                <button class="btn btn-warning btn-sm px-1 py-0"
-                                        title="Upravit lekci">
-                                    ✏
-                                </button>
-                            </form>
-
-
-
-                            <form method="post" asp-page-handler="Delete" class="m-0 p-0">
-                                <input type="hidden" name="id" value="@p.Id" />
-                                <input type="hidden" name="Week" value="@Model.Week.ToString("yyyy-MM-dd")" />
-
-                                <button class="btn btn-danger btn-sm px-1 py-0"
-                                        title="Smazat lekci">
-                                    🗑
-                                </button>
-                            </form>
-
-                        </div>
+                        @if (!Model.Plans.Any(p => p.Date.Date == date.Date))
+                        {
+                            <div class="text-muted small">Žádné hodiny</div>
+                        }
 
                     </div>
                 }
+
             </div>
-        }
+        </div>
     </div>
+
 </div>
+
 
 @section Scripts {
     <script>

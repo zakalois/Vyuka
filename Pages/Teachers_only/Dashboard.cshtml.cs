@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using Vyuka.Models;
 
 namespace Vyuka.Pages.Teachers_only
@@ -43,18 +42,17 @@ namespace Vyuka.Pages.Teachers_only
             var today = DateTime.Today;
 
             TodayLessons = await _context.Lessons
-    .Include(l => l.Student)
-    .Include(l => l.Subject)
-    .Where(l => l.TeacherId == teacher.Id &&
-                l.Date.Date == today)
-    .OrderBy(l => l.Date)
-    .Select(l => new LessonInfo(
-        l.Date.ToString("HH:mm"),
-        l.Student.FirstName + " " + l.Student.LastName,
-        l.Subject.Name // ← TADY JE OPRAVA
-    ))
-    .ToListAsync();
-
+                .Include(l => l.Student)
+                .Include(l => l.Subject)
+                .Where(l => l.TeacherId == teacher.Id &&
+                            l.Date.Date == today)
+                .OrderBy(l => l.Start)
+                .Select(l => new LessonInfo(
+                    l.Start.ToString(@"HH\:mm"),
+                    l.Student.FirstName + " " + l.Student.LastName,
+                    l.Subject.Name
+                ))
+                .ToListAsync();
 
             // 3️⃣ Počet studentů
             StudentCount = teacher.Students.Count;
@@ -62,32 +60,59 @@ namespace Vyuka.Pages.Teachers_only
             // 4️⃣ Studenti s nízkým kreditem
             LowCreditCount = teacher.Students.Count(s => s.RemainingHours <= 1);
 
-            // 5️⃣ Týdenní rozvrh
-            var weekLessons = await _context.Lessons
-                .Where(l => l.TeacherId == teacher.Id &&
-                            l.Date >= today &&
-                            l.Date < today.AddDays(7))
-                .ToListAsync(); // ← DŮLEŽITÉ!
+            // 5️⃣ Týdenní rozvrh (celý týden Po–Ne)
+            // dnešní datum
+            //var today = DateTime.Today;
 
-            WeeklySchedule = weekLessons
-                .GroupBy(l => l.Date.DayOfWeek)
-                .Select(g => new DaySchedule(
-                    GetCzechDayName(g.Key),
-                    g.Count()
-                ))
+            // today už existuje, NEDEKLARUJEME znovu
+
+            // Neděle = 0 → posuneme na 7
+            var dayOfWeek = (int)today.DayOfWeek == 0 ? 7 : (int)today.DayOfWeek;
+
+            // Pondělí = 1
+            var startOfWeek = today.AddDays(-(dayOfWeek - 1));
+            var endOfWeek = startOfWeek.AddDays(7);
+
+            var weekLessons = await _context.LessonPlans
+     .Include(l => l.Student)
+     .Include(l => l.Subject)
+     .Include(l => l.SubjectTopic)
+     .Where(l => l.TeacherId == teacher.Id &&
+                 l.Date >= startOfWeek &&
+                 l.Date < endOfWeek)
+     .OrderBy(l => l.Date)
+     .ThenBy(l => l.Start)
+     .ToListAsync();
+
+
+
+
+            WeeklySchedule = Enumerable.Range(0, 7)
+                .Select(offset =>
+                {
+                    var date = startOfWeek.AddDays(offset);
+                    var lessons = weekLessons
+                        .Where(l => l.Date.Date == date.Date)
+                        .OrderBy(l => l.Start)
+                        .ToList();
+
+                    return new DaySchedule
+                    {
+                        Day = GetCzechDayName(date.DayOfWeek),
+                        Date = date,
+                        Lessons = lessons
+                    };
+                })
                 .ToList();
-
 
             // 6️⃣ Upozornění
             Notifications = _context.Notes
-    .Include(n => n.Student)
-    .Where(n => n.TeacherId == teacher.Id)
-    .OrderByDescending(n => n.Created)
-    .Take(5)
-    .Select(n => $"{n.Created:dd.MM.yyyy HH:mm} – {n.Student.FirstName} {n.Student.LastName}: {n.Text}")
-    .ToList();
-
-
+                .Include(n => n.Student)
+                .Where(n => n.TeacherId == teacher.Id)
+                .OrderByDescending(n => n.Created)
+                .Take(5)
+                .Select(n => $"{n.Created:dd.MM.yyyy HH:mm} – {n.Student.FirstName} {n.Student.LastName}: {n.Text}")
+                .ToList();
         }
 
         // Pomocná funkce pro české názvy dnů
@@ -106,7 +131,16 @@ namespace Vyuka.Pages.Teachers_only
             };
         }
 
+        // DTO pro dnešní hodiny
         public record LessonInfo(string Time, string Student, string Subject);
-        public record DaySchedule(string Day, int LessonCount);
+
+        // DTO pro týdenní rozvrh
+        public class DaySchedule
+        {
+            public string Day { get; set; }
+            public DateTime Date { get; set; }
+            public List<LessonPlan> Lessons { get; set; } = new();
+        }
+
     }
 }

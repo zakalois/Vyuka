@@ -1,0 +1,73 @@
+﻿@page
+@model Vyuka.Pages.Teachers_only.TeacherHoursModel
+@using System.Globalization
+
+<div class="container mt-4">
+
+    <h2>Přehled odučených hodin</h2>
+
+    <form method="get" class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <label class="form-label">Datum od</label>
+            <input type="date" class="form-control" asp-for="From" />
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Datum do</label>
+            <input type="date" class="form-control" asp-for="To" />
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-primary w-100">Vyjet přehled</button>
+        </div>
+
+    </form>
+
+    @if (Model.Results != null && Model.Results.Any())
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <strong>Výsledky</strong>
+            </div>
+
+            <div class="card-body">
+
+                <p>
+                    <strong>Celkem hodin:</strong>
+                    @Model.TotalHours
+                </p>
+
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Čas</th>
+                            <th>Student</th>
+                            <th>Předmět</th>
+                            <th>Délka</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var l in Model.Results)
+                        {
+                            <tr>
+                                <td>@l.Date.ToString("dd.MM.yyyy")</td>
+                                <td>@l.Start.ToString(@"hh\:mm") – @l.End.ToString(@"hh\:mm")</td>
+                                <td>@l.Student.LastName @l.Student.FirstName</td>
+                                <td>@l.Subject.Name</td>
+                                <td>@((l.End - l.Start).TotalHours) h</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    }
+    else if (Model.From != default && Model.To != default)
+    {
+        <p class="text-muted">V tomto období nejsou žádné odučené hodiny.</p>
+    }
+
+</div>

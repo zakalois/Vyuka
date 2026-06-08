@@ -155,6 +155,15 @@ namespace Vyuka.Pages.Admin.Schedule
                 .Include(p => p.SubjectTopic)
                 .Include(p => p.Teacher)
                 .Where(p => p.Date >= StartOfWeek && p.Date <= EndOfWeek);
+            var taughtLessons = await _context.Lessons
+                .Include(l => l.Student)
+                .Include(l => l.Subject)
+                .Include(l => l.SubjectTopic)
+                .Include(l => l.Teacher)
+                .Where(l => l.Date >= StartOfWeek && l.Date <= EndOfWeek)
+                .ToListAsync();
+
+            ViewData["TaughtLessons"] = taughtLessons;
 
             // UČITEL → vidí jen svůj rozvrh
             if (User.IsInRole("Teacher"))

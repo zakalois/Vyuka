@@ -76,29 +76,61 @@
     </div>
 
     <!-- Týdenní rozvrh přes celou šířku -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-warning">
+    <div class="card bg-warning mt-4">
+        <div class="card-header">
             <strong>Týdenní rozvrh</strong>
         </div>
 
         <div class="card-body">
-
-            <div class="row text-center">
+            <div class="schedule-grid">
 
                 @foreach (var day in Model.WeeklySchedule)
                 {
-                    var isWeekend = day.Day == "Sobota" || day.Day == "Neděle";
-                    var bg = isWeekend ? "bg-light border-danger" : "bg-light";
+                    <div class="day-column">
+                        <div class="day-header">
+                            <strong>@day.Day</strong><br />
+                            <small class="text-muted">@day.Date.ToString("dd.MM.")</small><br />
+                            <span class="text-muted">
+                                @day.Lessons.Sum(l => (l.End - l.Start).TotalHours) hodin
+                            </span>
+                        </div>
 
-                    <div class="col border p-3 @bg">
-                        <strong>@day.Day</strong><br />
-                        @day.LessonCount hodin
+                        <hr />
+                        @if (day.Lessons.Any())
+                        {
+                            foreach (var l in day.Lessons)
+                            {
+                                <div class="lesson-block @(l.IsTaught ? "taught" : "")">
+                                    <div class="lesson-body">
+
+                                        <strong>@l.Student.LastName @l.Student.FirstName</strong><br />
+
+                                        @if (l.SubjectTopic != null)
+                                        {
+                                            <span class="text-muted">@l.SubjectTopic.Name</span><br />
+                                        }
+
+                                        <span class="text-muted">@l.Subject.Name</span><br />
+                                        @l.Start.ToString(@"hh\:mm") – @l.End.ToString(@"hh\:mm")<br />
+
+                                        @if (!string.IsNullOrEmpty(l.MeetLink))
+                                        {
+                                            <a href="@l.MeetLink" target="_blank" class="meet-link">Meet</a>
+                                        }
+
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        else
+                        {
+                            <div class="text-muted small">Žádné hodiny</div>
+                        }
                     </div>
                 }
 
             </div>
-
         </div>
     </div>
 
-</div>

@@ -154,27 +154,27 @@ namespace Vyuka.Pages.Teachers_only
     })
 
 
-                        .Concat(
-    lessons
-        .Where(l => l.Date.Date == date.Date)
-        .Select(l => new UnifiedLesson
-        {
-            LessonId = l.Id,
-            LessonPlanId = null,
-            Date = l.Date,
-            Start = l.Start,
-            End = l.End,
-            Student = $"{l.Student.LastName} {l.Student.FirstName}",
-            StudentId = l.StudentId,
-            Subject = l.Subject.Name,
-            SubjectId = l.SubjectId,
-            SubjectTopicId = null,
-            SubjectTopic = null,
-            MeetLink = l.MeetLink,
-            Color = GetStudentColor(l.Student),
-            IsTaught = l.IsTaught
-        })
-)
+//                        .Concat(
+//    lessons
+//        .Where(l => l.Date.Date == date.Date)
+//        .Select(l => new UnifiedLesson
+//        {
+//            LessonId = l.Id,
+//            LessonPlanId = null,
+//            Date = l.Date,
+//            Start = l.Start,
+//            End = l.End,
+//            Student = $"{l.Student.LastName} {l.Student.FirstName}",
+//            StudentId = l.StudentId,
+//            Subject = l.Subject.Name,
+//            SubjectId = l.SubjectId,
+//            SubjectTopicId = null,
+//            SubjectTopic = null,
+//            MeetLink = l.MeetLink,
+//            Color = GetStudentColor(l.Student),
+//            IsTaught = l.IsTaught
+//        })
+//)
 
                         .OrderBy(x => x.Start)
                         .ToList()
@@ -389,11 +389,7 @@ namespace Vyuka.Pages.Teachers_only
 
             if (plan != null)
             {
-                var teacher = await _context.Teachers
-                    .FirstOrDefaultAsync(t => t.Id == plan.Student.TeacherId);
-
-                if (teacher == null)
-                    throw new Exception("Teacher not found.");
+                plan.IsTaught = true;   // 🔥 označíme jako odučené
 
                 var lesson = new Lesson
                 {
@@ -402,19 +398,18 @@ namespace Vyuka.Pages.Teachers_only
                     End = plan.End,
                     StudentId = plan.StudentId,
                     SubjectId = plan.SubjectId,
-                    TeacherId = teacher.Id,
+                    TeacherId = plan.TeacherId,
                     MeetLink = plan.MeetLink,
                     IsTaught = true
                 };
 
-                _context.Lessons.Add(lesson);
-                _context.LessonPlans.Remove(plan);
-
+                _context.Lessons.Add(lesson);   // 🔥 uložíme historii
                 await _context.SaveChangesAsync();
             }
 
             return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
         }
+
     }
 
     public class NewLessonInput

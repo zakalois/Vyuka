@@ -50,6 +50,17 @@ namespace Vyuka.Services
             string emailType,
             int? studentId)
         {
+            // ⭐ OČIŠTĚNÍ EMAILU – TADY JE FIX
+            to = to?
+                .Trim()                // odstraní mezery na začátku a konci
+                .Replace("\r", "")     // odstraní CR
+                .Replace("\n", "")     // odstraní LF
+                .Replace("\t", "")     // odstraní tabulátory
+                .Replace("\uFEFF", ""); // odstraní BOM
+
+            if (string.IsNullOrWhiteSpace(to))
+                throw new Exception("EmailService: prázdná nebo neplatná emailová adresa.");
+
             // ⭐ NAHRAZENÍ PLACEHOLDERŮ
             html = html.Replace("{{Amount}}", dynamicAmount?.ToString("0") ?? "");
             html = html.Replace("{{Message}}", dynamicMessage ?? "");
@@ -60,6 +71,7 @@ namespace Vyuka.Services
             message.From.Add(new MailboxAddress("Výuka App", _smtp.From));
             message.To.Add(new MailboxAddress(to, to));
             message.Subject = subject;
+
 
             var builder = new BodyBuilder
             {

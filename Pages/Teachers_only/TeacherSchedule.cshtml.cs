@@ -389,26 +389,46 @@ namespace Vyuka.Pages.Teachers_only
 
             if (plan != null)
             {
-                plan.IsTaught = true;   // 🔥 označíme jako odučené
+                // 1️⃣ Najdeme skutečného učitele (přihlášeného)
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
 
+                if (teacher == null)
+                    return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
+
+                // 2️⃣ Označíme plán jako odučený
+                plan.IsTaught = true;
+
+                // 3️⃣ Převod TimeSpan (bez stringů!)
+                var start = plan.Start;
+                var end = plan.End;
+
+                var duration = end - start;
+
+                // 4️⃣ Vytvoříme Lesson se SPRÁVNÝM TeacherId
                 var lesson = new Lesson
                 {
-                    Date = plan.Date,
-                    Start = plan.Start,
-                    End = plan.End,
+                    Date = plan.Date.Date,   // 🔥 jistota, že se den neposune
+                    Start = start,
+                    End = end,
                     StudentId = plan.StudentId,
                     SubjectId = plan.SubjectId,
-                    TeacherId = plan.TeacherId,
+                    SubjectTopicId = plan.SubjectTopicId,
+                    TeacherId = teacher.Id,  // 🔥 KLÍČOVÁ OPRAVA
                     MeetLink = plan.MeetLink,
-                    IsTaught = true
+                    IsTaught = true,
+
+                    Day = plan.Date.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)plan.Date.DayOfWeek,
+                    Hours = (decimal)duration.TotalHours
                 };
 
-                _context.Lessons.Add(lesson);   // 🔥 uložíme historii
+                _context.Lessons.Add(lesson);
                 await _context.SaveChangesAsync();
             }
 
             return RedirectToPage("/Teachers_Only/TeacherSchedule", new { week });
         }
+
 
     }
 

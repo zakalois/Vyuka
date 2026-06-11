@@ -90,7 +90,14 @@ namespace Vyuka.Pages.Communications
 
         public async Task<IActionResult> OnPostSend()
         {
-            var selected = Recipients?.Where(r => r.Selected).ToList();
+            // 🔥 OPRAVA: Recipients se musí načíst, pokud nejsou v modelu
+            if (Recipients == null || Recipients.Count == 0)
+            {
+                LoadRecipients();
+            }
+
+            var selected = Recipients.Where(r => r.Selected).ToList();
+
 
             if (selected == null || !selected.Any())
             {

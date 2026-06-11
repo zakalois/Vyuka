@@ -429,8 +429,10 @@ namespace Vyuka.Pages.Admin.Schedule
                 End = plan.End,
                 Hours = hours,
                 IsTaught = true,
-                MeetLink = plan.MeetLink
+                MeetLink = plan.MeetLink,
+                TeacherId = plan.TeacherId   // ⭐ DOPLNĚNO
             });
+
 
             plan.IsTaught = true;
             await _context.SaveChangesAsync();

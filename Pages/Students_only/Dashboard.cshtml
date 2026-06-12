@@ -1,21 +1,24 @@
 ﻿@page
 @model Vyuka.Pages.Students_only.DashboardModel
+@{
+    Layout = "_LayoutStudents";
+}
 
 <div class="container mt-4">
 
     <h2>Vítej, @Model.StudentName</h2>
 
-    <div class="row mt-4">
+    <div class="row mt-4 align-items-stretch">
 
-        <div class="col-md-4">
-            <div class="p-3 rounded text-center" style="background:#e3f2fd;">
+        <div class="col-md-4 d-flex">
+            <div class="p-3 rounded text-center flex-fill" style="background:#e3f2fd;">
                 <h5>Zůstatek hodin</h5>
                 <h3>@Model.FormattedBalance h</h3>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="p-3 rounded text-center" style="background:#fff3e0;">
+        <div class="col-md-4 d-flex">
+            <div class="p-3 rounded text-center flex-fill" style="background:#fff3e0;">
                 <h5>Nejbližší lekce</h5>
 
                 @if (Model.NextLesson != null)
@@ -31,8 +34,8 @@
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="p-3 rounded text-center" style="background:#e8f5e9;">
+        <div class="col-md-4 d-flex">
+            <div class="p-3 rounded text-center flex-fill" style="background:#e8f5e9;">
                 <h5>Poslední platba</h5>
                 <h4>@Model.LastPaymentAmount Kč</h4>
                 <p>@Model.LastPaymentDate</p>

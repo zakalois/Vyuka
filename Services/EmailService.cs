@@ -50,13 +50,13 @@ namespace Vyuka.Services
             string emailType,
             int? studentId)
         {
-            // ⭐ OČIŠTĚNÍ EMAILU – TADY JE FIX
+            // ⭐ OČIŠTĚNÍ EMAILU
             to = to?
-                .Trim()                // odstraní mezery na začátku a konci
-                .Replace("\r", "")     // odstraní CR
-                .Replace("\n", "")     // odstraní LF
-                .Replace("\t", "")     // odstraní tabulátory
-                .Replace("\uFEFF", ""); // odstraní BOM
+                .Trim()
+                .Replace("\r", "")
+                .Replace("\n", "")
+                .Replace("\t", "")
+                .Replace("\uFEFF", "");
 
             if (string.IsNullOrWhiteSpace(to))
                 throw new Exception("EmailService: prázdná nebo neplatná emailová adresa.");
@@ -72,7 +72,6 @@ namespace Vyuka.Services
             message.To.Add(new MailboxAddress(to, to));
             message.Subject = subject;
 
-
             var builder = new BodyBuilder
             {
                 HtmlBody = html
@@ -81,11 +80,11 @@ namespace Vyuka.Services
             // ⭐ LOGO
             AddImageFromFile(builder, "logo", Path.Combine(_env.WebRootPath, "images", "logo.jpg"));
 
-            // ⭐ Statické QR obrázky
-            AddImageFromFile(builder, "qr350", Path.Combine(_env.WebRootPath, "images", "QR", "1_hod_350.jpg"));
-            AddImageFromFile(builder, "qr400", Path.Combine(_env.WebRootPath, "images", "QR", "1_hod_400.jpg"));
-            AddImageFromFile(builder, "qr3500", Path.Combine(_env.WebRootPath, "images", "QR", "10_hod_3500.jpg"));
-            AddImageFromFile(builder, "qr4000", Path.Combine(_env.WebRootPath, "images", "QR", "10_hod_4000.jpg"));
+            // ❌ ODSTRANĚNO – statické QR obrázky
+            // AddImageFromFile(builder, "qr350", ...);
+            // AddImageFromFile(builder, "qr400", ...);
+            // AddImageFromFile(builder, "qr3500", ...);
+            // AddImageFromFile(builder, "qr4000", ...);
 
             // ⭐ Dynamický QR kód – generovat vždy
             bool hasQr = false;
@@ -202,6 +201,7 @@ namespace Vyuka.Services
             img.ContentId = contentId;
             img.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
         }
+
         public async Task SendPasswordResetEmail(string email, string name, string token)
         {
             var resetLink = $"https://{_smtp.AppDomain}/Account/ResetPassword?token={token}";
@@ -215,6 +215,5 @@ namespace Vyuka.Services
 
             await SendAsync(email, "Reset hesla", html);
         }
-
     }
 }

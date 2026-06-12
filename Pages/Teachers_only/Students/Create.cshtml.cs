@@ -5,14 +5,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 
-namespace Vyuka.Pages.Admin.Students
+namespace Vyuka.Pages.Teachers_only.Students
 {
     public class CreateModel : PageModel
     {
         private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
-
-        public SelectList TeacherList { get; set; }
 
         public CreateModel(AppDbContext context, UserManager<AppUser> userManager)
         {
@@ -28,34 +26,16 @@ namespace Vyuka.Pages.Admin.Students
 
         public List<Subject> Subjects { get; set; } = new();
 
-        public async void OnGet()
+        public async Task OnGet()
         {
-            Subjects = _context.Subjects.ToList();
-
-            // ADMIN → naplníme TeacherList
-            if (User.IsInRole("Admin"))
-            {
-                TeacherList = new SelectList(
-                    await _context.Teachers
-                        .Include(t => t.User)
-                        .OrderBy(t => t.User.LastName)
-                        .Select(t => new
-                        {
-                            Id = t.Id,
-                            Name = t.User.FirstName + " " + t.User.LastName
-                        })
-                        .ToListAsync(),
-                    "Id",
-                    "Name"
-                );
-            }
+            Subjects = await _context.Subjects.ToListAsync();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
-                Subjects = _context.Subjects.ToList();
+                Subjects = await _context.Subjects.ToListAsync();
                 return Page();
             }
 
@@ -76,21 +56,16 @@ namespace Vyuka.Pages.Admin.Students
                 foreach (var error in result.Errors)
                     ModelState.AddModelError("", error.Description);
 
-                Subjects = _context.Subjects.ToList();
+                Subjects = await _context.Subjects.ToListAsync();
                 return Page();
             }
 
-            // 2) Automatické přiřazení TeacherId pro učitele
-            if (User.IsInRole("Teacher"))
-            {
-                var currentUser = await _userManager.GetUserAsync(User);
+            // 2) Automatické přiřazení TeacherId
+            var currentUser = await _userManager.GetUserAsync(User);
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == currentUser.Id);
 
-                var teacher = await _context.Teachers
-                    .FirstOrDefaultAsync(t => t.UserId == currentUser.Id);
-
-                if (teacher != null)
-                    Student.TeacherId = teacher.Id;
-            }
+            if (teacher != null)
+                Student.TeacherId = teacher.Id;
 
             // 3) Uložení studenta
             Student.UserId = user.Id;
@@ -99,7 +74,7 @@ namespace Vyuka.Pages.Admin.Students
             _context.Students.Add(Student);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage("Index");
+            return RedirectToPage("/Teachers_only/Students/Index");
         }
 
         private string GeneratePassword()

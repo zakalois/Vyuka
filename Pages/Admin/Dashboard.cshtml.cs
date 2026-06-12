@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Vyuka.Models;
 
 namespace Vyuka.Pages.Admin
 {
+    [Authorize(Roles = "Admin")]
+
     public class DashboardModel : PageModel
     {
         private readonly AppDbContext _context;

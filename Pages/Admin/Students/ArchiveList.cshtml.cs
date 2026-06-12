@@ -19,9 +19,9 @@ namespace Vyuka.Pages.Admin.Students
         {
             Students = await _context.Students
                 .Where(s => s.ArchivedAt != null)          // ⭐ jen archivovaní
-                .Include(s => s.Subject)
-                .OrderByDescending(s => s.ArchivedAt)      // ⭐ nejnovější nahoře
-                .ToListAsync();
+                .OrderBy(s => s.LastName)
+    .ThenBy(s => s.FirstName)
+    .ToListAsync();
         }
     }
 }

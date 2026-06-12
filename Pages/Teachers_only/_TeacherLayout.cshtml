@@ -55,35 +55,57 @@
 
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" asp-page="/Teachers_only/Students/Index">
+                    <!-- STUDENTI DROPDOWN -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-people-fill me-2" style="color:#ffd966;"></i>
                             Studenti
                         </a>
+
+                        <ul class="dropdown-menu">
+
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" asp-page="/Teachers_only/Students/Index">
+                                    <i class="bi bi-list-ul me-2"></i>
+                                    Moji studenti
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" asp-page="/Teachers_only/TeacherHours">
+                                    <i class="bi bi-journal-check me-2"></i>
+                                    Odučené hodiny
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" asp-page="/Teachers_only/TeacherSchedule">
+                                    <i class="bi bi-plus-circle me-2"></i>
+                                    Přidat hodinu
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" asp-page="/Teachers_only/Students/Create">
+                                    <i class="bi bi-person-plus-fill me-2"></i>
+                                    Přidat studenta
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" asp-page="/Teachers_only/Notes/Index">
+                                    <i class="bi bi-journal-text me-2" style="color:#ffdf80;"></i>
+                                    Poznámky
+                                </a>
+                            </li>
+
+
+                        </ul>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" asp-page="/Teachers_only/TeacherHours">
-                            <i class="bi bi-journal-check me-2" style="color:#a4d7ff;"></i>
-                            Přehled hodin
-                        </a>
-                    </li>
 
 
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" asp-page="/Teachers_only/Lessons/Create">
-                            <i class="bi bi-plus-circle me-2" style="color:#ffb3b3;"></i>
-                            Přidat hodinu
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" asp-page="/Teachers_only/Today">
-                            <i class="bi bi-calendar-day me-2" style="color:#baffc9;"></i>
-                            Dnešní hodiny
-                        </a>
-                    </li>
-
+                    <!-- TÝDENNÍ ROZVRH -->
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-center" asp-page="/Teachers_only/TeacherSchedule">
                             <i class="bi bi-calendar-week me-2" style="color:#d5b3ff;"></i>
@@ -91,14 +113,16 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <!-- POZNÁMKY -->
+                    @* <li class="nav-item">
                         <a class="nav-link d-flex align-items-center" asp-page="/Teachers_only/Notes/Index">
                             <i class="bi bi-journal-text me-2" style="color:#ffdf80;"></i>
                             Poznámky
                         </a>
-                    </li>
+                    </li> *@
 
                 </ul>
+
 
                 <div class="d-flex align-items-center">
 

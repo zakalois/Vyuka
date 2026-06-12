@@ -6,45 +6,30 @@ using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
 using Vyuka.Secrets;
 using Vyuka.Services;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---------------------------------------------------------
-// TimeProvider – nutné pro Identity v .NET 8
-// ---------------------------------------------------------
+// TimeProvider
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
-// ---------------------------------------------------------
-// SMTP nastavení
-// ---------------------------------------------------------
+// SMTP
 builder.Services.Configure<SmtpSettings>(
     builder.Configuration.GetSection("SmtpSettings")
 );
 
-// ---------------------------------------------------------
-// EmailService – JEDINÁ správná registrace
-// ---------------------------------------------------------
+// Email services
 builder.Services.AddScoped<IEmailService, EmailService>();
-
-// ---------------------------------------------------------
-// Šablony e‑mailů
-// ---------------------------------------------------------
 builder.Services.AddScoped<LessonPlanEmailBuilder>();
 builder.Services.AddScoped<LessonEmailBuilder>();
 builder.Services.AddScoped<OfferEmailBuilder>();
 
-// ---------------------------------------------------------
 // QR kód
-// ---------------------------------------------------------
 builder.Services.AddSingleton<QrCodeGeneratorService>();
 
 // TemplateService
 builder.Services.AddScoped<ITemplateService, TemplateService>();
 
-// ---------------------------------------------------------
-// Razor Pages + DB + HttpContext
-// ---------------------------------------------------------
+// Razor Pages + DB
 builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
 
@@ -52,9 +37,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// ---------------------------------------------------------
-// Identity – správná konfigurace pro AppUser
-// ---------------------------------------------------------
+// Identity
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 {
     options.User.RequireUniqueEmail = true;
@@ -68,24 +51,18 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// ---------------------------------------------------------
-// COOKIE – LoginPath + AccessDeniedPath
-// ---------------------------------------------------------
+// Cookie paths
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Login";
     options.AccessDeniedPath = "/AccessDenied";
 });
 
-// ---------------------------------------------------------
 // Authentication + Authorization
-// ---------------------------------------------------------
-builder.Services.AddAuthentication();
+//builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
-// ---------------------------------------------------------
-// Google Calendar API klient
-// ---------------------------------------------------------
+// Google Calendar
 builder.Services.AddSingleton(provider =>
 {
     var config = provider.GetRequiredService<IConfiguration>();
@@ -110,12 +87,9 @@ builder.Services.AddSingleton(provider =>
         });
 });
 
-// Služba pro práci s Google Calendar
 builder.Services.AddScoped<GoogleCalendarService>();
 
-// ---------------------------------------------------------
-// SESSION
-// ---------------------------------------------------------
+// Session
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(12);
@@ -125,9 +99,7 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
-// ---------------------------------------------------------
-// Inicializace rolí + ADMIN účtu při startu aplikace
-// ---------------------------------------------------------
+// Role + Admin init
 using (var scope = app.Services.CreateAsyncScope())
 {
     var services = scope.ServiceProvider;
@@ -178,9 +150,7 @@ using (var scope = app.Services.CreateAsyncScope())
     }
 }
 
-// ---------------------------------------------------------
 // Middleware pipeline
-// ---------------------------------------------------------
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -196,34 +166,7 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ---------------------------------------------------------
-// Ochrana před nepřihlášenými uživateli
-// ---------------------------------------------------------
-app.Use(async (context, next) =>
-{
-    var path = context.Request.Path.Value;
-
-    if (path.Equals("/Login", StringComparison.OrdinalIgnoreCase) ||
-        path.StartsWith("/Account/ForgotPassword", StringComparison.OrdinalIgnoreCase) ||
-        path.StartsWith("/Account/ResetPassword", StringComparison.OrdinalIgnoreCase) ||
-        path.Equals("/AccessDenied", StringComparison.OrdinalIgnoreCase))
-    {
-        await next();
-        return;
-    }
-
-    if (!context.User.Identity?.IsAuthenticated ?? true)
-    {
-        context.Response.Redirect("/Login");
-        return;
-    }
-
-    await next();
-});
-
-// ---------------------------------------------------------
-// Defaultní redirect
-// ---------------------------------------------------------
+// Default redirect
 app.MapGet("/", context =>
 {
     context.Response.Redirect("/Login");

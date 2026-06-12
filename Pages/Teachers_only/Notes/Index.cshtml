@@ -1,6 +1,11 @@
 ﻿@page "{studentId?}"
 @model Vyuka.Pages.Teachers_only.Notes.IndexModel
 
+@{
+    Layout = "/Pages/Teachers_only/_TeacherLayout.cshtml";
+}
+
+
 <h2>Poznámky</h2>
 
 <style>
@@ -75,7 +80,7 @@
             <tr>
                 <th>Datum</th>
                 <th>Autor</th>
-                <th>Poznámka</th>
+                <th class="text-start">Poznámka</th>
             </tr>
         </thead>
         <tbody>
@@ -84,14 +89,14 @@
                 <tr>
                     <td>@n.Created.ToString("dd.MM.yyyy HH:mm")</td>
 
-                    <!-- stejné zvýraznění autora jako admin -->
                     <td class="@(n.CreatedBy == Model.CurrentTeacherName ? "note-author-me" : "note-author-other")">
                         @n.CreatedBy
                     </td>
 
-                    <td>@n.Text</td>
+                    <td class="text-start">@n.Text</td>
                 </tr>
             }
         </tbody>
     </table>
+
 }

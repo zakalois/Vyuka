@@ -904,4 +904,19 @@ body.dark .notes-table th {
 .templates-table td {
     text-align: left;
 }
+.dashboard-row {
+    display: flex;
+    gap: 20px;
+    align-items: stretch; /* ⭐ DŮLEŽITÉ – všechny boxy budou mít stejnou výšku */
+}
+
+.box {
+    flex: 1; /* všechny boxy stejně široké */
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column; /* ⭐ aby obsah uvnitř držel strukturu */
+}
 

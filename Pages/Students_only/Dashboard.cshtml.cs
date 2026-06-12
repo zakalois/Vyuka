@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,8 @@ using Vyuka.Models;
 
 namespace Vyuka.Pages.Students_only
 {
+    [Authorize(Roles = "Student")]
+
     public class DashboardModel : PageModel
     {
         private readonly AppDbContext _db;

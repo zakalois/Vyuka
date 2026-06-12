@@ -1,9 +1,16 @@
 ﻿@page "/Teachers_only/Students/Edit/{id:int}"
 @model Vyuka.Pages.Teachers_only.Students.EditModel
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Teacher")]
+
+@{
+    Layout = "/Pages/Teachers_only/_TeacherLayout.cshtml";
+}
 
 <h2>Upravit studenta</h2>
 
 <form method="post">
+    @Html.AntiForgeryToken()
 
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
@@ -36,7 +43,9 @@
 
         <div class="col-md-6 mb-3">
             <label>Předmět</label>
-            <select asp-for="Student.SubjectId" asp-items="@(new SelectList(Model.Subjects, "Id", "Name"))" class="form-select"></select>
+            <select asp-for="Student.SubjectId"
+                    asp-items="@(new SelectList(Model.Subjects, "Id", "Name"))"
+                    class="form-select"></select>
             <span asp-validation-for="Student.SubjectId" class="text-danger"></span>
         </div>
 
@@ -55,7 +64,6 @@
         <!-- RODIČ -->
         <h4 class="mt-4">Rodič</h4>
 
-        <!-- SPRÁVNĚ -->
         <div class="mb-3">
             <label>Jméno rodiče</label>
             <input asp-for="Student.ParentFirstName" class="form-control" />
@@ -80,10 +88,8 @@
             <span asp-validation-for="Student.ParentPhone" class="text-danger"></span>
         </div>
 
-
     </div>
 
     <button type="submit" class="btn btn-primary">Uložit změny</button>
     <a asp-page="/Teachers_only/Students/Index" class="btn btn-secondary">Zpět</a>
-
 </form>

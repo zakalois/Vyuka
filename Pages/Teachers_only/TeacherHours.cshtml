@@ -4,9 +4,23 @@
 
 <div class="container mt-4">
 
-    <h2>Přehled odučených hodin</h2>
+    <h2>Přehled odučených hodin učitelem</h2>
 
     <form method="get" class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <label class="form-label">Student</label>
+            <select name="SelectedStudentId" class="form-select" onchange="this.form.submit()">
+                <option value="">Všichni studenti</option>
+
+                @foreach (var s in Model.Students)
+                {
+                    <option value="@s.Id" selected="@(Model.SelectedStudentId == s.Id)">
+                        @s.LastName @s.FirstName
+                    </option>
+                }
+            </select>
+        </div>
 
         <div class="col-md-4">
             <label class="form-label">Datum od</label>
@@ -18,11 +32,12 @@
             <input type="date" class="form-control" asp-for="To" />
         </div>
 
-        <div class="col-md-4 d-flex align-items-end">
-            <button class="btn btn-primary w-100">Vyjet přehled</button>
+        <div class="col-md-12 d-flex justify-content-end">
+            <button class="btn btn-primary">Vyjet přehled</button>
         </div>
 
     </form>
+
 
     @if (Model.Results != null && Model.Results.Any())
     {

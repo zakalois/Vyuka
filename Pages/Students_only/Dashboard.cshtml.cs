@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vyuka.Models;
@@ -7,7 +8,6 @@ using Vyuka.Models;
 namespace Vyuka.Pages.Students_only
 {
     [Authorize(Roles = "Student")]
-
     public class DashboardModel : PageModel
     {
         private readonly AppDbContext _db;
@@ -34,24 +34,25 @@ namespace Vyuka.Pages.Students_only
             public decimal Hours { get; set; }
         }
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
             // 1) Získáme ID přihlášeného uživatele
             var userId = _userManager.GetUserId(User);
 
-            // 2) Najdeme studenta podle UserId (správný název!)
+            // 2) Najdeme studenta podle UserId
             var student = await _db.Students
                 .FirstOrDefaultAsync(s => s.UserId == userId);
 
-            if (student == null)
+            // ⭐ 3) Kontrola aktivace – NEAKTIVNÍ STUDENT NESMÍ DOVNITŘ
+            if (student == null || !student.IsActive)
             {
-                StudentName = "Neznámý student";
-                return;
+                return RedirectToPage("/Students_only/RegistrationPending");
             }
 
+            // ⭐ 4) Student je aktivní → pokračujeme dál
             StudentName = student.FullName;
 
-            // 3) Zůstatek hodin
+            // 5) Zůstatek hodin
             var prepaid = await _db.Payments
                 .Where(p => p.StudentId == student.Id)
                 .SumAsync(p => (decimal?)p.HoursPurchased) ?? 0;
@@ -62,10 +63,10 @@ namespace Vyuka.Pages.Students_only
 
             FormattedBalance = (prepaid - taught).ToString("0.0");
 
-            // 4) Nejbližší lekce
+            // 6) Nejbližší lekce
             var next = await _db.LessonPlans
                 .Include(l => l.Subject)
-              .Where(l => l.StudentId == student.Id && l.Date >= DateTime.Today)
+                .Where(l => l.StudentId == student.Id && l.Date >= DateTime.Today)
                 .OrderBy(l => l.Date)
                 .FirstOrDefaultAsync();
 
@@ -79,7 +80,7 @@ namespace Vyuka.Pages.Students_only
                 };
             }
 
-            // 5) Poslední platba
+            // 7) Poslední platba
             var lastPayment = await _db.Payments
                 .Where(p => p.StudentId == student.Id)
                 .OrderByDescending(p => p.Date)
@@ -90,6 +91,8 @@ namespace Vyuka.Pages.Students_only
                 LastPaymentDate = lastPayment.Date.ToString("dd.MM.yyyy");
                 LastPaymentAmount = lastPayment.Amount.ToString("N0");
             }
+
+            return Page();
         }
     }
 }

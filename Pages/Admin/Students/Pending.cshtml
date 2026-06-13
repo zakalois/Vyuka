@@ -1,0 +1,30 @@
+﻿@page
+@model PendingModel
+
+<h2>Čekající registrace studentů</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Jméno</th>
+            <th>Email</th>
+            <th>Registrován</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model.PendingStudents)
+        {
+            <tr>
+                <td>@s.FirstName @s.LastName</td>
+                <td>@s.Email</td>
+                <td>@s.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>
+                    <a asp-page="Approve" asp-route-id="@s.Id" class="btn btn-success btn-sm">
+                        Schválit
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

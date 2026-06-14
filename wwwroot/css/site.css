@@ -802,6 +802,15 @@ body.dark .notes-table th {
         color: #ffffff !important;
         font-weight: 500;
     }
+.admin-navbar .nav-link.active {
+    color: #000000 !important;
+}
+.admin-navbar .nav-link.active,
+.admin-navbar .nav-link:active {
+    color: #000000 !important;
+    background-color: transparent !important;
+}
+
 
         /* Hover efekt */
         .admin-navbar .dropdown-menu .dropdown-item:hover {
@@ -813,6 +822,17 @@ body.dark .notes-table th {
     .admin-navbar .dropdown-menu i {
         color: #ffffff !important;
     }
+    .admin-navbar .dropdown-menu .dropdown-item.active,
+    .admin-navbar .dropdown-menu .dropdown-item:active {
+        background-color: transparent !important;
+        color: #000000 !important;
+    }
+.admin-navbar .nav-link.active,
+.admin-navbar .nav-link:active {
+    color: #000000 !important;
+    background-color: transparent !important;
+}
+
 .teacher-assigned {
     background-color: #d4f8d4; /* světle zelená */
     color: #0f7a0f; /* tmavě zelená */
@@ -919,4 +939,25 @@ body.dark .notes-table th {
     display: flex;
     flex-direction: column; /* ⭐ aby obsah uvnitř držel strukturu */
 }
+.navbar-dark .navbar-nav .nav-link.active,
+.navbar-dark .navbar-nav .nav-link:active,
+.navbar-dark .navbar-nav .nav-link.show {
+    color: #000000 !important;
+    background-color: transparent !important;
+}
+.navbar-dark .navbar-nav .nav-link,
+.navbar-dark .navbar-nav .nav-link.active,
+.navbar-dark .navbar-nav .nav-link:active,
+.navbar-dark .navbar-nav .nav-link.show {
+    color: #000000 !important;
+}
+* {
+    color: red !important;
+}
+.navbar-dark .navbar-nav .nav-link.active,
+.navbar-dark .navbar-nav .nav-link:active {
+    color: #000000 !important;
+    background-color: transparent !important;
+}
+
 

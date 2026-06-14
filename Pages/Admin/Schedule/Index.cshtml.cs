@@ -228,7 +228,19 @@ namespace Vyuka.Pages.Admin.Schedule
                 meet.MeetLink
             );
 
-            await _email.SendAsync(student.Email, "Plánovaná lekce", html);
+            await _email.SendAsync(
+    student.Email,
+    "Plánovaná lekce",
+    html,
+    null,                                   // attachments
+    null,                                   // dynamicAmount
+    null,                                   // dynamicMessage
+    null,                                   // customText
+    $"{student.FirstName} {student.LastName}", // studentName
+    "lesson_planned",                       // emailType
+    student.Id                              // studentId
+);
+
 
             // URČENÍ TEACHER ID – vždy podle studenta
             int? teacherIdToAssign = _context.Students

@@ -74,7 +74,19 @@ namespace Vyuka.Pages.Communications
                 new EmailAttachment("qrDynamic", Path.Combine(_env.WebRootPath, "images/QR/1_hod_400.jpg"))
             };
 
-            await _email.SendAsync(ParentEmail, "Nabídka online výuky", html, attachments);
+            await _email.SendAsync(
+    ParentEmail,                     // to
+    "Nabídka online výuky",          // subject
+    html,                            // html
+    attachments,                     // attachments
+    400,                             // dynamicAmount (pro QR)
+    $"Výuka pro {StudentName}",      // dynamicMessage
+    CustomText,                      // customText
+    StudentName,                     // studentName
+    "offer",                         // emailType
+    null                             // studentId (pokud neznáš ID studenta)
+);
+
 
             TempData["Message"] = "Nabídka byla úspěšně odeslána.";
             return RedirectToPage("/Communications/Index");

@@ -17,6 +17,10 @@ namespace Vyuka.Pages.Admin.Teachers
 
         public async Task OnGetAsync()
         {
+            var now = DateTime.Now;
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+            var monthEnd = monthStart.AddMonths(1);
+
             Teachers = await _context.Teachers
                 .Include(t => t.User)
                 .Select(t => new TeacherListViewModel
@@ -29,12 +33,20 @@ namespace Vyuka.Pages.Admin.Teachers
                     Phone = t.User.PhoneNumber,
                     Subjects = "",
 
-                    // ⭐ OPRAVA — správný počet studentů
+                    // Počet studentů
                     StudentsCount = _context.Students
                         .Count(s => s.TeacherId == t.Id),
 
-                    // ⭐ Hodiny tento měsíc (zatím 0, doplníme později)
-                    HoursThisMonth = 0,
+                    // ⭐ Hodiny tento měsíc – používáme Lesson.Hours (decimal)
+                    HoursThisMonth = (int)_context.Lessons
+    .Where(l =>
+        l.TeacherId == t.Id &&
+        l.Date >= monthStart &&
+        l.Date < monthEnd &&
+        l.IsTaught == true
+    )
+    .Sum(l => l.Hours),
+
 
                     IsActive = t.IsActive
                 })

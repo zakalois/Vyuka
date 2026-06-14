@@ -121,7 +121,19 @@ namespace Vyuka.Pages.Payments
             else
                 emailToSend = "zaka@outlook.cz"; // fallback
 
-            await _email.SendAsync(emailToSend, "Potvrzení platby", html);
+            await _email.SendAsync(
+    emailToSend,
+    "Potvrzení platby",
+    html,
+    null,                       // attachments
+    Amount,                     // dynamicAmount
+    null,                       // dynamicMessage
+    null,                       // customText
+    $"{student.FirstName} {student.LastName}", // studentName
+    "payment",                  // emailType
+    student.Id                  // studentId
+);
+
 
             // 7) Redirect
             return RedirectToPage("/Payments/Index");

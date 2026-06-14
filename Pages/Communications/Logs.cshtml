@@ -9,11 +9,25 @@
         <label class="form-label">Typ e‑mailu</label>
         <select name="Type" class="form-select">
             <option value="">Vše</option>
-            <option value="payment" selected="@(Model.Type == "payment")">Platba</option>
-            <option value="birthday" selected="@(Model.Type == "birthday")">Narozeniny</option>
-            <option value="offer" selected="@(Model.Type == "offer")">Nabídka</option>
-            <option value="system" selected="@(Model.Type == "system")">Systém</option>
+
+            @foreach (var item in new[] {
+        new { Value = "payment", Text = "Platba" },
+        new { Value = "birthday", Text = "Narozeniny" },
+        new { Value = "offer", Text = "Nabídka" },
+        new { Value = "system", Text = "Systém" }
+    })
+            {
+                if (Model.Type == item.Value)
+                {
+                    <option value="@item.Value" selected>@item.Text</option>
+                }
+                else
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            }
         </select>
+
     </div>
 
     <div class="col-md-3">
@@ -98,6 +112,6 @@
     </tbody>
 </table>
 
-<form method="post" asp-page-handler="Clean" class="mt-3">
+<form method="get" asp-page-handler="Clean" class="mt-3">
     <button class="btn btn-danger">Vyčistit staré logy</button>
 </form>

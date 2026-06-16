@@ -32,6 +32,9 @@ namespace Vyuka.Pages.Payments
 
         public async Task OnGetAsync()
         {
+            // ⭐ Anti‑duplicate token – ochrana proti opakovanému odeslání
+            TempData["PaymentToken"] = Guid.NewGuid().ToString();
+
             var students = await _context.Students
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
@@ -50,24 +53,36 @@ namespace Vyuka.Pages.Payments
 
         public async Task<IActionResult> OnPostAsync()
         {
+            // ⭐ 1) Anti‑duplicate token kontrola
+            var token = Request.Form["PaymentToken"].ToString();
+
+            if (string.IsNullOrEmpty(token))
+                return RedirectToPage("/Payments/Index");
+
+            if (TempData[token] != null)
+                return RedirectToPage("/Payments/Index");
+
+            TempData[token] = "used";
+
+            // ⭐ 2) Validace
             if (!ModelState.IsValid)
             {
                 await OnGetAsync();
                 return Page();
             }
 
-            // 0) OCHRANA PROTI DUPLICITÁM
+            // ⭐ 3) Silnější ochrana proti duplicitám
             var exists = await _context.Payments.AnyAsync(p =>
                 p.StudentId == SelectedStudentId &&
                 p.Amount == Amount &&
                 p.Date == Date &&
-                p.HoursPurchased == HoursPurchased
+                EF.Functions.DateDiffMinute(p.Date, DateTime.Now) < 5
             );
 
             if (exists)
                 return RedirectToPage("/Payments/Index");
 
-            // 1) Uložit platbu
+            // ⭐ 4) Uložit platbu
             var payment = new Payment
             {
                 StudentId = SelectedStudentId,
@@ -82,7 +97,7 @@ namespace Vyuka.Pages.Payments
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            // 2) Načíst studenta
+            // ⭐ 5) Načíst studenta
             var student = await _context.Students
                 .FirstOrDefaultAsync(s => s.Id == SelectedStudentId);
 
@@ -92,15 +107,16 @@ namespace Vyuka.Pages.Payments
                 return Page();
             }
 
-            // 3) Rodič a student email
-            string? parentEmail = student.ParentEmail;
-            string? studentEmail = student.Email;
+            // ⭐ 6) Email – výběr příjemce
+            string? emailToSend =
+                !string.IsNullOrWhiteSpace(student.ParentEmail) ? student.ParentEmail :
+                !string.IsNullOrWhiteSpace(student.Email) ? student.Email :
+                "zaka@outlook.cz";
 
-            // 4) Načíst HTML šablonu
+            // ⭐ 7) Načíst HTML šablonu
             var templatePath = Path.Combine(_env.ContentRootPath, "EmailsTemplates", "PaymentConfirmation.html");
             var html = await System.IO.File.ReadAllTextAsync(templatePath);
 
-            // 5) Nahradit placeholdery
             html = html.Replace("{{StudentName}}", $"{student.FirstName} {student.LastName}")
                        .Replace("{{Amount}}", Amount.ToString("0.##"))
                        .Replace("{{PaymentDate}}", Date.ToString("dd.MM.yyyy"))
@@ -111,31 +127,21 @@ namespace Vyuka.Pages.Payments
                             ? ""
                             : $"<p><strong>Poznámka:</strong> {Note}</p>");
 
-            // 6) Odeslat e-mail
-            string? emailToSend = null;
-
-            if (!string.IsNullOrWhiteSpace(parentEmail))
-                emailToSend = parentEmail;
-            else if (!string.IsNullOrWhiteSpace(studentEmail))
-                emailToSend = studentEmail;
-            else
-                emailToSend = "zaka@outlook.cz"; // fallback
-
+            // ⭐ 8) Odeslat e-mail
             await _email.SendAsync(
-    emailToSend,
-    "Potvrzení platby",
-    html,
-    null,                       // attachments
-    Amount,                     // dynamicAmount
-    null,                       // dynamicMessage
-    null,                       // customText
-    $"{student.FirstName} {student.LastName}", // studentName
-    "payment",                  // emailType
-    student.Id                  // studentId
-);
+                emailToSend,
+                "Potvrzení platby",
+                html,
+                null,
+                Amount,
+                null,
+                null,
+                $"{student.FirstName} {student.LastName}",
+                "payment",
+                student.Id
+            );
 
-
-            // 7) Redirect
+            // ⭐ 9) Hotovo
             return RedirectToPage("/Payments/Index");
         }
     }

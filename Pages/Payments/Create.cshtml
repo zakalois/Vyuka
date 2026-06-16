@@ -4,6 +4,8 @@
 <h1>Přidat platbu</h1>
 
 <form method="post">
+    <input type="hidden" name="PaymentToken" value="@TempData["PaymentToken"]" />
+
     <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
     <div class="mb-3">

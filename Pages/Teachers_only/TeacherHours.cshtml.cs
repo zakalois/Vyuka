@@ -62,24 +62,25 @@ namespace Vyuka.Pages.Teachers_only
                 .Include(l => l.Subject)
                 .Where(l =>
                     l.TeacherId == teacher.Id &&
-                    l.IsTaught &&
+                    l.IsTaught == true &&
                     l.Date >= From &&
                     l.Date <= To);
 
-            // ⭐ pokud je vybraný student → filtrujeme
-            if (SelectedStudentId.HasValue)
+            // ⭐ filtr podle studenta (pokud je vybraný)
+            if (SelectedStudentId.HasValue && SelectedStudentId.Value > 0)
             {
                 query = query.Where(l => l.StudentId == SelectedStudentId.Value);
             }
 
-            // ⭐ výsledky
+            // ⭐ výsledky – řazení od nejnovějších k nejstarším
             Results = await query
-                .OrderBy(l => l.Date)
-                .ThenBy(l => l.Start)
+                .OrderByDescending(l => l.Date)
+                .ThenByDescending(l => l.Start)
                 .ToListAsync();
 
             // ⭐ výpočet celkových hodin
             TotalHours = Results.Sum(l => (l.End - l.Start).TotalHours);
+
         }
     }
 }

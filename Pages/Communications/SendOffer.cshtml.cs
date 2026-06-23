@@ -1,95 +1,125 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Vyuka.Models;
 using Vyuka.Services;
 
 namespace Vyuka.Pages.Communications
 {
     public class SendOfferModel : PageModel
     {
-        private readonly OfferEmailBuilder _builder;
-        private readonly IEmailService _email;
-        private readonly IWebHostEnvironment _env;
+        private readonly AppDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public SendOfferModel(OfferEmailBuilder builder, IEmailService email, IWebHostEnvironment env)
+        public SendOfferModel(AppDbContext context, IEmailService emailService)
         {
-            _builder = builder;
-            _email = email;
-            _env = env;
+            _context = context;
+            _emailService = emailService;
         }
 
-        [BindProperty] public string ParentEmail { get; set; } = "";
-        [BindProperty] public string ParentName { get; set; } = "";
-        [BindProperty] public string StudentName { get; set; } = "";
-        [BindProperty] public string CustomText { get; set; } = "";
+        // ⭐ Form fields
+        [BindProperty] public int? SelectedStudentId { get; set; }
+        [BindProperty] public string? Subject { get; set; }
+        [BindProperty] public string? Message { get; set; }
+        [BindProperty] public List<IFormFile>? Attachments { get; set; }
 
+        // ⭐ Dropdown
+        public List<SelectListItem> StudentList { get; set; } = new();
+
+        // ⭐ Preview
         public string? PreviewHtml { get; set; }
 
-        public void OnGet() { }
-
-        // ⭐ Náhled – používá statický QR pro zobrazení
-        public IActionResult OnPostPreview()
+        public async Task<IActionResult> OnGetAsync()
         {
-            var model = new Dictionary<string, string>
-            {
-                ["ParentName"] = ParentName,
-                ["StudentName"] = StudentName,
-                ["CustomText"] = CustomText,
-
-                // ⭐ Amount + Message musí být i v náhledu
-                ["Amount"] = "400",
-                ["Message"] = $"Výuka pro {StudentName}",
-
-                // ⭐ Náhled používá statický obrázek
-                ["QR"] = "/images/QR/1_hod_400.jpg"
-            };
-
-            PreviewHtml = _builder.BuildOffer(model);
+            await LoadStudents();
             return Page();
         }
 
-        // ⭐ Odeslání – používá CID obrázek
-        public async Task<IActionResult> OnPostSend()
+        public async Task<IActionResult> OnPostAsync()
         {
-            if (string.IsNullOrWhiteSpace(ParentEmail))
-                throw new Exception("ParentEmail je prázdný nebo null – formulář ho neposílá.");
+            await LoadStudents();
 
-            var model = new Dictionary<string, string>
+            // ❗ Student musí být vybrán
+            if (!SelectedStudentId.HasValue)
             {
-                ["ParentName"] = ParentName,
-                ["StudentName"] = StudentName,
-                ["CustomText"] = CustomText,
+                TempData["Error"] = "Musíte vybrat studenta.";
+                return Page();
+            }
 
-                // ⭐ Amount + Message
-                ["Amount"] = "400",
-                ["Message"] = $"Výuka pro {StudentName}",
+            var student = await _context.Students
+                .FirstOrDefaultAsync(s => s.Id == SelectedStudentId.Value);
 
-                // ⭐ Dynamický QR pro e‑mail
-                ["QR"] = "cid:qrDynamic"
-            };
-
-            var html = _builder.BuildOffer(model);
-
-            var attachments = new List<EmailAttachment>
+            if (student == null)
             {
-                new EmailAttachment("qrDynamic", Path.Combine(_env.WebRootPath, "images/QR/1_hod_400.jpg"))
-            };
+                TempData["Error"] = "Student nebyl nalezen.";
+                return Page();
+            }
 
-            await _email.SendAsync(
-    ParentEmail,                     // to
-    "Nabídka online výuky",          // subject
-    html,                            // html
-    attachments,                     // attachments
-    400,                             // dynamicAmount (pro QR)
-    $"Výuka pro {StudentName}",      // dynamicMessage
-    CustomText,                      // customText
-    StudentName,                     // studentName
-    "offer",                         // emailType
-    null                             // studentId (pokud neznáš ID studenta)
-);
+            // ⭐ Vytvoření HTML náhledu – jen tvůj text
+            PreviewHtml = BuildPreview();
 
+            // ⭐ Zpracování příloh
+            List<EmailAttachment>? emailAttachments = null;
 
-            TempData["Message"] = "Nabídka byla úspěšně odeslána.";
-            return RedirectToPage("/Communications/Index");
+            if (Attachments != null && Attachments.Any())
+            {
+                emailAttachments = new List<EmailAttachment>();
+
+                foreach (var file in Attachments)
+                {
+                    using var ms = new MemoryStream();
+                    await file.CopyToAsync(ms);
+
+                    emailAttachments.Add(new EmailAttachment
+                    {
+                        FileName = file.FileName,
+                        Content = ms.ToArray(),
+                        ContentType = file.ContentType
+                    });
+                }
+            }
+
+            try
+            {
+                // ⭐ Odeslání e‑mailu
+                await _emailService.SendAsync(
+                    student.Email ?? "",
+                    Subject ?? "",
+                    PreviewHtml,
+                    emailAttachments
+                );
+
+                TempData["Success"] = "E‑mail byl odeslán.";
+                return RedirectToPage();
+            }
+            catch
+            {
+                TempData["Error"] = "E‑mail se nepodařilo odeslat.";
+                return Page();
+            }
+        }
+
+        private async Task LoadStudents()
+        {
+            StudentList = await _context.Students
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.LastName)
+                .Select(s => new SelectListItem
+                {
+                    Value = s.Id.ToString(),
+                    Text = s.FullName
+                })
+                .ToListAsync();
+        }
+
+        // ⭐ ČISTÝ PREVIEW – jen text od tebe
+        private string BuildPreview()
+        {
+            return $@"
+<div style=""font-family:Segoe UI,Arial,sans-serif; font-size:15px; color:#333;"">
+    {Message}
+</div>";
         }
     }
 }

@@ -3,6 +3,10 @@
 @using System.Globalization
 @using Vyuka.Extensions
 
+@{
+    ViewData["Title"] = "Týdenní rozvrh";
+}
+
 @if (Model.StartOfWeek == default(DateTime) || Model.EndOfWeek == default(DateTime))
 {
     <p>Načítám…</p>

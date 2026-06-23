@@ -7,7 +7,6 @@
 <form method="post" asp-page-handler="LoadTemplate" class="mb-4">
 
     <h3>Šablona</h3>
-
     <select asp-for="TemplateId" class="form-select">
         <option value="">-- Vyberte šablonu --</option>
         @foreach (var t in Model.Templates)
@@ -16,16 +15,24 @@
         }
     </select>
 
+    <h3>Komu poslat</h3>
+    <select asp-for="RecipientType" class="form-select">
+        <option value="Parents">Rodičům</option>
+        <option value="Students">Studentům</option>
+        <option value="Both">Rodičům i studentům</option>
+    </select>
+
     <!-- Přenést Recipients -->
     @for (int i = 0; i < Model.Recipients.Count; i++)
     {
         <input type="hidden" asp-for="Recipients[i].Id" />
-        <input type="hidden" asp-for="Recipients[i].Email" />
+        <input type="hidden" asp-for="Recipients[i].StudentEmail" />
+        <input type="hidden" asp-for="Recipients[i].ParentEmail" />
         <input type="hidden" asp-for="Recipients[i].FullName" />
         <input type="hidden" asp-for="Recipients[i].Selected" />
     }
 
-    <!-- ⭐ DŮLEŽITÉ: přenést Amount a PaymentMessage -->
+    <!-- Přenést Amount a PaymentMessage -->
     <input type="hidden" asp-for="Amount" />
     <input type="hidden" asp-for="PaymentMessage" />
 
@@ -35,11 +42,11 @@
 </form>
 
 
-
 <!-- FORM 2: Odeslání emailu -->
 <form method="post" asp-page-handler="Send">
 
     <input type="hidden" asp-for="TemplateId" />
+    <input type="hidden" asp-for="RecipientType" />
 
     <h3>Vyberte příjemce</h3>
 
@@ -62,17 +69,23 @@
                 <tr>
                     <td>
                         <input type="checkbox" asp-for="Recipients[i].Selected" />
+
                         <input type="hidden" asp-for="Recipients[i].Id" />
-                        <input type="hidden" asp-for="Recipients[i].Email" />
+                        <input type="hidden" asp-for="Recipients[i].StudentEmail" />
+                        <input type="hidden" asp-for="Recipients[i].ParentEmail" />
                         <input type="hidden" asp-for="Recipients[i].FullName" />
                     </td>
+
                     <td class="text-start">@Model.Recipients[i].FullName</td>
-                    <td class="text-start">@Model.Recipients[i].Email</td>
+
+                    <td class="text-start">
+                        @Model.GetDisplayEmail(Model.Recipients[i], Model.RecipientType)
+                    </td>
                 </tr>
             }
         </tbody>
-    </table>
 
+    </table>
 
     <h3>Předmět</h3>
     <input asp-for="Subject" class="form-control" />

@@ -34,6 +34,9 @@ namespace Vyuka.Pages.Communications
         public string PaymentMessage { get; set; }
 
         [BindProperty]
+        public string RecipientType { get; set; } = "Parents";
+
+        [BindProperty]
         public List<EmailRecipient> Recipients { get; set; }
 
         public int RecipientsCount { get; set; }
@@ -41,7 +44,8 @@ namespace Vyuka.Pages.Communications
         public class EmailRecipient
         {
             public int Id { get; set; }
-            public string Email { get; set; }
+            public string StudentEmail { get; set; }
+            public string ParentEmail { get; set; }
             public string FullName { get; set; }
             public bool Selected { get; set; }
         }
@@ -49,13 +53,13 @@ namespace Vyuka.Pages.Communications
         private void LoadRecipients()
         {
             Recipients = _context.Students
-                .Where(s => !string.IsNullOrEmpty(s.Email))
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .Select(s => new EmailRecipient
                 {
                     Id = s.Id,
-                    Email = s.Email,
+                    StudentEmail = s.Email,
+                    ParentEmail = s.ParentEmail,
                     FullName = s.LastName + " " + s.FirstName,
                     Selected = false
                 })
@@ -64,6 +68,18 @@ namespace Vyuka.Pages.Communications
             RecipientsCount = Recipients.Count;
         }
 
+        public string GetDisplayEmail(EmailRecipient r, string type)
+        {
+            return type switch
+            {
+                "Parents" => r.ParentEmail,
+                "Students" => r.StudentEmail,
+                "Both" => !string.IsNullOrEmpty(r.StudentEmail)
+                            ? r.StudentEmail
+                            : r.ParentEmail,
+                _ => r.StudentEmail
+            };
+        }
 
         public void OnGet()
         {
@@ -90,16 +106,12 @@ namespace Vyuka.Pages.Communications
 
         public async Task<IActionResult> OnPostSend()
         {
-            // 🔥 OPRAVA: Recipients se musí načíst, pokud nejsou v modelu
             if (Recipients == null || Recipients.Count == 0)
-            {
                 LoadRecipients();
-            }
 
             var selected = Recipients.Where(r => r.Selected).ToList();
 
-
-            if (selected == null || !selected.Any())
+            if (!selected.Any())
             {
                 Templates = _context.EmailTemplates.OrderBy(t => t.Name).ToList();
                 LoadRecipients();
@@ -107,28 +119,59 @@ namespace Vyuka.Pages.Communications
                 return Page();
             }
 
+            int sentCount = 0;
+
             foreach (var r in selected)
             {
-                var personalizedBody = Body
-                    .Replace("{{FullName}}", r.FullName)
-                    .Replace("{{Amount}}", Amount?.ToString("0") ?? "")
-                    .Replace("{{Message}}", PaymentMessage ?? "");
+                var emails = new List<string>();
 
-                await _emailService.SendAsync(
-                    to: r.Email,
-                    subject: Subject,
-                    html: personalizedBody,
-                    attachments: null,
-                    dynamicAmount: Amount,
-                    dynamicMessage: PaymentMessage,
-                    customText: null,
-                    studentName: r.FullName,
-                    emailType: "Bulk",
-                    studentId: r.Id
-                );
+                switch (RecipientType)
+                {
+                    case "Parents":
+                        if (!string.IsNullOrEmpty(r.ParentEmail))
+                            emails.Add(r.ParentEmail);
+                        break;
+
+                    case "Students":
+                        if (!string.IsNullOrEmpty(r.StudentEmail))
+                            emails.Add(r.StudentEmail);
+                        break;
+
+                    case "Both":
+                        if (!string.IsNullOrEmpty(r.ParentEmail))
+                            emails.Add(r.ParentEmail);
+                        if (!string.IsNullOrEmpty(r.StudentEmail))
+                            emails.Add(r.StudentEmail);
+                        break;
+                }
+
+                emails = emails.Distinct().ToList();
+
+                foreach (var email in emails)
+                {
+                    var personalizedBody = Body
+                        .Replace("{{FullName}}", r.FullName)
+                        .Replace("{{Amount}}", Amount?.ToString("0") ?? "")
+                        .Replace("{{Message}}", PaymentMessage ?? "");
+
+                    await _emailService.SendAsync(
+                        to: email,
+                        subject: Subject,
+                        html: personalizedBody,
+                        attachments: null,
+                        dynamicAmount: Amount,
+                        dynamicMessage: PaymentMessage,
+                        customText: null,
+                        studentName: r.FullName,
+                        emailType: "Bulk",
+                        studentId: r.Id
+                    );
+
+                    sentCount++;
+                }
             }
 
-            TempData["Success"] = $"Odesláno {selected.Count} e‑mailů.";
+            TempData["Success"] = $"Odesláno {sentCount} e‑mailů.";
 
             Templates = _context.EmailTemplates.OrderBy(t => t.Name).ToList();
             LoadRecipients();

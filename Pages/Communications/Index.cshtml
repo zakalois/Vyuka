@@ -6,7 +6,8 @@
 <div class="card shadow-sm">
     <div class="card-body">
 
-        <form method="post">
+        <!-- ⭐ MUSÍ být enctype="multipart/form-data" -->
+        <form method="post" enctype="multipart/form-data">
 
             <!-- Student -->
             <div class="mb-3">
@@ -30,6 +31,8 @@
                     }
                 </select>
             </div>
+
+            <!-- Komu odeslat -->
             <div class="mb-3">
                 <label class="form-label fw-bold">Komu odeslat</label>
                 <select asp-for="RecipientType" class="form-select">
@@ -38,7 +41,6 @@
                     <option value="both">Oběma</option>
                 </select>
             </div>
-
 
             <!-- Dynamická částka -->
             <div class="mb-3">
@@ -55,6 +57,17 @@
             <!-- Tlačítka -->
             <button type="submit" formaction="?handler=Preview" class="btn btn-primary">Náhled</button>
             <button type="submit" formaction="?handler=Send" class="btn btn-success">Odeslat</button>
+
+            <!-- ⭐ Tlačítko pro výběr příloh (více souborů) -->
+            <label class="btn btn-outline-secondary ms-2 mb-0">
+                📎 Přidat přílohy
+                <input type="file" name="Attachments" id="attachmentInput" class="d-none" multiple />
+            </label>
+
+            <!-- ⭐ Zobrazení názvu / počtu souborů -->
+            <span id="attachmentName" class="text-muted ms-2" style="font-size:14px;">
+                žádné soubory nevybrány
+            </span>
 
         </form>
     </div>
@@ -74,3 +87,21 @@
 {
     <div class="alert alert-info mt-3">@TempData["Message"]</div>
 }
+
+<script>
+    document.getElementById('attachmentInput').addEventListener('change', function () {
+        const label = document.getElementById('attachmentName');
+
+        if (this.files.length === 0) {
+            label.textContent = "žádné soubory nevybrány";
+            return;
+        }
+
+        if (this.files.length === 1) {
+            label.textContent = "📎 " + this.files[0].name;
+            return;
+        }
+
+        label.textContent = "📎 " + this.files.length + " souborů vybráno";
+    });
+</script>

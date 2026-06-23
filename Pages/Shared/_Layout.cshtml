@@ -27,7 +27,6 @@
             font-size:18px; font-weight:bold; text-align:center;">
             Vývojová verze – @ViewData["Title"]
         </div>
-
     </environment>
 
     <environment exclude="Development">
@@ -37,175 +36,126 @@
         </div>
     </environment>
 
-    <header>
-        ...
-
-
-
     <!-- ========================================= -->
     <!-- ADMIN MENU -->
     <!-- ========================================= -->
     @inject IWebHostEnvironment Env
 
-        <nav class="navbar navbar-expand-lg navbar-dark admin-navbar px-4 py-2">
-            <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-dark admin-navbar px-4 py-2">
+        <div class="container-fluid">
 
-                <a class="navbar-brand" href="/Admin/Dashboard">
-                    <i class="bi bi-speedometer2 me-1"></i> Administrace
-                </a>
+            <a class="navbar-brand" href="/Admin/Dashboard">
+                <i class="bi bi-speedometer2 me-1"></i> Administrace
+            </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <div class="collapse navbar-collapse" id="adminNav">
+            <div class="collapse navbar-collapse" id="adminNav">
 
-                    <!-- LEVÁ STRANA MENU -->
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <!-- LEVÁ STRANA MENU -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-                        <!-- STUDENTI -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-people-fill me-1"></i> Studenti
-                            </a>
+                    <!-- STUDENTI -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-people-fill me-1"></i> Studenti
+                        </a>
 
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" asp-page="/Admin/Students/Overview">
-                                        <i class="bi bi-table me-2"></i> Přehled studentů
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-page="/Admin/Students/Index">
-                                        <i class="bi bi-person-lines-fill me-2"></i> Přiřazení učitelů
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-page="/Admin/Students/Create">
-                                        <i class="bi bi-person-plus-fill me-2"></i> Přidat studenta
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-page="/Admin/Students/Pending">
-                                        <i class="bi bi-hourglass-split me-2"></i> Čekající registrace
-                                    </a>
-                                </li>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" asp-page="/Admin/Students/Overview"><i class="bi bi-table me-2"></i> Přehled studentů</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Students/Index"><i class="bi bi-person-lines-fill me-2"></i> Přiřazení učitelů</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Students/Create"><i class="bi bi-person-plus-fill me-2"></i> Přidat studenta</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Students/Pending"><i class="bi bi-hourglass-split me-2"></i> Čekající registrace</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Students/ArchiveList"><i class="bi bi-archive me-2"></i> Archiv studentů</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Notes/Notes"><i class="bi bi-journal-text me-2"></i> Poznámky</a></li>
+                        </ul>
+                    </li>
 
-                                <li>
-                                    <a class="dropdown-item" asp-page="/Admin/Students/ArchiveList">
-                                        <i class="bi bi-archive me-2"></i> Archiv studentů
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-page="/Admin/Notes/Notes">
-                                        <i class="bi bi-journal-text me-2"></i> Poznámky
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
+                    <!-- PŘEDMĚTY -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Subjects/Index">
+                            <i class="bi bi-book-fill me-1"></i> Předměty
+                        </a>
+                    </li>
 
-                        <!-- PŘEDMĚTY -->
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Subjects/Index">
-                                <i class="bi bi-book-fill me-1"></i> Předměty
-                            </a>
-                        </li>
+                    <!-- UČITELÉ -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Admin/Teachers/Teachers">
+                            <i class="bi bi-person-badge-fill me-1"></i> Učitelé
+                        </a>
+                    </li>
 
-                        <!-- UČITELÉ -->
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Admin/Teachers/Teachers">
-                                <i class="bi bi-person-badge-fill me-1"></i> Učitelé
-                            </a>
-                        </li>
+                    <!-- ODUČENÉ HODINY -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Admin/Hours">
+                            <i class="bi bi-clock-history me-1"></i> Odučené hodiny
+                        </a>
+                    </li>
 
-                        <!-- ODUČENÉ HODINY -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="/Admin/Hours">
-                                <i class="bi bi-clock-history me-1"></i> Odučené hodiny
-                            </a>
-                        </li>
+                    <!-- ROZVRH -->
+                    <li class="nav-item">
+                        <a class="nav-link" asp-page="/Admin/Schedule/Index">
+                            <i class="bi bi-calendar-week me-1"></i> Rozvrh
+                        </a>
+                    </li>
 
-                        <!-- ROZVRH -->
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Admin/Schedule/Index">
-                                <i class="bi bi-calendar-week me-1"></i> Rozvrh
-                            </a>
-                        </li>
+                    <!-- FINANCE -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-cash-coin"></i> Finance
+                        </a>
 
-                        <!-- FINANCE -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-cash-coin"></i> Finance
-                            </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" asp-page="/Payments/Index">Přehled plateb</a></li>
+                            <li><a class="dropdown-item" asp-page="/Payments/Create">Nová platba</a></li>
+                        </ul>
+                    </li>
 
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-page="/Payments/Index">Přehled plateb</a></li>
-                                <li><a class="dropdown-item" asp-page="/Payments/Create">Nová platba</a></li>
-                            </ul>
-                        </li>
+                    <!-- E-MAILY -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-envelope-fill me-1"></i> E‑maily
+                        </a>
 
-                        <!-- E-MAILY -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-envelope-fill me-1"></i> E‑maily
-                            </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" asp-page="/Communications/BulkEmail"><i class="bi bi-people-fill me-2"></i> Hromadný e‑mail</a></li>
+                            <li><a class="dropdown-item" asp-page="/Communications/SendTeachingOffer"><i class="bi bi-envelope-open me-2"></i> Nabídka výuky</a></li>
+                            <li><a class="dropdown-item" asp-page="/Communications/Index"><i class="bi bi-envelope-open me-2"></i> E‑mailová komunikace</a></li>
+                            <li><a class="dropdown-item" asp-page="/Communications/SendOffer"><i class="bi bi-send-check me-2"></i> Univerzální email</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Templates/Index"><i class="bi bi-file-earmark-text me-2"></i> Šablony e‑mailů</a></li>
+                            <li><a class="dropdown-item" asp-page="/Communications/Logs"><i class="bi bi-envelope-paper me-2"></i> Log e‑mailů</a></li>
+                        </ul>
+                    </li>
 
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" asp-page="/Communications/BulkEmail">
-                                        <i class="bi bi-people-fill me-2"></i> Hromadný e‑mail
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="/Communications">
-                                        <i class="bi bi-envelope-open me-2"></i> E‑mailová komunikace
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="/Admin/Templates/Index">
-                                        <i class="bi bi-file-earmark-text me-2"></i> Šablony e‑mailů
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-page="/Communications/Logs">
-                                        <i class="bi bi-envelope-paper me-2"></i> Log e‑mailů
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
+                    <!-- PROFIL -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Account/Profile">
+                            <i class="bi bi-person-circle me-1"></i> Profil
+                        </a>
+                    </li>
 
-                        <!-- PROFIL -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="/Account/Profile">
-                                <i class="bi bi-person-circle me-1"></i> Profil
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a id="darkToggle" class="nav-link darkmode-link" role="button">
-                                <i class="bi bi-moon-fill me-1"></i> Tmavý režim
-                            </a>
-                        </li>
+                    <!-- Tmavý režim -->
+                    <li class="nav-item">
+                        <a id="darkToggle" class="nav-link darkmode-link" role="button">
+                            <i class="bi bi-moon-fill me-1"></i> Tmavý režim
+                        </a>
+                    </li>
 
+                </ul>
 
-
-                    </ul>
-
-                    <!-- PRAVÁ STRANA: Tmavý režim + Odhlásit se -->
-                    <div class="top-actions d-flex align-items-center gap-2 ms-auto">
-                        <form method="post" asp-page="/Logout" class="m-0">
-                            <button type="submit" class="logout-btn btn btn-sm">Odhlásit se</button>
-                        </form>
-                    </div>
-
+                <!-- PRAVÁ STRANA: Odhlásit se -->
+                <div class="top-actions d-flex align-items-center gap-2 ms-auto">
+                    <form method="post" asp-page="/Logout" class="m-0">
+                        <button type="submit" class="logout-btn btn btn-sm">Odhlásit se</button>
+                    </form>
                 </div>
 
             </div>
-        </nav>
 
-
-
-
-
+        </div>
+    </nav>
 
     <!-- ========================================= -->
     <!-- OBSAH STRÁNKY -->
@@ -217,43 +167,40 @@
     <!-- ========================================= -->
     <!-- DARK MODE SCRIPT -->
     <!-- ========================================= -->
-        <script>
-            (function () {
+    <script>
+        (function () {
             const body = document.body;
             const toggle = document.getElementById('darkToggle');
-            const icon = toggle.querySelector('i'); // najdeme ikonku
+            const icon = toggle.querySelector('i');
 
             function updateUI(isDark) {
-            if (isDark) {
-            icon.classList.remove('bi-moon-fill');
-            icon.classList.add('bi-sun-fill');
-            toggle.lastChild.textContent = ' Světlý režim';
-            } else {
-            icon.classList.remove('bi-sun-fill');
-            icon.classList.add('bi-moon-fill');
-            toggle.lastChild.textContent = ' Tmavý režim';
-            }
+                if (isDark) {
+                    icon.classList.remove('bi-moon-fill');
+                    icon.classList.add('bi-sun-fill');
+                    toggle.lastChild.textContent = ' Světlý režim';
+                } else {
+                    icon.classList.remove('bi-sun-fill');
+                    icon.classList.add('bi-moon-fill');
+                    toggle.lastChild.textContent = ' Tmavý režim';
+                }
             }
 
-            // Načtení uloženého režimu
             const saved = localStorage.getItem('theme');
             const isDark = saved === 'dark';
             if (isDark) body.classList.add('dark');
 
             updateUI(isDark);
 
-            // Kliknutí na přepínač
             toggle.addEventListener('click', function () {
-            body.classList.toggle('dark');
-            const nowDark = body.classList.contains('dark');
-            localStorage.setItem('theme', nowDark ? 'dark' : 'light');
-            updateUI(nowDark);
+                body.classList.toggle('dark');
+                const nowDark = body.classList.contains('dark');
+                localStorage.setItem('theme', nowDark ? 'dark' : 'light');
+                updateUI(nowDark);
             });
-            })();
-        </script>
+        })();
+    </script>
 
-        @RenderSection("Scripts", required: false)
-
+    @RenderSection("Scripts", required: false)
 
 </body>
 </html>

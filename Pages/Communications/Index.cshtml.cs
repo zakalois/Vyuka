@@ -2,7 +2,6 @@ using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Mail;
 using Vyuka.Models;
 using Vyuka.Services;
 
@@ -34,13 +33,15 @@ namespace Vyuka.Pages.Communications
         [BindProperty] public decimal PaymentAmount { get; set; }
         [BindProperty] public string PaymentMessage { get; set; }
 
+        // ⭐ Více příloh
+        [BindProperty]
+        public List<IFormFile>? Attachments { get; set; }
 
         public string PreviewHtml { get; set; } = "";
 
         private async Task LoadStudentsAsync()
         {
             Students = await _context.Students
-                //.Where(s => s.IsActive)
                 .OrderBy(s => s.LastName)
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
@@ -72,7 +73,6 @@ namespace Vyuka.Pages.Communications
             html = html.Replace("{{LessonDate}}", lessonDate);
             html = html.Replace("{{LessonTime}}", lessonTime);
 
-            // QR kód se generuje až v EmailService → náhled bude prázdný
             html = html.Replace("{{QrCode}}", "");
 
             return html;
@@ -106,6 +106,7 @@ namespace Vyuka.Pages.Communications
                 return Page();
             }
 
+            // ⭐ Příjemci
             List<string> recipients = new();
 
             if (RecipientType == "student" || RecipientType == "both")
@@ -128,24 +129,51 @@ namespace Vyuka.Pages.Communications
 
             string html = await BuildEmailHtml(student);
 
+            // ⭐ Více příloh + limit velikosti
+            const long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+            List<EmailAttachment>? attachments = null;
+
+            if (Attachments != null && Attachments.Count > 0)
+            {
+                attachments = new List<EmailAttachment>();
+
+                foreach (var file in Attachments)
+                {
+                    if (file.Length > MAX_FILE_SIZE)
+                    {
+                        TempData["Message"] = $"Soubor {file.FileName} je příliš velký. Limit je 5 MB.";
+                        return Page();
+                    }
+
+                    using var ms = new MemoryStream();
+                    await file.CopyToAsync(ms);
+
+                    attachments.Add(new EmailAttachment
+                    {
+                        FileName = file.FileName,
+                        Content = ms.ToArray(),
+                        ContentType = file.ContentType
+                    });
+                }
+            }
+
+            // ⭐ Odeslání e‑mailů
             foreach (var email in recipients)
             {
                 string subject = "Učitel Žák – automatická zpráva";
 
                 await _emailService.SendAsync(
-    email,                          // to
-    subject,                        // subject
-    html,                           // html
-    null,                           // attachments (zatím nepoužíváš)
-    PaymentAmount,                  // dynamicAmount
-    PaymentMessage,                 // dynamicMessage
-    null,                           // customText
-    $"{student.FirstName} {student.LastName}",   // studentName
-    "payment",                      // emailType
-    student.Id                      // studentId
-);
-
-
+                    email,
+                    subject,
+                    html,
+                    attachments,
+                    PaymentAmount,
+                    PaymentMessage,
+                    null,
+                    $"{student.FirstName} {student.LastName}",
+                    "payment",
+                    student.Id
+                );
             }
 
             TempData["Message"] = "E‑mail byl odeslán.";

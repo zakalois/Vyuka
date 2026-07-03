@@ -98,6 +98,21 @@ namespace Vyuka.Services
             };
             related.Add(htmlPart);
 
+            // ⭐ Velké logo pro úvod (cid:logo)
+            string bigLogoPath = Path.Combine(_env.WebRootPath, "images", "logo.png");
+            if (File.Exists(bigLogoPath))
+            {
+                var bigLogo = new MimePart("image", "png")
+                {
+                    Content = new MimeContent(File.OpenRead(bigLogoPath)),
+                    ContentId = "logo",
+                    ContentDisposition = new ContentDisposition(ContentDisposition.Inline),
+                    ContentTransferEncoding = ContentEncoding.Base64
+                };
+                related.Add(bigLogo);
+            }
+
+
             // ⭐ Malé logo pro podpis (logoSmall)
             string smallLogoPath = Path.Combine(_env.WebRootPath, "images", "logo.jpg");
             if (File.Exists(smallLogoPath))

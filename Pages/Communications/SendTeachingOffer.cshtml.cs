@@ -84,8 +84,11 @@ namespace Vyuka.Pages.Communications
             try
             {
                 await _emailService.SendAsync(
-    student.Email ?? "",
-    Subject ?? "Nabídka výuky",
+      !string.IsNullOrWhiteSpace(student.ParentEmail)
+          ? student.ParentEmail
+          : student.Email,
+
+      Subject ?? "Nabídka výuky",
     PreviewHtml,
     emailAttachments,
     decimal.TryParse(Amount, out var amountValue) ? amountValue : null,   // dynamicAmount

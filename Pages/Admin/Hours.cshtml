@@ -1,7 +1,7 @@
 ﻿@page "/Admin/Hours"
 @model Vyuka.Pages.Admin.HoursModel
 
-<h1>Přehled hodin</h1>
+<h1>Přehled hodin celkem</h1>
 
 <!-- MĚSÍČNÍ FILTR -->
 @if (Model.SelectedStudentId != null)
@@ -12,42 +12,39 @@
 
     <div class="mb-3">
 
-        <!-- Tento měsíc -->
         <a href="/Admin/Hours?studentId=@Model.SelectedStudentId&monthOffset=0"
-           class="btn btn-secondary me-2">
+           class="btn btn-outline-secondary me-2">
             Tento měsíc
         </a>
 
-        <!-- Nekonečný posun dozadu -->
         <a href="/Admin/Hours?studentId=@Model.SelectedStudentId&monthOffset=@(currentOffset - 1)"
-           class="btn btn-dark">
+           class="btn btn-outline-dark">
             ← Předchozí měsíc
         </a>
 
     </div>
 }
 
-
-<!-- HORNÍ PŘEHLED -->
+<!-- HORNÍ PŘEHLED – stejné barvy jako Platby -->
 <div class="row mb-4">
 
     <div class="col-md-4">
-        <div class="alert alert-warning text-center">
-            <strong>Předplacené hodiny:</strong><br />
+        <div class="alert alert-info text-center">
+            <strong>Předplacené hodiny</strong><br />
             @Model.TotalPrepaidHours.ToString("0")
         </div>
     </div>
 
     <div class="col-md-4">
         <div class="alert alert-success text-center">
-            <strong>Odučené hodiny:</strong><br />
+            <strong>Odučené hodiny</strong><br />
             @Model.TotalTaughtHours.ToString("0")
         </div>
     </div>
 
     <div class="col-md-4">
-        <div class="alert alert-danger text-center">
-            <strong>Zbývá odučit hodin:</strong><br />
+        <div class="alert alert-warning text-center">
+            <strong>Zbývá odučit hodin</strong><br />
             @Model.TotalRemainingHours.ToString("0")
         </div>
     </div>
@@ -94,7 +91,7 @@
 {
     <h3>@Model.SelectedStudent.LastName @Model.SelectedStudent.FirstName</h3>
 
-    <!-- SOUHRN STUDENTA -->
+    <!-- CELKOVÝ SOUHRN STUDENTA – stejné alert barvy -->
     <div class="row mb-4">
 
         <div class="col-md-3">
@@ -113,25 +110,24 @@
 
         <div class="col-md-3">
             <div class="alert alert-success text-center">
-                <strong>Odučené hodiny v intervalu:</strong><br />
+                <strong>Odučené hodiny v intervalu</strong><br />
                 @Model.TaughtHours.ToString("0")
             </div>
         </div>
 
         <div class="col-md-3">
             <div class="alert alert-danger text-center">
-                <strong>Zbývá hodin celkem:</strong><br />
+                <strong>Zbývá odučit hodin celkem</strong><br />
                 @Model.RemainingHours.ToString("0")
             </div>
         </div>
 
     </div>
 
-
     <!-- DALŠÍ PLÁNOVANÁ HODINA -->
     @if (Model.NextLesson != null)
     {
-        <div class="alert alert-info text-center" style="border: 3px solid black;">
+        <div class="alert alert-info text-center" style="border: 2px solid #0dcaf0;">
             <strong>Další plánovaná hodina:</strong><br />
             @Model.NextLesson.Date.ToString("dd.MM.yyyy")
             @Model.NextLesson.Start.ToString(@"hh\:mm")
@@ -141,36 +137,34 @@
         </div>
     }
 
-    <!-- SOUHRN ZA OBDOBÍ -->
+    <!-- SOUHRN ZA OBDOBÍ – jen když existují hodiny -->
     @if (Model.IntervalLessonsCount > 0)
     {
         <div class="row mb-3">
 
             <div class="col-md-4">
-                <div class="card bg-info text-white p-3 text-center d-flex align-items-center justify-content-center flex-column">
-                    <h5>Odučené hodiny v období:</h5>
-                    <h3>@Model.IntervalTaughtHours.ToString("0") </h3>
+                <div class="alert alert-info text-center">
+                    <strong>Odučené hodiny v období</strong><br />
+                    @Model.IntervalTaughtHours.ToString("0")
                 </div>
             </div>
 
             <div class="col-md-4">
-                <div class="card bg-success text-white p-3 text-center d-flex align-items-center justify-content-center flex-column">
-                    <h5>Počet lekcí v období:</h5>
-                    <h3>@Model.IntervalLessonsCount</h3>
+                <div class="alert alert-success text-center">
+                    <strong>Počet lekcí v období</strong><br />
+                    @Model.IntervalLessonsCount
                 </div>
             </div>
 
             <div class="col-md-4">
-                <div class="card bg-primary text-white p-3 text-center d-flex align-items-center justify-content-center flex-column">
-                    <h5>Celkem odučeno hodin:</h5>
-                    <h3>@Model.TotalTaughtStudentHours.ToString("0")</h3>
+                <div class="alert alert-primary text-center">
+                    <strong>Celkem odučeno hodin</strong><br />
+                    @Model.TotalTaughtStudentHours.ToString("0")
                 </div>
             </div>
 
         </div>
     }
-
-
 
     <!-- TABULKA -->
     <table class="table table-striped mt-3">

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Services;
@@ -174,5 +175,7 @@ app.MapGet("/", context =>
 });
 
 app.MapRazorPages();
-
+var hasher = new PasswordHasher<AppUser>();
+var tempUser = new AppUser();
+var hash = hasher.HashPassword(tempUser, "Student123!");
 app.Run();

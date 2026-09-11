@@ -17,6 +17,10 @@ namespace Vyuka.Pages.Admin
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
 
+        // Souhrn za vybrané období
+        public double IntervalTaughtHours { get; set; }
+        public int IntervalLessonsCount { get; set; }
+
         // Data
         public IList<Student> Students { get; set; } = new List<Student>();
         public IList<UnifiedLesson> UnifiedLessons { get; set; } = new List<UnifiedLesson>();
@@ -34,18 +38,33 @@ namespace Vyuka.Pages.Admin
         public double PlannedHours { get; set; }
         public double TaughtHours { get; set; }
         public double RemainingHours { get; set; }
+        public double TotalTaughtStudentHours { get; set; }
 
         public UnifiedLesson? NextLesson { get; set; }
 
-        public async Task OnGetAsync(int? studentId, DateTime? from, DateTime? to)
+        public async Task OnGetAsync(
+            int? studentId,
+            DateTime? from,
+            DateTime? to,
+            int monthOffset = 0)
         {
             SelectedStudentId = studentId;
 
             var yearStart = new DateTime(DateTime.Today.Year, 1, 1);
 
-            // OPRAVA – žádné MinValue, žádné automatické datum
-            From = (from.HasValue && from.Value != DateTime.MinValue) ? from : null;
-            To = (to.HasValue && to.Value != DateTime.MinValue) ? to : null;
+            // MĚSÍČNÍ FILTR – pokud není ruční datum
+            if (!from.HasValue && !to.HasValue)
+            {
+                var baseDate = DateTime.Today.AddMonths(monthOffset);
+
+                From = new DateTime(baseDate.Year, baseDate.Month, 1);
+                To = From.Value.AddMonths(1).AddDays(-1);
+            }
+            else
+            {
+                From = (from.HasValue && from.Value != DateTime.MinValue) ? from : null;
+                To = (to.HasValue && to.Value != DateTime.MinValue) ? to : null;
+            }
 
             // studenti
             Students = await _context.Students
@@ -64,7 +83,6 @@ namespace Vyuka.Pages.Admin
                 .Where(l => l.Date >= yearStart && l.IsTaught)
                 .ToListAsync();
 
-            // OPRAVA – přesný výpočet pomocí decimal + zaokrouhlení
             var taughtYearDecimal = taughtLessonsYear.Sum(l =>
                 l.End > l.Start
                     ? (decimal)Math.Round((l.End - l.Start).TotalHours, 1)
@@ -72,10 +90,7 @@ namespace Vyuka.Pages.Admin
             );
 
             TotalTaughtHours = (double)taughtYearDecimal;
-
-            // zbývá odučit
             TotalRemainingHours = TotalPrepaidHours - TotalTaughtHours;
-
 
             // pokud není vybrán student → konec
             if (studentId == null)
@@ -92,17 +107,17 @@ namespace Vyuka.Pages.Admin
 
             PaidHours = (double)paidDecimal;
 
-            // plánované hodiny studenta (LessonPlans)
+            // plánované hodiny studenta
             var plans = await _context.LessonPlans
                 .Where(lp => lp.StudentId == studentId)
                 .ToListAsync();
 
-            // odučené hodiny studenta (Lessons)
+            // odučené hodiny studenta
             var lessons = await _context.Lessons
                 .Where(l => l.StudentId == studentId)
                 .ToListAsync();
 
-            // sjednocená tabulka pro zobrazení
+            // sjednocená tabulka
             var unified = new List<UnifiedLesson>();
 
             unified.AddRange(plans.Select(lp => new UnifiedLesson
@@ -123,13 +138,26 @@ namespace Vyuka.Pages.Admin
                 MeetLink = l.MeetLink
             }));
 
-            // OPRAVA – filtr bez .Value
+            // filtr sjednocené tabulky
             unified = unified
                 .Where(u =>
                     (!From.HasValue || u.Date >= From.Value) &&
                     (!To.HasValue || u.Date <= To.Value)
                 )
                 .ToList();
+
+            // Souhrn za období – pouze odučené
+            var taughtIntervalUnified = unified
+                .Where(u => u.IsTaught)
+                .ToList();
+
+            IntervalTaughtHours = taughtIntervalUnified.Sum(u =>
+                u.End > u.Start
+                    ? (u.End - u.Start).TotalHours
+                    : 0
+            );
+
+            IntervalLessonsCount = taughtIntervalUnified.Count;
 
             // plánované v intervalu
             var plannedInterval = plans
@@ -139,8 +167,7 @@ namespace Vyuka.Pages.Admin
                 )
                 .ToList();
 
-            PlannedHours = plannedInterval
-                .Sum(lp => (lp.End - lp.Start).TotalHours);
+            PlannedHours = plannedInterval.Sum(lp => (lp.End - lp.Start).TotalHours);
 
             // odučené v intervalu
             var taughtInterval = lessons
@@ -151,21 +178,27 @@ namespace Vyuka.Pages.Admin
                 )
                 .ToList();
 
-            TaughtHours = taughtInterval
-                .Sum(l => l.End > l.Start
+            TaughtHours = taughtInterval.Sum(l =>
+                l.End > l.Start
                     ? (l.End - l.Start).TotalHours
-                    : (double)l.Hours);
+                    : (double)l.Hours
+            );
 
-            // zbývá = zaplacené – odučené CELKEM (za rok)
-            var taughtAllYear = lessons
-                .Where(l => l.IsTaught && l.Date >= yearStart)
-                .Sum(l => l.End > l.Start
-                    ? (l.End - l.Start).TotalHours
-                    : (double)l.Hours);
+            // CELKEM ODUČENO – všechny odučené hodiny studenta
+            var taughtAllTime = lessons
+                .Where(l => l.IsTaught)
+                .Sum(l =>
+                    l.End > l.Start
+                        ? (l.End - l.Start).TotalHours
+                        : (double)l.Hours
+                );
 
-            RemainingHours = PaidHours - taughtAllYear;
+            TotalTaughtStudentHours = taughtAllTime;
 
-            // řazení tabulky
+            // ZBÝVÁ CELKEM
+            RemainingHours = PaidHours - taughtAllTime;
+
+            // řazení
             UnifiedLessons = unified
                 .OrderByDescending(u => u.Date)
                 .ThenBy(u => u.IsTaught)

@@ -9,24 +9,27 @@
     }
   },
   "profiles": {
-    "http": {
+
+    "Vyuka": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "http://localhost:5198",
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "https": {
+
+    "Vyuka-Production": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:7123;http://localhost:5199",
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Production"
       }
     },
+
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,

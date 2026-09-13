@@ -71,7 +71,7 @@ namespace Vyuka.Pages.Payments
 
             // ⭐ OPRAVA – zaokrouhlení na 1 desetinné místo
             TotalPrepaidHours = Math.Round(
-                await _context.Payments.SumAsync(p => (decimal?)p.HoursPurchased) ?? 0, 1);
+                await _context.Payments.SumAsync(p => (decimal?)p.HoursPurchased) ?? 0, 0);
 
             var taughtLessons = await _context.Lessons
     .Where(l => l.IsTaught)
@@ -80,9 +80,9 @@ namespace Vyuka.Pages.Payments
             TotalTaughtHours = Math.Round(
                 taughtLessons.Sum(l =>
                     l.End > l.Start
-                        ? (decimal)Math.Round((l.End - l.Start).TotalHours, 1)
+                        ? (decimal)Math.Round((l.End - l.Start).TotalHours, 0)
                         : l.Hours
-                ), 1);
+                ), 0);
 
 
             var query = _context.Payments
@@ -107,7 +107,7 @@ namespace Vyuka.Pages.Payments
                 SelectedStudentPrepaidHours = Math.Round(
                     await _context.Payments
                         .Where(p => p.StudentId == SelectedStudentId)
-                        .SumAsync(p => (decimal?)p.HoursPurchased) ?? 0, 1);
+                        .SumAsync(p => (decimal?)p.HoursPurchased) ?? 0,0);
 
                 var taughtStudentLessons = await _context.Lessons
     .Where(l => l.StudentId == SelectedStudentId && l.IsTaught)
@@ -116,9 +116,9 @@ namespace Vyuka.Pages.Payments
                 SelectedStudentTaughtHours = Math.Round(
                     taughtStudentLessons.Sum(l =>
                         l.End > l.Start
-                            ? (decimal)Math.Round((l.End - l.Start).TotalHours, 1)
+                            ? (decimal)Math.Round((l.End - l.Start).TotalHours, 0)
                             : l.Hours
-                    ), 1);
+                    ), 0);
 
 
                 SelectedStudentTotalPaid = await _context.Payments

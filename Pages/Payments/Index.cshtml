@@ -8,43 +8,43 @@
 
     <div class="col-md-2">
         <div class="alert alert-primary text-center">
-            <strong>Studentů:</strong><br />
+            <strong>Studentů</strong><br />
             @Model.TotalStudents
         </div>
     </div>
 
     <div class="col-md-2">
         <div class="alert alert-success text-center">
-            <strong>Aktivních:</strong><br />
+            <strong>Aktivních</strong><br />
             @Model.ActiveStudents
         </div>
     </div>
 
     <div class="col-md-2">
         <div class="alert alert-secondary text-center">
-            <strong>Neaktivních:</strong><br />
+            <strong>Neaktivních</strong><br />
             @Model.InactiveStudents
         </div>
     </div>
 
     <div class="col-md-2">
         <div class="alert alert-info text-center">
-            <strong>Celkem zaplaceno:</strong><br />
+            <strong>Celkem zaplaceno</strong><br />
             @Model.TotalPaid.ToString("N0") Kč
         </div>
     </div>
 
     <div class="col-md-2">
         <div class="alert alert-warning text-center">
-            <strong>Předplacené hodiny:</strong><br />
-            @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.TotalPrepaidHours) h
+            <strong>Předplacené hodiny</strong><br />
+            @((int)Model.TotalPrepaidHours)
         </div>
     </div>
 
     <div class="col-md-2">
         <div class="alert alert-danger text-center">
-            <strong>Odučené hodiny:</strong><br />
-            @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.TotalTaughtHours) h
+            <strong>Odučené hodiny</strong><br />
+            @((int)Model.TotalTaughtHours)
         </div>
     </div>
 
@@ -95,22 +95,22 @@
 
         <div class="col-md-4">
             <div class="alert alert-primary text-center">
-                <strong>Předplacené hodiny:</strong><br />
-                @Model.SelectedStudentPrepaidHours h
+                <strong>Předplacené hodiny</strong><br />
+                @((int)Model.SelectedStudentPrepaidHours)
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="alert alert-warning text-center">
-                <strong>Odučené hodiny:</strong><br />
-                @Vyuka.Pages.Lessons.IndexModel.FormatHours(Model.SelectedStudentTaughtHours) h
+                <strong>Odučené hodiny</strong><br />
+                @((int)Model.SelectedStudentTaughtHours)
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="alert alert-info text-center">
-                <strong>Zůstatek:</strong><br />
-                @Model.SelectedStudentBalance h
+                <strong>Zůstatek</strong><br />
+                @((int)Model.SelectedStudentBalance)
             </div>
         </div>
 
@@ -123,23 +123,22 @@
 
         <div class="col-md-4">
             <div class="alert alert-success text-center">
-                <strong>Celkem zaplaceno:</strong><br />
+                <strong>Celkem zaplaceno</strong><br />
                 @Model.SelectedStudentTotalPaid Kč
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="alert alert-secondary text-center">
-                <strong>Počet plateb:</strong><br />
+                <strong>Počet plateb</strong><br />
                 @Model.SelectedStudentPaymentCount
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="alert alert-dark text-center">
-                <strong>Poslední platba:</strong><br />
-                @Model.SelectedStudentLastPaymentDate?.ToShortDateString() <br />
-                @Model.SelectedStudentLastPaymentAmount Kč — @Model.SelectedStudentLastPaymentHours h
+                <strong>Poslední platba</strong><br />
+                @Model.SelectedStudentLastPaymentDate?.ToShortDateString()
             </div>
         </div>
 
@@ -163,8 +162,6 @@ else
                 <th>Cena za hodinu</th>
                 <th>Způsob platby</th>
                 <th>Poznámka</th>
-
-                <!-- ⭐ Sloupec Akce -->
                 <th class="text-center" style="width:110px;">Akce</th>
             </tr>
         </thead>
@@ -176,12 +173,11 @@ else
                     <td>@p.Date.ToShortDateString()</td>
                     <td class="text-start">@p.Student.LastName @p.Student.FirstName</td>
                     <td>@p.Amount Kč</td>
-                    <td>@p.HoursPurchased</td>
+                    <td>@((int)p.HoursPurchased)</td>
                     <td>@p.PricePerHour Kč</td>
                     <td>@p.Method</td>
                     <td>@p.Note</td>
 
-                    <!-- ⭐ Ikony pro editaci a mazání -->
                     <td class="text-center" style="white-space:nowrap;">
                         <a asp-page="Edit" asp-route-id="@p.Id" class="text-primary me-2" title="Upravit">
                             <i class="bi bi-pencil-square"></i>
@@ -192,7 +188,6 @@ else
                         </a>
                     </td>
                 </tr>
-
             }
         </tbody>
     </table>

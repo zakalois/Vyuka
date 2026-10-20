@@ -1,8 +1,13 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF;
+using QuestPDF.Fluent;
 using Vyuka.Models;
+using Vyuka.PDF;
 
 namespace Vyuka.Pages.Admin
+
 {
     public class HoursModel : PageModel
     {
@@ -229,6 +234,46 @@ namespace Vyuka.Pages.Admin
                 })
                 .FirstOrDefault();
         }
+        // PDF EXPORT – odučené + plánované hodiny
+        public IActionResult OnGetExportHoursPdf(int studentId, DateTime? from, DateTime? to)
+        {
+            var student = _context.Students.Find(studentId);
+
+            var lessons = _context.Lessons
+                .Where(l => l.StudentId == studentId &&
+                            (!from.HasValue || l.Date >= from.Value) &&
+                            (!to.HasValue || l.Date <= to.Value))
+                .OrderByDescending(l => l.Date)
+                .Select(l => new LessonDto
+                {
+                    Date = l.Date,
+                    Start = l.Start,
+                    End = l.End,
+                    Hours = (decimal)(l.End - l.Start).TotalHours,
+                    Type = l.IsTaught ? "Odučeno" : "Plánováno"
+                })
+                .ToList();
+
+            var taughtHours = lessons.Where(x => x.Type == "Odučeno").Sum(x => x.Hours);
+            var totalHours = (decimal)student.PaidHours;
+            var remaining = totalHours - taughtHours;
+
+
+            var doc = new LessonsReportDocument
+            {
+                StudentName = student.FullName,
+                TotalHours = totalHours,
+                TaughtHours = taughtHours,
+                RemainingHours = remaining,
+                Lessons = lessons
+            };
+
+            var pdfBytes = doc.GeneratePdf();
+
+            return File(pdfBytes, "application/pdf", $"hodiny_{student.FullName}.pdf");
+        }
+
+
     }
 
     public class UnifiedLesson

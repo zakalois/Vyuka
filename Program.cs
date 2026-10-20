@@ -9,6 +9,8 @@ using Vyuka.Secrets;
 using Vyuka.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 
 // TimeProvider
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);

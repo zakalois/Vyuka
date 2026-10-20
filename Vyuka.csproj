@@ -51,6 +51,7 @@
     <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="8.0.5" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
     <PackageReference Include="QRCoder" Version="1.8.0" />
+    <PackageReference Include="QuestPDF" Version="2026.9.1" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -64,6 +65,11 @@
 
   <!-- Google JSON soubor přibalit do publish -->
   <None Include="Secrets\vyukameet-887de6c28b47.json" CopyToOutputDirectory="Always" />
+</ItemGroup>
+<ItemGroup>
+  <Content Update="wwwroot\images\logo.jpg">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
 </ItemGroup>
 
 </Project>

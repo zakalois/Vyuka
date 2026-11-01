@@ -1,14 +1,15 @@
 ﻿using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
+using Vyuka.Models;
 
 namespace Vyuka.PDF
 {
     public class LessonsReportDocument : IDocument
     {
         public string StudentName { get; set; } = "";
-        public decimal TotalHours { get; set; }
-        public decimal TaughtHours { get; set; }
-        public decimal RemainingHours { get; set; }
+        public int TotalHours { get; set; }
+        public int TaughtHours { get; set; }
+        public int RemainingHours { get; set; }
         public List<LessonDto> Lessons { get; set; } = new();
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
@@ -27,42 +28,36 @@ namespace Vyuka.PDF
             });
         }
 
-        // ⭐ Barevná hlavička s logem a učitelem
         void ComposeHeader(IContainer container)
         {
             container.Row(row =>
             {
-                // Logo vlevo
                 row.ConstantColumn(80).Image("wwwroot/images/logo.jpg");
 
-                // Text vpravo
-                row.RelativeColumn().Column(col =>
+                row.RelativeColumn().AlignCenter().Column(col =>
                 {
                     col.Item().Text("Ing. Alois Žák")
                         .FontSize(20).Bold().FontColor("#2C3E50");
 
+                    col.Item().Text("");
+
                     col.Item().Text($"Výkaz odučených hodin – {StudentName}")
-                        .FontSize(14).FontColor("#34495E");
+                        .FontSize(16).Bold().FontColor("#34495E");
                 });
             });
         }
 
-        // ⭐ Obsah dokumentu
         void ComposeContent(IContainer container)
         {
             container.Column(col =>
             {
-                // Souhrnný barevný box
                 col.Item().PaddingVertical(10).Background("#ECF0F1").Padding(10).Column(box =>
                 {
-                    box.Item().Text($"Student: {StudentName}")
-                        .FontSize(16).Bold().FontColor("#2C3E50");
-
                     box.Item().Row(r =>
                     {
-                        r.RelativeColumn().Text($"Předplaceno: {TotalHours} h").FontColor("#2980B9");
-                        r.RelativeColumn().Text($"Odučeno: {TaughtHours} h").FontColor("#27AE60");
-                        r.RelativeColumn().Text($"Zbývá: {RemainingHours} h").FontColor("#C0392B").Bold();
+                        r.RelativeColumn().AlignCenter().Text($"Předplaceno: {TotalHours} h").FontColor("#2980B9");
+                        r.RelativeColumn().AlignCenter().Text($"Odučeno: {TaughtHours} h").FontColor("#27AE60");
+                        r.RelativeColumn().AlignCenter().Text($"Zbývá: {RemainingHours} h").FontColor("#C0392B").Bold();
                     });
                 });
 
@@ -70,39 +65,48 @@ namespace Vyuka.PDF
             });
         }
 
-        // ⭐ Moderní barevná tabulka
         void ComposeLessonsTable(IContainer container)
         {
             container.Table(table =>
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(90);   // Datum
-                    columns.ConstantColumn(60);   // Od
-                    columns.ConstantColumn(60);   // Do
-                    columns.ConstantColumn(60);   // Hodiny
-                    columns.RelativeColumn();     // Typ
+                    columns.RelativeColumn();   // Číslo
+                    columns.RelativeColumn();   // Datum
+                    columns.RelativeColumn();   // Od
+                    columns.RelativeColumn();   // Do
+                    columns.RelativeColumn();   // Hodiny
+                    columns.RelativeColumn();   // Stav
                 });
 
-                // Barevná hlavička
                 table.Header(header =>
                 {
-                    header.Cell().Background("#2980B9").Padding(5).Text("Datum").FontColor("#FFFFFF").Bold();
-                    header.Cell().Background("#2980B9").Padding(5).Text("Od").FontColor("#FFFFFF").Bold();
-                    header.Cell().Background("#2980B9").Padding(5).Text("Do").FontColor("#FFFFFF").Bold();
-                    header.Cell().Background("#2980B9").Padding(5).Text("Hodin").FontColor("#FFFFFF").Bold();
-                    header.Cell().Background("#2980B9").Padding(5).Text("Typ").FontColor("#FFFFFF").Bold();
-
+                    header.Cell().Background("#2980B9").AlignCenter().Padding(5).Text("Číslo").FontColor("#FFFFFF").Bold();
+                    header.Cell().Background("#2980B9").AlignCenter().Padding(5).Text("Datum").FontColor("#FFFFFF").Bold();
+                    header.Cell().Background("#2980B9").AlignCenter().Padding(5).Text("Od").FontColor("#FFFFFF").Bold();
+                    header.Cell().Background("#2980B9").AlignCenter().Padding(5).Text("Do").FontColor("#FFFFFF").Bold();
+                    header.Cell().Background("#2980B9").AlignCenter().Padding(5).Text("Hodiny").FontColor("#FFFFFF").Bold();
+                    header.Cell().Background("#2980B9").AlignCenter().Padding(5).Text("Stav").FontColor("#FFFFFF").Bold();
                 });
+
+                int index = 0;
 
                 foreach (var l in Lessons)
                 {
-                    table.Cell().Padding(5).Text(l.Date.ToString("dd.MM.yyyy"));
-                    table.Cell().Padding(5).Text(l.Start.ToString(@"hh\:mm"));
-                    table.Cell().Padding(5).Text(l.End.ToString(@"hh\:mm"));
-                    table.Cell().Padding(5).Text($"{l.Hours:0.0}");
-                    table.Cell().Padding(5).Text(l.Type);
+                    // Jemné pruhování řádků
+                    var bg = (index % 2 == 1) ? "#dddddd" : "#FFFFFF";
+                    ;
+
+                    table.Cell().Background(bg).AlignCenter().Padding(5).Text(l.Order.ToString());
+                    table.Cell().Background(bg).AlignCenter().Padding(5).Text(l.Date.ToString("dd.MM.yyyy"));
+                    table.Cell().Background(bg).AlignCenter().Padding(5).Text(l.Start.ToString(@"hh\:mm"));
+                    table.Cell().Background(bg).AlignCenter().Padding(5).Text(l.End.ToString(@"hh\:mm"));
+                    table.Cell().Background(bg).AlignCenter().Padding(5).Text($"{l.Hours}");
+                    table.Cell().Background(bg).AlignCenter().Padding(5).Text(l.Type);
+
+                    index++;
                 }
+
             });
         }
     }

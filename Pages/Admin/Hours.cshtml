@@ -3,7 +3,6 @@
 
 <h1>Přehled hodin celkem</h1>
 
-<!-- MĚSÍČNÍ FILTR -->
 @if (Model.SelectedStudentId != null)
 {
     var currentOffset = Request.Query["monthOffset"].Count == 0
@@ -25,7 +24,6 @@
     </div>
 }
 
-<!-- HORNÍ PŘEHLED – stejné barvy jako Platby -->
 <div class="row mb-4">
 
     <div class="col-md-4">
@@ -51,13 +49,17 @@
 
 </div>
 
-<!-- FILTR -->
 <form method="get" class="mb-4">
+
+    <!-- skryté hodnoty, aby se při změně studenta neztratily datumy -->
+    <input type="hidden" name="from" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
+    <input type="hidden" name="to" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
+
     <div class="row g-3 align-items-end">
 
         <div class="col-md-4">
             <label class="form-label">Vyber studenta:</label>
-            <select name="studentId" class="form-select">
+            <select name="studentId" class="form-select" onchange="this.form.submit()">
                 <option value="">Vyber studenta</option>
                 @foreach (var s in Model.Students)
                 {
@@ -71,13 +73,13 @@
         <div class="col-md-3">
             <label class="form-label">Od:</label>
             <input type="date" name="from" class="form-control"
-                   value="@(Model.From.HasValue ? Model.From.Value.ToString("yyyy-MM-dd") : "")" />
+                   value="@(Model.From?.ToString("yyyy-MM-dd"))" />
         </div>
 
         <div class="col-md-3">
             <label class="form-label">Do:</label>
             <input type="date" name="to" class="form-control"
-                   value="@(Model.To.HasValue ? Model.To.Value.ToString("yyyy-MM-dd") : "")" />
+                   value="@(Model.To?.ToString("yyyy-MM-dd"))" />
         </div>
 
         <div class="col-md-2">
@@ -91,7 +93,6 @@
 {
     <h3>@Model.SelectedStudent.LastName @Model.SelectedStudent.FirstName</h3>
 
-    <!-- TLAČÍTKO PDF EXPORT -->
     <div class="mb-3">
         <a asp-page-handler="ExportHoursPdf"
            asp-route-studentId="@Model.SelectedStudentId"
@@ -103,7 +104,6 @@
         </a>
     </div>
 
-    <!-- CELKOVÝ SOUHRN STUDENTA – stejné alert barvy -->
     <div class="row mb-4">
 
         <div class="col-md-3">
@@ -136,7 +136,6 @@
 
     </div>
 
-    <!-- DALŠÍ PLÁNOVANÁ HODINA -->
     @if (Model.NextLesson != null)
     {
         <div class="alert alert-info text-center" style="border: 2px solid #0dcaf0;">
@@ -149,7 +148,6 @@
         </div>
     }
 
-    <!-- SOUHRN ZA OBDOBÍ – jen když existují hodiny -->
     @if (Model.IntervalLessonsCount > 0)
     {
         <div class="row mb-3">
@@ -178,7 +176,6 @@
         </div>
     }
 
-    <!-- TABULKA -->
     <table class="table table-striped mt-3">
         <thead>
             <tr>
@@ -186,7 +183,7 @@
                 <th>Od</th>
                 <th>Do</th>
                 <th>Hodin</th>
-                <th>Typ</th>
+                <th>Stav</th>
             </tr>
         </thead>
         <tbody>

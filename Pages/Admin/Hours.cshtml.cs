@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF;
 using QuestPDF.Fluent;
 using Vyuka.Models;
 using Vyuka.PDF;
 
 namespace Vyuka.Pages.Admin
-
 {
     public class HoursModel : PageModel
     {
@@ -22,10 +20,6 @@ namespace Vyuka.Pages.Admin
         public DateTime? From { get; set; }
         public DateTime? To { get; set; }
 
-        // Souhrn za vybrané období
-        public double IntervalTaughtHours { get; set; }
-        public int IntervalLessonsCount { get; set; }
-
         // Data
         public IList<Student> Students { get; set; } = new List<Student>();
         public IList<UnifiedLesson> UnifiedLessons { get; set; } = new List<UnifiedLesson>();
@@ -33,43 +27,29 @@ namespace Vyuka.Pages.Admin
         public Student? SelectedStudent { get; set; }
         public int? SelectedStudentId { get; set; }
 
-        // Horní přehled
+        // ⭐ Souhrny za období – stránka je potřebuje
+        public double IntervalTaughtHours { get; set; }
+        public int IntervalLessonsCount { get; set; }
+        public double PlannedHours { get; set; }
+        public double TaughtHours { get; set; }
+
+        // ⭐ Horní přehled – stránka ho používá
         public double TotalPrepaidHours { get; set; }
         public double TotalTaughtHours { get; set; }
         public double TotalRemainingHours { get; set; }
 
-        // Souhrn studenta
+        // ⭐ Souhrny studenta – celkové
         public double PaidHours { get; set; }
-        public double PlannedHours { get; set; }
-        public double TaughtHours { get; set; }
         public double RemainingHours { get; set; }
         public double TotalTaughtStudentHours { get; set; }
 
+        // ⭐ Další plánovaná hodina – stránka ji také používá
         public UnifiedLesson? NextLesson { get; set; }
 
-        public async Task OnGetAsync(
-            int? studentId,
-            DateTime? from,
-            DateTime? to,
-            int monthOffset = 0)
+
+        public async Task OnGetAsync(int? studentId, DateTime? from, DateTime? to, int monthOffset = 0)
         {
             SelectedStudentId = studentId;
-
-            var yearStart = new DateTime(DateTime.Today.Year, 1, 1);
-
-            // MĚSÍČNÍ FILTR – pokud není ruční datum
-            if (!from.HasValue && !to.HasValue)
-            {
-                var baseDate = DateTime.Today.AddMonths(monthOffset);
-
-                From = new DateTime(baseDate.Year, baseDate.Month, 1);
-                To = From.Value.AddMonths(1).AddDays(-1);
-            }
-            else
-            {
-                From = (from.HasValue && from.Value != DateTime.MinValue) ? from : null;
-                To = (to.HasValue && to.Value != DateTime.MinValue) ? to : null;
-            }
 
             // studenti
             Students = await _context.Students
@@ -77,27 +57,6 @@ namespace Vyuka.Pages.Admin
                 .ThenBy(s => s.FirstName)
                 .ToListAsync();
 
-            // horní přehled – předplacené
-            var prepaidDecimal = await _context.Payments
-                .SumAsync(p => (decimal?)p.HoursPurchased) ?? 0m;
-
-            TotalPrepaidHours = (double)prepaidDecimal;
-
-            // horní přehled – odučené (za celý rok)
-            var taughtLessonsYear = await _context.Lessons
-                .Where(l => l.Date >= yearStart && l.IsTaught)
-                .ToListAsync();
-
-            var taughtYearDecimal = taughtLessonsYear.Sum(l =>
-                l.End > l.Start
-                    ? (decimal)Math.Round((l.End - l.Start).TotalHours, 1)
-                    : l.Hours
-            );
-
-            TotalTaughtHours = (double)taughtYearDecimal;
-            TotalRemainingHours = TotalPrepaidHours - TotalTaughtHours;
-
-            // pokud není vybrán student → konec
             if (studentId == null)
                 return;
 
@@ -112,19 +71,20 @@ namespace Vyuka.Pages.Admin
 
             PaidHours = (double)paidDecimal;
 
-            // plánované hodiny studenta
+            // načtení plánovaných hodin
             var plans = await _context.LessonPlans
                 .Where(lp => lp.StudentId == studentId)
                 .ToListAsync();
 
-            // odučené hodiny studenta
+            // načtení odučených hodin
             var lessons = await _context.Lessons
                 .Where(l => l.StudentId == studentId)
                 .ToListAsync();
 
-            // sjednocená tabulka
+            // sjednocená tabulka – PLÁNOVANÉ + ODUČENÉ
             var unified = new List<UnifiedLesson>();
 
+            // plánované (žluté)
             unified.AddRange(plans.Select(lp => new UnifiedLesson
             {
                 Date = lp.Date,
@@ -134,12 +94,13 @@ namespace Vyuka.Pages.Admin
                 MeetLink = lp.MeetLink
             }));
 
+            // odučené (zelené)
             unified.AddRange(lessons.Select(l => new UnifiedLesson
             {
                 Date = l.Date,
                 Start = l.Start,
                 End = l.End,
-                IsTaught = true,
+                IsTaught = l.IsTaught,
                 MeetLink = l.MeetLink
             }));
 
@@ -150,19 +111,6 @@ namespace Vyuka.Pages.Admin
                     (!To.HasValue || u.Date <= To.Value)
                 )
                 .ToList();
-
-            // Souhrn za období – pouze odučené
-            var taughtIntervalUnified = unified
-                .Where(u => u.IsTaught)
-                .ToList();
-
-            IntervalTaughtHours = taughtIntervalUnified.Sum(u =>
-                u.End > u.Start
-                    ? (u.End - u.Start).TotalHours
-                    : 0
-            );
-
-            IntervalLessonsCount = taughtIntervalUnified.Count;
 
             // plánované v intervalu
             var plannedInterval = plans
@@ -188,6 +136,9 @@ namespace Vyuka.Pages.Admin
                     ? (l.End - l.Start).TotalHours
                     : (double)l.Hours
             );
+
+            IntervalLessonsCount = taughtInterval.Count;
+            IntervalTaughtHours = TaughtHours;
 
             // CELKEM ODUČENO – všechny odučené hodiny studenta
             var taughtAllTime = lessons
@@ -234,46 +185,66 @@ namespace Vyuka.Pages.Admin
                 })
                 .FirstOrDefault();
         }
-        // PDF EXPORT – odučené + plánované hodiny
+
+        // ⭐ PDF EXPORT – kompletní historie + číslování + správné počty
         public IActionResult OnGetExportHoursPdf(int studentId, DateTime? from, DateTime? to)
         {
             var student = _context.Students.Find(studentId);
 
-            var lessons = _context.Lessons
-                .Where(l => l.StudentId == studentId &&
-                            (!from.HasValue || l.Date >= from.Value) &&
-                            (!to.HasValue || l.Date <= to.Value))
-                .OrderByDescending(l => l.Date)
-                .Select(l => new LessonDto
+            // Zaplacené hodiny studenta
+            var paidDecimal = _context.Payments
+                .Where(p => p.StudentId == studentId)
+                .Sum(p => (decimal?)p.HoursPurchased) ?? 0m;
+
+            var totalPaidHours = (int)paidDecimal;
+
+            // Všechny lekce studenta
+            var allLessons = _context.Lessons
+                .Where(l => l.StudentId == studentId)
+                .OrderBy(l => l.Date)
+                .ThenBy(l => l.Start)
+                .ToList();
+
+            // Celkem odučeno
+            var totalTaughtHours = (int)Math.Round(allLessons
+                .Where(l => l.IsTaught)
+                .Sum(l =>
+                    l.End > l.Start
+                        ? (l.End - l.Start).TotalHours
+                        : (double)l.Hours
+                ));
+
+            // Zbývá
+            var remaining = totalPaidHours - totalTaughtHours;
+
+            // Lekce pro PDF – číslování + celé hodiny
+            var lessons = allLessons
+                .Select((l, index) => new LessonDto
                 {
+                    Order = index + 1,
                     Date = l.Date,
                     Start = l.Start,
                     End = l.End,
-                    Hours = (decimal)(l.End - l.Start).TotalHours,
+                    Hours = (int)Math.Round(
+                        l.End > l.Start
+                            ? (l.End - l.Start).TotalHours
+                            : (double)l.Hours),
                     Type = l.IsTaught ? "Odučeno" : "Plánováno"
                 })
                 .ToList();
 
-            var taughtHours = lessons.Where(x => x.Type == "Odučeno").Sum(x => x.Hours);
-            var totalHours = (decimal)student.PaidHours;
-            var remaining = totalHours - taughtHours;
-
-
             var doc = new LessonsReportDocument
             {
                 StudentName = student.FullName,
-                TotalHours = totalHours,
-                TaughtHours = taughtHours,
+                TotalHours = totalPaidHours,
+                TaughtHours = totalTaughtHours,
                 RemainingHours = remaining,
                 Lessons = lessons
             };
 
             var pdfBytes = doc.GeneratePdf();
-
             return File(pdfBytes, "application/pdf", $"hodiny_{student.FullName}.pdf");
         }
-
-
     }
 
     public class UnifiedLesson

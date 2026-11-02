@@ -1,60 +1,9 @@
 ﻿@page "/Admin/Hours"
 @model Vyuka.Pages.Admin.HoursModel
 
-<h1>Přehled hodin celkem</h1>
-
-@if (Model.SelectedStudentId != null)
-{
-    var currentOffset = Request.Query["monthOffset"].Count == 0
-        ? 0
-        : int.Parse(Request.Query["monthOffset"]);
-
-    <div class="mb-3">
-
-        <a href="/Admin/Hours?studentId=@Model.SelectedStudentId&monthOffset=0"
-           class="btn btn-outline-secondary me-2">
-            Tento měsíc
-        </a>
-
-        <a href="/Admin/Hours?studentId=@Model.SelectedStudentId&monthOffset=@(currentOffset - 1)"
-           class="btn btn-outline-dark">
-            ← Předchozí měsíc
-        </a>
-
-    </div>
-}
-
-<div class="row mb-4">
-
-    <div class="col-md-4">
-        <div class="alert alert-info text-center">
-            <strong>Předplacené hodiny</strong><br />
-            @Model.TotalPrepaidHours.ToString("0")
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="alert alert-success text-center">
-            <strong>Odučené hodiny</strong><br />
-            @Model.TotalTaughtHours.ToString("0")
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="alert alert-warning text-center">
-            <strong>Zbývá odučit hodin</strong><br />
-            @Model.TotalRemainingHours.ToString("0")
-        </div>
-    </div>
-
-</div>
+<h1>Přehled hodin se studenty</h1>
 
 <form method="get" class="mb-4">
-
-    <!-- skryté hodnoty, aby se při změně studenta neztratily datumy -->
-    <input type="hidden" name="from" value="@(Model.From?.ToString("yyyy-MM-dd"))" />
-    <input type="hidden" name="to" value="@(Model.To?.ToString("yyyy-MM-dd"))" />
-
     <div class="row g-3 align-items-end">
 
         <div class="col-md-4">
@@ -93,6 +42,7 @@
 {
     <h3>@Model.SelectedStudent.LastName @Model.SelectedStudent.FirstName</h3>
 
+    <!-- PDF tlačítko -->
     <div class="mb-3">
         <a asp-page-handler="ExportHoursPdf"
            asp-route-studentId="@Model.SelectedStudentId"
@@ -104,6 +54,7 @@
         </a>
     </div>
 
+    <!-- Horní souhrny -->
     <div class="row mb-4">
 
         <div class="col-md-3">
@@ -115,27 +66,28 @@
 
         <div class="col-md-3">
             <div class="alert alert-warning text-center">
-                <strong>Plánované hodiny v intervalu</strong><br />
+                <strong>Plánované hodiny</strong><br />
                 @Model.PlannedHours.ToString("0")
             </div>
         </div>
 
         <div class="col-md-3">
             <div class="alert alert-success text-center">
-                <strong>Odučené hodiny v intervalu</strong><br />
+                <strong>Odučené hodiny</strong><br />
                 @Model.TaughtHours.ToString("0")
             </div>
         </div>
 
         <div class="col-md-3">
             <div class="alert alert-danger text-center">
-                <strong>Zbývá odučit hodin celkem</strong><br />
+                <strong>Zbývá odučit hodin</strong><br />
                 @Model.RemainingHours.ToString("0")
             </div>
         </div>
 
     </div>
 
+    <!-- Další plánovaná hodina -->
     @if (Model.NextLesson != null)
     {
         <div class="alert alert-info text-center" style="border: 2px solid #0dcaf0;">
@@ -148,6 +100,7 @@
         </div>
     }
 
+    <!-- Souhrny za období -->
     @if (Model.IntervalLessonsCount > 0)
     {
         <div class="row mb-3">
@@ -176,6 +129,7 @@
         </div>
     }
 
+    <!-- Tabulka hodin -->
     <table class="table table-striped mt-3">
         <thead>
             <tr>

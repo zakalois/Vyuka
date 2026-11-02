@@ -10,6 +10,10 @@ namespace Vyuka.PDF
         public int TotalHours { get; set; }
         public int TaughtHours { get; set; }
         public int RemainingHours { get; set; }
+
+        // ⭐ Nové – plánované neodučené hodiny
+        public int PlannedNotTaughtHours { get; set; }
+
         public List<LessonDto> Lessons { get; set; } = new();
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
@@ -51,12 +55,14 @@ namespace Vyuka.PDF
         {
             container.Column(col =>
             {
+                // ⭐ Horní souhrnný pruh – nyní 4 položky
                 col.Item().PaddingVertical(10).Background("#ECF0F1").Padding(10).Column(box =>
                 {
                     box.Item().Row(r =>
                     {
                         r.RelativeColumn().AlignCenter().Text($"Předplaceno: {TotalHours} h").FontColor("#2980B9");
                         r.RelativeColumn().AlignCenter().Text($"Odučeno: {TaughtHours} h").FontColor("#27AE60");
+                        r.RelativeColumn().AlignCenter().Text($"Plánováno: {PlannedNotTaughtHours} h").FontColor("#F39C12");
                         r.RelativeColumn().AlignCenter().Text($"Zbývá: {RemainingHours} h").FontColor("#C0392B").Bold();
                     });
                 });
@@ -89,13 +95,23 @@ namespace Vyuka.PDF
                     header.Cell().Background("#2980B9").AlignCenter().Padding(5).Text("Stav").FontColor("#FFFFFF").Bold();
                 });
 
+                // ⭐ Najdeme poslední plánovanou hodinu
+                var lastPlanned = Lessons
+                    .Where(l => l.Type == "Plánováno")
+                    .OrderByDescending(l => l.Date)
+                    .ThenByDescending(l => l.Start)
+                    .FirstOrDefault();
+
                 int index = 0;
 
                 foreach (var l in Lessons)
                 {
                     // Jemné pruhování řádků
                     var bg = (index % 2 == 1) ? "#dddddd" : "#FFFFFF";
-                    ;
+
+                    // ⭐ Zvýraznění poslední plánované hodiny
+                    if (lastPlanned != null && l.Order == lastPlanned.Order)
+                        bg = "#FFF3CD";   // jemná žlutá
 
                     table.Cell().Background(bg).AlignCenter().Padding(5).Text(l.Order.ToString());
                     table.Cell().Background(bg).AlignCenter().Padding(5).Text(l.Date.ToString("dd.MM.yyyy"));
@@ -106,7 +122,6 @@ namespace Vyuka.PDF
 
                     index++;
                 }
-
             });
         }
     }

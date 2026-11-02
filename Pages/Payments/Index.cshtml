@@ -1,5 +1,6 @@
-﻿@page
+﻿@page "{handler?}"
 @model Vyuka.Pages.Payments.IndexModel
+
 
 <h2>Platby</h2>
 
@@ -79,12 +80,30 @@
 
 </form>
 
-<!-- Tlačítko přes celou šířku -->
-<div class="mb-4">
-    <a asp-page="/Payments/Create" class="btn btn-success w-100 py-2 fs-5">
-        ➕ Přidat platbu
-    </a>
-</div>
+@if (Model.SelectedStudentId > 0)
+{
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <a asp-page="/Payments/Create"
+               asp-route-studentId="@Model.SelectedStudentId"
+               class="btn btn-success w-100 py-2 fs-5">
+                ➕ Přidat platbu
+            </a>
+        </div>
+
+        <div class="col-md-6">
+            <a asp-page-handler="ExportPaymentsPdf"
+               asp-route-studentId="@Model.SelectedStudentId"
+               asp-route-from="@Model.FromDate?.ToString("yyyy-MM-dd")"
+               asp-route-to="@Model.ToDate?.ToString("yyyy-MM-dd")"
+               class="btn btn-outline-danger w-100 py-2 fs-5">
+                📄 Export PDF
+            </a>
+
+        </div>
+    </div>
+}
+
 
 @if (Model.SelectedStudentId > 0)
 {

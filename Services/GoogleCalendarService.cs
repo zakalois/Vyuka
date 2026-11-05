@@ -1,9 +1,13 @@
 ﻿using Google;
+using System.Reflection;
+using Google.Apis;
+using Google.Apis.Util;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
 using Microsoft.Extensions.Configuration;
+
 
 public class GoogleCalendarService
 {
@@ -36,32 +40,49 @@ public class GoogleCalendarService
     }
 
     public async Task<(string MeetLink, string EventId)> CreateMeetEventAsync(
-        DateTime start,
-        DateTime end,
-        string title,
-        string studentEmail,
-        string teacherEmail,
-        string studentFirstName,
-        string studentLastName,
-        string hexColor)
+     DateTime start,
+     DateTime end,
+     string title,
+     string studentEmail,
+     string teacherEmail,
+     string studentFirstName,
+     string studentLastName,
+     string hexColor)
     {
         var service = CreateCalendarService();
         var calendarOwner = _config["GoogleCalendar:CalendarOwner"];
+
+        // Diagnostika
+        var calendar = await service.Calendars.Get("primary").ExecuteAsync();
+
+        Console.WriteLine("=================================");
+        Console.WriteLine($"Calendar ID: {calendar.Id}");
+        Console.WriteLine($"Calendar Summary: {calendar.Summary}");
+        Console.WriteLine($"Configured Owner: {calendarOwner}");
+        Console.WriteLine("=================================");
 
         string colorId = MapHexToGoogleColorId(hexColor);
 
         var ev = new Event
         {
-            Summary = $"{title} – {studentLastName} {studentFirstName[0]}.",
-            Description = "Online lekce přes Google Meet",
+            Summary = $"{title} - {studentLastName} {studentFirstName[0]}.",
+            Description = "Online lekce pres Google Meet",
             ColorId = colorId,
-            Start = new EventDateTime { DateTime = start, TimeZone = "Europe/Prague" },
-            End = new EventDateTime { DateTime = end, TimeZone = "Europe/Prague" },
-            Attendees = new List<EventAttendee>
+            Start = new EventDateTime
             {
-                new EventAttendee { Email = studentEmail },
-                new EventAttendee { Email = teacherEmail }
+                DateTime = start,
+                TimeZone = "Europe/Prague"
             },
+            End = new EventDateTime
+            {
+                DateTime = end,
+                TimeZone = "Europe/Prague"
+            },
+            Attendees = new List<EventAttendee>
+        {
+            new EventAttendee { Email = studentEmail },
+            new EventAttendee { Email = teacherEmail }
+        },
             ConferenceData = new ConferenceData
             {
                 CreateRequest = new CreateConferenceRequest
@@ -73,12 +94,11 @@ public class GoogleCalendarService
 
         var request = service.Events.Insert(ev, calendarOwner);
         request.ConferenceDataVersion = 1;
-
-        // ⭐ Vypnout Google pozvánky
         request.SendUpdates = EventsResource.InsertRequest.SendUpdatesEnum.None;
 
         var created = await request.ExecuteAsync();
-        return (created.HangoutLink, created.Id);
+
+        return (created.HangoutLink ?? string.Empty, created.Id);
     }
 
     public async Task DeleteEventAsync(string eventId)

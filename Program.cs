@@ -1,16 +1,18 @@
-using Microsoft.AspNetCore.Identity;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using System.Diagnostics;
 using Vyuka.Models;
 using Vyuka.Secrets;
 using Vyuka.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
-
 
 // TimeProvider
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
@@ -62,34 +64,31 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // Authentication + Authorization
-//builder.Services.AddAuthentication();
+builder.Services.AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["GoogleOAuth:ClientId"];
+        options.ClientSecret = builder.Configuration["GoogleOAuth:ClientSecret"];
+        options.CallbackPath = "/signin-google";
+
+        // scopes
+        options.Scope.Add("https://www.googleapis.com/auth/calendar");
+        options.Scope.Add("https://www.googleapis.com/auth/calendar.events");
+
+        // ukládání tokenů
+        options.SaveTokens = true;
+
+        // refresh token + consent
+        options.Events.OnRedirectToAuthorizationEndpoint = context =>
+        {
+            context.RedirectUri += "&access_type=offline&prompt=consent";
+            return Task.CompletedTask;
+        };
+    });
+
 builder.Services.AddAuthorization();
 
-// Google Calendar
-builder.Services.AddSingleton(provider =>
-{
-    var config = provider.GetRequiredService<IConfiguration>();
-    var env = provider.GetRequiredService<IHostEnvironment>();
-
-    var keyPath = config["Google:ServiceAccountKeyPath"];
-    keyPath = Path.Combine(env.ContentRootPath, keyPath);
-
-    if (!File.Exists(keyPath))
-        throw new FileNotFoundException($"Service account JSON nenalezen: {keyPath}");
-
-    var credential = GoogleCredential
-        .FromFile(keyPath)
-        .CreateScoped(CalendarService.Scope.Calendar)
-        .CreateWithUser("zakalois@ucitelzak.eu");
-
-    return new CalendarService(
-        new BaseClientService.Initializer
-        {
-            HttpClientInitializer = credential,
-            ApplicationName = "VyukaApp"
-        });
-});
-
+// Google Calendar service
 builder.Services.AddScoped<GoogleCalendarService>();
 
 // Session
@@ -177,7 +176,17 @@ app.MapGet("/", context =>
 });
 
 app.MapRazorPages();
+
 var hasher = new PasswordHasher<AppUser>();
 var tempUser = new AppUser();
 var hash = hasher.HashPassword(tempUser, "Student123!");
+
+
+
+Process.Start(new ProcessStartInfo
+{
+    FileName = "http://localhost:5000",
+    UseShellExecute = true
+});
+
 app.Run();

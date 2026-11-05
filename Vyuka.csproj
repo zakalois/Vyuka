@@ -1,42 +1,39 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>f9060daf-08bb-433c-89b2-62618bc366b0</UserSecretsId>
   </PropertyGroup>
 
+  <!-- Email HTML šablony -->
   <ItemGroup>
     <None Remove="EmailsTemplates\LessonPlanned.html" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="EmailsTemplates\LessonPlanEmail.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="EmailsTemplates\Thanks.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="EmailsTemplates\PaymentReminder.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="EmailsTemplates\OfferTemplate.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="EmailsTemplates\PaymentConfirmation.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="EmailsTemplates\LessonPlanned.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="EmailsTemplates\LessonPlanEmail.html" CopyToOutputDirectory="Always" />
+    <Content Include="EmailsTemplates\Thanks.html" CopyToOutputDirectory="Always" />
+    <Content Include="EmailsTemplates\PaymentReminder.html" CopyToOutputDirectory="Always" />
+    <Content Include="EmailsTemplates\OfferTemplate.html" CopyToOutputDirectory="Always" />
+    <Content Include="EmailsTemplates\PaymentConfirmation.html" CopyToOutputDirectory="Always" />
+    <Content Include="EmailsTemplates\LessonPlanned.html" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Apis" Version="1.73.0" />
-    <PackageReference Include="Google.Apis.Auth" Version="1.73.0" />
-    <PackageReference Include="Google.Apis.Calendar.v3" Version="1.73.0.4073" />
+    <!-- Google API (správné verze) -->
+    <PackageReference Include="Google.Apis" Version="1.78.0" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.78.0" />
+    <PackageReference Include="Google.Apis.Calendar.v3" Version="1.78.0.4285" />
+
+    <!-- Google OAuth (AddGoogle) -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.0" />
+
+    <!-- Email -->
     <PackageReference Include="MailKit" Version="4.16.0" />
+
+    <!-- EF Core -->
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.5">
@@ -48,28 +45,34 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="8.0.5" />
+
+    <!-- Identity Stores -->
+    <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="10.0.14" />
+
+    <!-- Scaffolding -->
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
+
+    <!-- QR kódy -->
     <PackageReference Include="QRCoder" Version="1.8.0" />
+
+    <!-- PDF -->
     <PackageReference Include="QuestPDF" Version="2026.9.1" />
   </ItemGroup>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-<ItemGroup>
-  <!-- appsettings.json MUSÍ být v publish výstupu -->
-  <None Update="appsettings.json" CopyToOutputDirectory="Always" />
 
-  <!-- Development verzi NEkopírovat -->
-  <None Update="appsettings.Development.json" CopyToOutputDirectory="Never" />
+  <!-- appsettings + Secrets -->
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="Always" />
+    <None Update="appsettings.Development.json" CopyToOutputDirectory="Never" />
+    <None Include="Secrets\vyukameet-887de6c28b47.json" CopyToOutputDirectory="Always" />
+  </ItemGroup>
 
-  <!-- Google JSON soubor přibalit do publish -->
-  <None Include="Secrets\vyukameet-887de6c28b47.json" CopyToOutputDirectory="Always" />
-</ItemGroup>
-<ItemGroup>
-  <Content Update="wwwroot\images\logo.jpg">
-    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-  </Content>
-</ItemGroup>
+  <!-- Logo -->
+  <ItemGroup>
+    <Content Update="wwwroot\images\logo.jpg" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

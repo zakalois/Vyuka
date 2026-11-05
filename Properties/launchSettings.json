@@ -13,6 +13,7 @@
     "Vyuka": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "/",
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5000",
       "environmentVariables": {

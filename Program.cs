@@ -183,10 +183,10 @@ var hash = hasher.HashPassword(tempUser, "Student123!");
 
 
 
-Process.Start(new ProcessStartInfo
-{
-    FileName = "http://localhost:5000",
-    UseShellExecute = true
-});
+//Process.Start(new ProcessStartInfo
+//{
+//    FileName = "http://localhost:5000",
+//    UseShellExecute = true
+//});
 
 app.Run();
